@@ -1,0 +1,41 @@
+---
+title: "AIO + Sensor Installer"
+description: "현재 13-Step Workflow로 하나의 KVM Host에 AIO Data Processor와 Sensor를 배포합니다."
+---
+
+# AIO + Sensor Installer
+
+`AIO-Sensor-Installer.sh`는 같은 KVM Host에 AIO Data Processor와 Sensor를 순차적으로 배포합니다.
+
+## 현재 13-Step Workflow
+
+| Step | 작업 |
+| ---: | --- |
+| 1 | Hardware / NIC / SPAN NIC 선택 |
+| 2 | HWE Kernel 설치 |
+| 3 | NIC Rename / ifupdown 전환 / Network 구성 |
+| 4 | KVM / libvirt 설치 및 기본 구성 |
+| 5 | Kernel Parameter / KSM / Swap Tuning |
+| 6 | libvirt Hook + NTPsec |
+| 7 | AIO LVM Storage 구성 |
+| 8 | AIO Image/Download 준비 |
+| 9 | AIO VM 배포 |
+| 10 | Sensor LV 생성 + Image/Script 다운로드 |
+| 11 | Sensor VM 배포 |
+| 12 | PCI Passthrough / CPU Affinity |
+| 13 | DP Appliance CLI Package 설치 |
+
+## 배포 순서
+
+```text
+Host 준비
+  → AIO Storage 준비
+  → AIO Image/Asset 준비
+  → AIO VM 배포
+  → Sensor Storage 및 Asset 준비
+  → Sensor VM 배포
+  → Sensor Data Path 구성
+  → Appliance CLI 설치
+```
+
+Step 3과 Step 5는 현재 Reboot 지점이며, 동일 Installer를 재실행하면 저장된 State에서 이어집니다.
