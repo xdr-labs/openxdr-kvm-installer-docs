@@ -1,0 +1,27 @@
+---
+title: "Reboot & Resume"
+description: "의도된 Reboot 지점과 Persistent State 기반 Resume 동작을 이해합니다."
+---
+
+# Reboot & Resume
+
+Installer는 Host 변경에 Reboot가 필요해도 전체 배포를 처음부터 다시 시작하지 않도록 Stateful하게 동작합니다.
+
+## 현재 Reboot 지점
+
+현재 Script는 다음 Step 이후 Auto Reboot를 구성합니다.
+
+- **Step 3** — NIC Rename / ifupdown 전환 / Network 구성
+- **Step 5** — Kernel Tuning
+
+## Reboot 이후
+
+동일 Source와 State Context에서 **같은 Installer**를 다시 실행한 뒤 **Auto Execute All Steps**를 선택합니다. 첫 미완료 Step부터 이어집니다.
+
+## State 원칙
+
+Step이 정상 완료된 경우에만 Completed State가 진행됩니다. Failed 또는 Canceled Step은 완료 Step Marker를 앞으로 이동시키지 않아야 합니다.
+
+<Note>
+실패한 Step을 건너뛰기 위해 State File을 수동으로 변경하지 마십시오. 원인을 해결하고 해당 Step을 다시 실행하는 것이 기본 복구 방법입니다.
+</Note>
