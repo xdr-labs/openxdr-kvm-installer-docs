@@ -1,0 +1,53 @@
+---
+title: "Quickstart"
+description: "Clone the installer, start with DRY_RUN, validate configuration and execute the selected workflow."
+---
+
+# Quickstart
+
+## 1. Clone the source repository
+
+```bash
+git clone https://github.com/xdr-labs/OpenXDR-KVM-Installer.git
+cd OpenXDR-KVM-Installer
+sudo -i
+```
+
+## 2. Choose the installer
+
+```bash
+# Standalone Data Processor
+./DP-Installer.sh
+
+# Standard modular Sensor
+./Sensor-Installer.sh
+
+# High-performance Sensor
+./6000-Sensor-Installer.sh
+
+# AIO + Sensor
+./AIO-Sensor-Installer.sh
+```
+
+## 3. Keep DRY_RUN enabled
+
+DRY_RUN is enabled by default. Use the configuration menu to review versions, credentials, NIC selections, storage selections and deployment-specific inputs.
+
+<Warning>
+Do not disable DRY_RUN until the displayed configuration matches the target host and the full validation results are acceptable.
+</Warning>
+
+## 4. Run Full Configuration Validation
+
+The common menu model provides a read-only validation workflow. Review **OK / WARN / FAIL** results. A FAIL is a blocking condition.
+
+## 5. Execute
+
+Use either:
+
+- **Auto Execute All Steps** — continues from the first incomplete step
+- **Execute Specific Step** — useful for controlled execution or retry
+
+## 6. Resume after reboot
+
+Network and kernel-tuning stages can intentionally reboot the host. After reboot, run the same installer again and select Auto Execute. The installer reads its persistent state and continues from the next incomplete step.
