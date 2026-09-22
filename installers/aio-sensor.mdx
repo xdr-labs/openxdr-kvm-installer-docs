@@ -1,0 +1,41 @@
+---
+title: "AIO + Sensor Installer"
+description: "Deploy an AIO Data Processor and Sensor on one KVM host through the current 13-step workflow."
+---
+
+# AIO + Sensor Installer
+
+`AIO-Sensor-Installer.sh` coordinates deployment of an AIO Data Processor and a Sensor on the same KVM host.
+
+## Current 13-step flow
+
+| Step | Operation |
+| ---: | --- |
+| 1 | Hardware / NIC / SPAN NIC selection |
+| 2 | HWE kernel installation |
+| 3 | NIC rename / ifupdown switch and network configuration |
+| 4 | KVM / libvirt installation and base configuration |
+| 5 | Kernel parameters / KSM / swap tuning |
+| 6 | libvirt hooks installation + NTPsec |
+| 7 | LVM storage configuration for AIO |
+| 8 | AIO image/download preparation |
+| 9 | AIO VM deployment |
+| 10 | Sensor LV creation + image/script download |
+| 11 | Sensor VM deployment |
+| 12 | PCI passthrough / CPU affinity |
+| 13 | Install DP Appliance CLI package |
+
+## Deployment sequence
+
+```text
+Prepare host
+  → prepare AIO storage
+  → obtain AIO image/assets
+  → deploy AIO VM
+  → create Sensor storage and obtain Sensor assets
+  → deploy Sensor VM
+  → attach/tune Sensor data path
+  → install appliance CLI
+```
+
+Steps 3 and 5 are configured reboot points. Persistent state allows the same installer to resume after reboot without restarting completed work.
