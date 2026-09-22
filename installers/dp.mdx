@@ -1,0 +1,50 @@
+---
+title: "Data Processor Installer"
+description: "Deploy OpenXDR Data Processor DL/DA VMs and prepare the KVM host with the current 14-step DP workflow."
+---
+
+# Data Processor Installer
+
+`DP-Installer.sh` is the host-level installer and orchestrator for a standalone Data Processor deployment.
+
+## What it builds
+
+- KVM/libvirt host
+- Management and DP networking
+- DL and DA LVM storage
+- DL-master VM
+- DA-master VM
+- SR-IOV / CPU affinity / PCI passthrough where configured
+- DP Appliance CLI
+- NFS backup-server configuration for DP configuration backup
+
+## Current 14-step flow
+
+| Step | Operation |
+| ---: | --- |
+| 1 | Detect and select hardware / NIC / disks |
+| 2 | Install HWE kernel |
+| 3 | Rename NICs, switch to ifupdown and configure networking |
+| 4 | Install and configure KVM / libvirt |
+| 5 | Tune kernel parameters / KSM / swap |
+| 6 | Configure SR-IOV drivers and NTPsec |
+| 7 | Create LVM storage for DL/DA root and data |
+| 8 | Install libvirt hooks and OOM recovery scripts |
+| 9 | Download DP image and deployment scripts |
+| 10 | Deploy DL-master VM |
+| 11 | Deploy DA-master VM |
+| 12 | Configure SR-IOV / CPU affinity / PCI passthrough |
+| 13 | Install DP Appliance CLI package |
+| 14 | Configure NFS backup server for DP configuration backup |
+
+## Network model
+
+The installer keeps the KVM host management address separate from VM-internal addresses. Current defaults include the libvirt NAT network `192.168.122.0/24`, DL `192.168.122.2`, and DA `192.168.122.3`. The host management IP is derived from the selected management interface.
+
+## Image handling
+
+The DP image is prepared before VM deployment. The download stage can use a suitable existing local qcow2 image when explicitly selected, while later DL/DA deployment stages consume the already prepared image.
+
+## Reboot points
+
+The current script is configured to auto-reboot after Step 3 and Step 5. After reboot, run `DP-Installer.sh` again and continue from saved state.
