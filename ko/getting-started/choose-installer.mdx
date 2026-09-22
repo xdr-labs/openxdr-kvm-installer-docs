@@ -1,0 +1,32 @@
+---
+title: "Installer 선택"
+description: "배포할 OpenXDR 구성 요소와 토폴로지에 맞는 Installer를 선택합니다."
+---
+
+# Installer 선택
+
+배포 대상, 토폴로지, 성능 요구사항에 따라 하나의 Installer를 선택합니다.
+
+| Installer | 용도 | 현재 Step 수 |
+| --- | --- | ---: |
+| `DP-Installer.sh` | DL-master / DA-master 기반 Standalone Data Processor | 14 |
+| `Sensor-Installer.sh` | Standard Modular Sensor | 10 |
+| `6000-Sensor-Installer.sh` | Dual VM / NUMA 기반 High-performance Sensor | 10 |
+| `AIO-Sensor-Installer.sh` | AIO Data Processor + Sensor 통합 배포 | 13 |
+
+## 선택 기준
+
+<Steps>
+  <Step title="DL과 DA Data Processor VM이 필요한가?">
+    **DP-Installer.sh**를 사용합니다. DP image 준비, DL/DA 배포, SR-IOV/CPU affinity, Appliance CLI, NFS backup configuration까지 포함합니다.
+  </Step>
+  <Step title="Standard Modular Sensor만 필요한가?">
+    **Sensor-Installer.sh**를 사용합니다. Sensor Storage, VM Deployment, Network/SPAN 구성을 처리합니다.
+  </Step>
+  <Step title="고성능 Sensor 토폴로지가 필요한가?">
+    **6000-Sensor-Installer.sh**를 사용합니다. Dual VM, NUMA-aware placement와 PCI passthrough 중심의 경로입니다.
+  </Step>
+  <Step title="한 Host에 AIO와 Sensor가 필요한가?">
+    **AIO-Sensor-Installer.sh**를 사용합니다. AIO를 먼저 배포한 후 같은 Host에서 Sensor 배포를 이어서 수행합니다.
+  </Step>
+</Steps>
