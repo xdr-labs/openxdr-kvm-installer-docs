@@ -3,16 +3,39 @@
   "theme": "mint",
   "name": "OpenXDR KVM Installer",
   "description": "Operator documentation for deploying Stellar Cyber OpenXDR Data Processor and Sensor components on KVM.",
-  "colors": {"primary": "#16A34A"},
+  "colors": {
+    "primary": "#16A34A"
+  },
   "favicon": "/favicon.svg",
   "navbar": {
-    "links": [{"type": "github", "href": "https://github.com/xdr-labs/OpenXDR-KVM-Installer"}],
-    "primary": {"type": "button", "label": "Source", "href": "https://github.com/xdr-labs/OpenXDR-KVM-Installer"}
+    "links": [
+      {
+        "type": "github",
+        "href": "https://github.com/xdr-labs/OpenXDR-KVM-Installer"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Source",
+      "href": "https://github.com/xdr-labs/OpenXDR-KVM-Installer"
+    }
   },
-  "search": {"prompt": "Search KVM Installer docs..."},
-  "seo": {"indexing": "navigable", "metatags": {"canonical": "https://kvm.xdr.ooo"}},
-  "appearance": {"default": "system", "strict": false},
-  "metadata": {"timestamp": true},
+  "search": {
+    "prompt": "Search KVM Installer docs..."
+  },
+  "seo": {
+    "indexing": "navigable",
+    "metatags": {
+      "canonical": "https://kvm.xdr.ooo"
+    }
+  },
+  "appearance": {
+    "default": "system",
+    "strict": false
+  },
+  "metadata": {
+    "timestamp": true
+  },
   "navigation": {
     "languages": [
       {
@@ -21,16 +44,53 @@
           {
             "tab": "Deployment Guide",
             "groups": [
-              {"group": "Start Here", "pages": ["index","getting-started/choose-installer","getting-started/requirements","getting-started/quickstart"]},
-              {"group": "Installer Guides", "pages": ["installers/dp","installers/sensor","installers/high-performance-sensor","installers/aio-sensor"]},
-              {"group": "Operations", "pages": ["operations/dry-run-validation","operations/reboot-resume","operations/troubleshooting"]}
+              {
+                "group": "Start Here",
+                "pages": [
+                  "index",
+                  "getting-started/choose-installer",
+                  "getting-started/requirements",
+                  "getting-started/quickstart"
+                ]
+              },
+              {
+                "group": "Installer Guides",
+                "pages": [
+                  "installers/dp",
+                  "installers/sensor",
+                  "installers/high-performance-sensor",
+                  "installers/aio-sensor"
+                ]
+              },
+              {
+                "group": "Operations",
+                "pages": [
+                  "operations/dry-run-validation",
+                  "operations/reboot-resume",
+                  "operations/troubleshooting"
+                ]
+              }
             ]
           },
           {
             "tab": "Reference",
             "groups": [
-              {"group": "Architecture", "pages": ["reference/architecture","reference/networking","reference/storage-performance"]},
-              {"group": "Operator Reference", "pages": ["reference/step-matrix","reference/state-logs","reference/post-deployment"]}
+              {
+                "group": "Architecture",
+                "pages": [
+                  "reference/architecture",
+                  "reference/networking",
+                  "reference/storage-performance"
+                ]
+              },
+              {
+                "group": "Operator Reference",
+                "pages": [
+                  "reference/step-matrix",
+                  "reference/state-logs",
+                  "reference/post-deployment"
+                ]
+              }
             ]
           }
         ]
@@ -41,16 +101,54 @@
           {
             "tab": "배포 가이드",
             "groups": [
-              {"group": "시작하기", "pages": ["ko/index","ko/getting-started/choose-installer","ko/getting-started/requirements","ko/getting-started/quickstart"]},
-              {"group": "Installer 가이드", "pages": ["ko/installers/dp","ko/installers/sensor","ko/installers/high-performance-sensor","ko/installers/aio-sensor"]},
-              {"group": "운영", "pages": ["ko/operations/dry-run-validation","ko/operations/reboot-resume","ko/operations/troubleshooting"]}
+              {
+                "group": "시작하기",
+                "pages": [
+                  "ko/index",
+                  "ko/getting-started/choose-installer",
+                  "ko/getting-started/requirements",
+                  "ko/getting-started/installing-ubuntu-24-04",
+                  "ko/getting-started/quickstart"
+                ]
+              },
+              {
+                "group": "Installer 가이드",
+                "pages": [
+                  "ko/installers/dp",
+                  "ko/installers/sensor",
+                  "ko/installers/high-performance-sensor",
+                  "ko/installers/aio-sensor"
+                ]
+              },
+              {
+                "group": "운영",
+                "pages": [
+                  "ko/operations/dry-run-validation",
+                  "ko/operations/reboot-resume",
+                  "ko/operations/troubleshooting"
+                ]
+              }
             ]
           },
           {
             "tab": "참고 자료",
             "groups": [
-              {"group": "아키텍처", "pages": ["ko/reference/architecture","ko/reference/networking","ko/reference/storage-performance"]},
-              {"group": "운영 참고", "pages": ["ko/reference/step-matrix","ko/reference/state-logs","ko/reference/post-deployment"]}
+              {
+                "group": "아키텍처",
+                "pages": [
+                  "ko/reference/architecture",
+                  "ko/reference/networking",
+                  "ko/reference/storage-performance"
+                ]
+              },
+              {
+                "group": "운영 참고",
+                "pages": [
+                  "ko/reference/step-matrix",
+                  "ko/reference/state-logs",
+                  "ko/reference/post-deployment"
+                ]
+              }
             ]
           }
         ]
