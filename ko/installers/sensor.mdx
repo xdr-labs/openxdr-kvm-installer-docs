@@ -1,0 +1,33 @@
+---
+title: "Standard Sensor Installer"
+description: "현재 10-Step Workflow로 Standard Modular OpenXDR Sensor VM을 배포합니다."
+---
+
+# Standard Sensor Installer
+
+`Sensor-Installer.sh`는 Sensor VM과 Host-side 준비 전용 Installer이며 DL/DA를 배포하지 않습니다.
+
+## 현재 10-Step Workflow
+
+| Step | 작업 |
+| ---: | --- |
+| 1 | Hardware / NIC / CPU / Memory / SPAN NIC 선택 |
+| 2 | HWE Kernel 설치 |
+| 3 | NIC Rename / ifupdown 전환 / Network 구성 |
+| 4 | KVM / libvirt 설치 및 기본 구성 |
+| 5 | Kernel Parameter / KSM / Swap Tuning |
+| 6 | libvirt Hook + NTPsec |
+| 7 | Sensor LV 생성 + Image/Script 다운로드 |
+| 8 | Sensor VM 배포 |
+| 9 | Sensor VM Network & SPAN Interface 구성 |
+| 10 | DP Appliance CLI Package 설치 |
+
+## Network 및 SPAN
+
+Standard Sensor 경로는 Management/VM Network와 별도로 SPAN Interface를 처리합니다. 현재 Script는 Configuration에 따라 PCI Passthrough 또는 Bridge 방식의 SPAN Attachment를 지원합니다.
+
+<Warning>
+PCI Passthrough는 IOMMU가 필요하며 선택한 Device를 Host에서 VM으로 넘깁니다. 대상 NIC를 반드시 검증하십시오.
+</Warning>
+
+Step 3과 Step 5는 현재 Reboot 지점입니다.
