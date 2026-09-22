@@ -1,0 +1,33 @@
+---
+title: "요구사항"
+description: "배포 전 Host, BIOS, OS, Storage, Network 및 Access 요구사항을 확인합니다."
+---
+
+# 요구사항
+
+정확한 자원 크기는 OpenXDR 구성 요소와 실제 워크로드에 따라 달라집니다. Production 배포 전 Stellar sizing과 현재 Installer 설정을 함께 검증하십시오.
+
+## 공통 요구사항
+
+- 선택한 Installer가 지원하는 Ubuntu Server
+- System 변경을 위한 Root 권한
+- BIOS에서 Intel VT-x 또는 AMD-V 활성화
+- SR-IOV/PCI passthrough 사용 시 Intel VT-d 또는 AMD-Vi 활성화
+- `whiptail`
+- VM 배포에 필요한 CPU, Memory, Local Storage
+- Host Management Connectivity
+- Sensor용 추가 SPAN/Data Interface
+- Package와 Stellar Component Image 다운로드에 필요한 Network Access
+- Network/Storage 변경 전 Recovery Plan
+
+## OS 가이드
+
+현재 프로젝트 문서는 Sensor/AIO 계열에서 Ubuntu Server 20.04, 22.04, 24.04를 다룹니다. DP Installer는 Ubuntu 16.04 기반의 과거 DP 환경을 포함한 추가 경로도 지원합니다. 실제 실행 전 선택한 DP/Component version과 현재 Installer를 반드시 대조하십시오.
+
+## Sensor/AIO 공통 시작 기준
+
+현재 프로젝트 README는 Standard Sensor/AIO 경로의 일반적인 시작 기준으로 **12 vCPU**, **16 GB Memory**, 약 **100 GB Free Storage**를 제시합니다. Production sizing은 더 클 수 있으며 Installer가 일부 Resource를 자동 계산합니다.
+
+<Warning>
+NIC 이름 변경, ifupdown 전환, Disk Provisioning은 원격 접속과 기존 데이터를 손상시킬 수 있습니다. Console 또는 Out-of-Band Access를 먼저 확보하십시오.
+</Warning>
