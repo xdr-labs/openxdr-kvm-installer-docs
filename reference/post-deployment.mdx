@@ -1,0 +1,40 @@
+---
+title: "Post-deployment Operations"
+description: "Validate deployed VMs and move from installation into normal KVM host operations."
+---
+
+# Post-deployment Operations
+
+After the installer completes, verify the host and deployed VMs before handing the environment over for normal OpenXDR operation.
+
+## Validate the host
+
+Confirm:
+
+- libvirt is healthy
+- expected VM definitions exist
+- management addressing and routes are correct
+- expected LVM volumes are present
+- time synchronization is healthy
+
+## Validate the selected topology
+
+Check the items relevant to the installer:
+
+- DL/DA/AIO/Sensor VMs are present and running as expected
+- management connectivity is reachable
+- SPAN or passthrough interfaces are attached to the correct Sensor VM
+- SR-IOV/VF assignments are correct for DP paths that use them
+- storage mappings match the intended topology
+
+## Appliance CLI
+
+The installer families include a step to install the DP Appliance CLI package.
+
+<Card title="Stellar Appliance CLI" icon="terminal" href="https://github.com/xdr-labs/Stellar-appliance-cli">
+  Unified operational interface for KVM hosts deployed by the OpenXDR KVM Installer.
+</Card>
+
+## Keep deployment evidence
+
+Retain the installer log and final configuration summary according to your change-control policy. Remove or redact secrets before sharing artifacts.
