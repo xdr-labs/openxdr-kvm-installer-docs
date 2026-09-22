@@ -1,0 +1,512 @@
+---
+title: "Stellar Appliance CLI 사용자 가이드"
+description: "Open XDR KVM 호스트의 배포 이후 네트워크, NTP, ACL, VM 운영과 시스템 설정을 관리하는 Stellar Appliance CLI 가이드입니다."
+---
+
+# Stellar Cyber Open XDR Platform
+
+## Stellar Appliance CLI – 사용자 가이드
+
+## 개요
+
+본 문서는 **Stellar Appliance CLI**에 대한 종합 사용자 가이드입니다.
+
+Stellar Appliance CLI는 Stellar Cyber Open XDR 환경을 위해 설계된 명령줄 기반 관리 도구입니다.
+
+이 CLI는 공식 설치 스크립트를 사용하여 Open XDR 구성 요소(Data Processor, Sensor, AIO)가 이미 배포된 KVM 호스트를 관리하기 위한 통합 운영 인터페이스를 제공합니다.
+
+본 CLI는 배포 이후(Post-deployment) 운영 작업에만 집중하며, 시스템 엔지니어와 운영자가 환경을 안전하고, 일관되며, 감사 가능하게 구성·제어·유지보수할 수 있도록 지원합니다.
+
+특히 다음 항목에 중점을 둡니다.
+
+- 네트워크 구성 (ifupdown 기반)
+- 시간 동기화 (NTP)
+- 방화벽 접근 제어 (iptables 기반 ACL)
+- 가상 머신 운영 및 모니터링
+- 재배포 없이 수행하는 통제된 운영 변경
+
+<Warning>
+Appliance CLI는 플랫폼 배포를 수행하지 않습니다. 이는 설치 도구가 아닌 **운영 관리 계층**입니다.
+</Warning>
+
+## 1. Appliance CLI의 아키텍처적 역할
+
+Stellar Appliance CLI는 **KVM 호스트 상에서 동작**하며, 운영체제(OS) 및 libvirt 위에 위치하지만 Open XDR 애플리케이션 계층 아래에 위치하는 **운영 제어 계층**으로 동작합니다.
+
+CLI는 다음 항목을 관리합니다.
+
+- 호스트 네트워크 구성 (ifupdown 기반)
+- 시간 동기화 (NTP)
+- 방화벽 접근 제어 (iptables)
+- 가상 머신 운영 (콘솔, 자동 시작, 모니터링)
+- 호스트 시스템 메타데이터 및 서비스
+
+### CLI가 설계된 목적
+
+- 배포 이후 구성 변경
+- 운영 중 네트워크 / NTP / 방화벽 관리
+- 안전한 VM 접근 및 모니터링
+- 반복 가능하고 감사 가능한 운영 워크플로우
+
+### CLI가 설계되지 않은 목적
+
+- Open XDR 초기 배포
+- 디스크 레이아웃 또는 스토리지 재구성
+- VM 토폴로지 재설계
+- 설치 스크립트 로직 대체
+
+## 2. CLI 탐색 및 명령 모델
+
+### CLI 실행
+
+```bash
+aella_cli
+```
+
+다음과 같은 메시지가 표시됩니다.
+
+```text
+Welcome to Starlight Appliance
+Appliance>
+```
+
+### 명령 구조
+
+모든 명령은 다음과 같은 일관된 구조를 따릅니다.
+
+```text
+<command> <subcommand> [parameters]
+```
+
+예시:
+
+```text
+show interface
+set interface mgt ip 192.168.1.100/24 gateway 192.168.1.1
+set acl 10.10.10.0/24 all
+console dl-master
+```
+
+### 기본 명령
+
+| 명령 | 용도 |
+| --- | --- |
+| `clear` | 명령 History 초기화 |
+| `console` | dl-master, da-master(aka dr-master), mds 또는 aio Console 접속 |
+| `monitor` | VM Resource와 System Health 모니터링 |
+| `quit` | CLI 종료 |
+| `restart` | System 또는 Service 재시작 |
+| `set` | Component Parameter 구성 |
+| `show` | Component 정보 표시 |
+| `shutdown` | System 또는 Service 종료 |
+| `start` | System 또는 Service 시작 |
+| `unset` | Configuration 제거 |
+
+### 도움말 및 Shell 명령
+
+특정 명령 도움말:
+
+```text
+help <command>
+```
+
+중첩 명령(`show`, `set`) 도움말:
+
+```text
+<command> help
+```
+
+System Command 직접 실행:
+
+```text
+!<command>
+```
+
+예:
+
+```text
+!ping
+```
+
+### CLI 사용성 기능
+
+- 명령어, VM 이름, 인터페이스에 대한 탭 자동 완성
+- 대화형 도움말 제공
+- 모든 명령에 대해 일관된 문법 유지
+
+## 3. 네트워크 구성 관리
+
+CLI는 OpenXDR 설치 스크립트와 완전히 정렬된 **ifupdown 호환 모델**을 사용하여 런타임 네트워크 구성을 관리합니다.
+
+### 네트워크 정보 표시
+
+```text
+show interface
+show dns
+show gateway
+show route
+```
+
+### 네트워크 인터페이스 구성
+
+```text
+set interface <iface> ip <IP/Mask> [gateway <IP>]
+set interface <iface> dns <dns1> [dns2 ...]
+unset interface <iface> <ip|gateway|dns>
+```
+
+### 변경 사항 적용 (필수)
+
+네트워크 변경 사항은 인터페이스를 재시작하기 전까지 적용되지 않습니다.
+
+```text
+set interface <iface> restart
+```
+
+### 운영상 유의사항
+
+구성 파일 위치:
+
+```text
+/etc/network/interfaces
+/etc/network/interfaces.d/*.cfg
+```
+
+- Netplan은 비활성화되어 있어야 함
+  - 설치 스크립트에서 처리됨
+- 변경 후에는 항상 인터페이스 재시작이 필요함
+
+## 4. 시간 동기화(NTP) 관리
+
+CLI는 현재 활성화된 NTP 구현체를 자동으로 감지하고 관리합니다.
+
+### 지원되는 NTP 서비스
+
+- ntpsec (설치 스크립트 기본값)
+- chrony
+- systemd-timesyncd
+- legacy ntp
+
+### 명령어
+
+```text
+show ntp
+set ntp <server>
+unset ntp <server>
+```
+
+### 동작 방식
+
+- 활성화된 NTP 서비스 자동 감지
+- 해당 서비스의 구성 파일 자동 업데이트
+- NTP 서비스 자동 재시작
+
+## 5. 방화벽 접근 제어(ACL) 관리
+
+### 5.1 ACL 개요 및 설계 모델
+
+Stellar Appliance CLI는 **iptables INPUT 체인** 위에 구축된 정책 기반 ACL 추상화 모델을 사용하여 방화벽 규칙을 관리합니다.
+
+ACL 시스템은 iptables의 저수준 복잡성을 숨기고, 안전하고 예측 가능한 운영 모델을 제공하도록 의도적으로 설계되었습니다.
+
+주요 특징:
+
+- ACL 규칙은 수신 트래픽에만 적용
+- 규칙은 위에서 아래로 평가
+- 규칙은 항상 append 방식으로 추가
+- 수동 규칙 삽입 또는 순서 변경은 지원되지 않음
+- 로컬 인터페이스 IP는 항상 허용됨
+- 규칙 동작은 선택한 ACL 정책에 의해 전적으로 결정됨
+- ACL 규칙은 소스 IP 또는 네트워크 → 이 KVM 호스트로의 접근을 제어함
+
+### 5.2 ACL 정책 초기화 (`set acl policy`)
+
+ACL 규칙을 구성하기 전에 반드시 정책을 초기화해야 합니다.
+
+```text
+set acl policy
+```
+
+정책 초기화 과정에서 운영자는 다음 두 가지를 선택합니다.
+
+- ACL 모드: `whitelist` 또는 `blacklist`
+- ACL을 적용할 대상 인터페이스
+
+### 5.3 ACL 모드 설명: Whitelist vs Blacklist
+
+#### Whitelist 모드 (권장)
+
+개념:
+
+- 명시적으로 지정된 소스만 허용
+- 그 외 모든 트래픽은 자동으로 차단
+
+동작 방식:
+
+- 사용자가 입력한 모든 규칙은 ALLOW 규칙으로 처리됨
+- 마지막에 deny-all 규칙이 자동 적용됨
+- 운영자가 수동으로 deny all을 설정할 필요 없음
+
+예시 시나리오:
+
+```text
+Allow: 10.10.10.0/24
+Allow: 192.168.1.50
+Deny: all others (automatic)
+```
+
+#### Blacklist 모드
+
+개념:
+
+- 기본적으로 모든 트래픽 허용
+- 명시적으로 지정된 소스만 차단
+
+동작 방식:
+
+- 사용자가 입력한 모든 규칙은 DENY 규칙으로 처리됨
+- 기본 allow-all 동작은 자동 유지됨
+- 운영자가 수동으로 allow all을 설정할 필요 없음
+
+예시 시나리오:
+
+```text
+Deny: 203.0.113.10
+Allow: all others (automatic)
+```
+
+### 5.4 정책 동작 요약
+
+| 항목 | Whitelist 모드 | Blacklist 모드 |
+| --- | --- | --- |
+| 기본 동작 | 모두 차단 | 모두 허용 |
+| 사용자 정의 규칙 | 허용 대상 | 차단 대상 |
+| 수동 allow/deny 필요 | 아니오 | 아니오 |
+| 수동 deny-all / allow-all | 아니오 | 아니오 |
+| 규칙 순서 고려 필요 | 아니오 | 아니오 |
+
+운영자는 다음만 결정하면 됩니다.
+
+- 사용할 정책 모드
+- 보호할 인터페이스
+- 지정할 IP, 네트워크 또는 포트
+
+### 5.5 대상 인터페이스 선택
+
+ACL 모드를 선택한 후, 보호할 인터페이스를 선택합니다.
+
+```text
+Select target interface:
+ 1) mgt
+ 2) hostmgmt
+```
+
+ACL 규칙은 선택한 인터페이스로 유입되는 트래픽에만 적용됩니다.
+
+다른 인터페이스에는 영향을 주지 않습니다.
+
+### 5.6 ACL 규칙 정의 (`set acl`)
+
+ACL 규칙은 다음 문법으로 정의합니다.
+
+```text
+set acl <source_ip_or_network> <port|icmp|all> [description]
+```
+
+중요 사항:
+
+- `allow` 또는 `deny` 키워드는 존재하지 않음
+- 규칙 동작은 선택된 정책에 의해 자동 결정됨
+- 다중 포트, ICMP(ping), `all` 지원
+
+### 5.7 규칙 정의 예시
+
+#### 예시 1: 관리 네트워크 접근 허용 (Whitelist 모드)
+
+```text
+set acl 10.10.10.0/24 all "Management network"
+```
+
+의미:
+
+- `10.10.10.0/24`에서 오는 모든 트래픽을 허용
+
+#### 예시 2: 관리자 PC에서 SSH 및 ping 허용
+
+```text
+set acl 192.168.1.50 22 icmp "Admin PC"
+```
+
+의미:
+
+- `192.168.1.50`에서 오는 SSH(22) 및 ICMP 트래픽 허용
+
+### 규칙 적용
+
+```text
+set acl apply
+```
+
+이 시점에서:
+
+- 규칙이 iptables에 적용됨
+- Whitelist 모드는 자동으로 deny-all 적용
+- Blacklist 모드는 자동으로 allow-all 유지
+
+### 5.8 ACL 규칙 제거 (`unset acl`)
+
+규칙은 언제든지 제거할 수 있습니다.
+
+```text
+unset acl <source_ip_or_network> <port|icmp|all>
+```
+
+예시:
+
+```text
+unset acl 192.168.1.50 22
+```
+
+규칙 제거 후에는 다시 적용해야 합니다.
+
+```text
+set acl apply
+```
+
+### 5.9 Reset 옵션을 사용한 규칙 적용
+
+```text
+set acl apply
+set acl apply --reset
+```
+
+- `set acl apply`
+  - 현재 staging된 규칙을 적용
+- `set acl apply --reset`
+  - 기존 AELLA 관리 ACL 규칙 전체 제거
+  - staging 상태의 규칙으로 재구성
+  - 대규모 정책 변경 시 유용
+
+### 5.10 내장 안전 보호 장치
+
+다음 IP들은 항상 허용되며 차단할 수 없습니다.
+
+```text
+127.0.0.1
+Local interface IPs (e.g. 192.168.0.100, 192.168.122.1)
+```
+
+특징:
+
+- `show acl`에 표시되지 않음
+- `unset acl`로 제거 불가
+- 관리자 접속 차단 사고 방지
+
+## 6. 시스템 정보 및 구성
+
+### 정보 표시
+
+```text
+show version
+show hostname
+show service
+show route
+show timezone
+show time
+```
+
+### 시스템 설정 변경
+
+```text
+set timezone <Region/City>
+set time YYYY-MM-DD HH:MM:SS
+set hostname <hostname>
+set password
+```
+
+## 7. 가상 머신 운영
+
+### VM 콘솔 접속
+
+```text
+console dl-master
+console da-master
+console aio
+console sensor
+```
+
+콘솔 종료:
+
+```text
+Ctrl+] or exit
+```
+
+### VM 자동 시작 설정
+
+```text
+show autostart
+set autostart <vm> enable
+set autostart <vm> disable
+set autostart <vm> # toggle
+```
+
+### 모니터링
+
+```text
+monitor
+```
+
+## 8. 로깅 및 감사 추적성
+
+모든 CLI 작업은 자동으로 로그에 기록됩니다.
+
+### 로그 위치
+
+```text
+/var/log/aella/
+```
+
+### 로그 내용
+
+- 타임스탬프
+- 실행된 명령
+- 실행 컨텍스트
+
+## 9. 운영 모범 사례
+
+### Appliance CLI 사용 권장 항목
+
+- 배포 이후 운영 변경
+- 네트워크 / NTP / 방화벽 관리
+- 안전한 VM 접근 및 모니터링
+
+### Appliance CLI 사용 비권장 항목
+
+- 초기 배포
+- 스토리지 레이아웃 변경
+- VM 토폴로지 재설계
+- 설치 도구 대체
+
+## 10. 호환성 및 적용 범위
+
+CLI는 다음 OpenXDR 설치 스크립트와 호환됩니다.
+
+```text
+DP-Installer.sh
+Sensor-Installer.sh
+AIO-Sensor-Installer.sh
+6000-Sensor-Installer.sh
+```
+
+CLI는 자동으로 다음을 수행합니다.
+
+- 설치 스크립트가 관리하는 네트워크 구성 인식
+- 설치 스크립트가 관리하는 NTP 설정 감지
+- NAT 및 Bridge 모드 모두 지원
+- 설치 스크립트로 배포된 VM 관리
+
+## 최종 참고 사항
+
+Stellar Appliance CLI는 의도적으로 보수적인 설계를 따릅니다.
+
+유연성을 극대화하는 것이 목적이 아니라, **운영 환경의 Open XDR 시스템을 안전하고, 예측 가능하며, 감사 가능한 방식으로 관리하는 것**이 목적입니다.
