@@ -1,0 +1,46 @@
+---
+title: "DRY_RUN & Validation"
+description: "실제 System 변경 전에 DRY_RUN과 Full Configuration Validation으로 배포 내용을 검증합니다."
+---
+
+# DRY_RUN & Validation
+
+Installer Family는 실제 실행 전에 Host 변경 내용을 운영자가 확인할 수 있도록 설계되어 있습니다.
+
+## DRY_RUN
+
+DRY_RUN은 기본적으로 활성화됩니다.
+
+`DRY_RUN=1`일 때:
+
+- 실행 예정 Command를 표시합니다.
+- 실제 실행과 동일한 Confirmation Flow를 유지합니다.
+- Destructive/System-changing Command는 실행하지 않습니다.
+- 실제 Step 순서대로 Workflow를 점검할 수 있습니다.
+
+## Full Configuration Validation
+
+Validation은 Read-only로 동작하며 결과는 다음과 같이 구분합니다.
+
+- **OK** — 요구사항 충족
+- **WARN** — 확인 또는 권고 사항
+- **FAIL** — 배포 차단 문제
+
+FAIL이 있으면 실제 배포를 진행하지 않습니다.
+
+## 권장 Gate
+
+<Steps>
+  <Step title="DRY_RUN으로 전체 Workflow 확인">
+    NIC, Disk, Version, Image, VM Parameter를 검토합니다.
+  </Step>
+  <Step title="Full Configuration Validation 실행">
+    모든 Blocking Issue를 해결하고 WARN을 검토합니다.
+  </Step>
+  <Step title="Recovery Access 확인">
+    Console/Out-of-Band Access와 Rollback 절차를 준비합니다.
+  </Step>
+  <Step title="승인된 실행에서만 DRY_RUN 해제">
+    최종 Configuration Summary를 다시 확인합니다.
+  </Step>
+</Steps>
