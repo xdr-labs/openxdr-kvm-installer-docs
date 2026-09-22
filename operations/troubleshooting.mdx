@@ -1,0 +1,42 @@
+---
+title: "Troubleshooting"
+description: "Use logs, validation and step-level retry to diagnose installer failures without restarting the entire workflow."
+---
+
+# Troubleshooting
+
+Start with the failed layer instead of rerunning everything.
+
+## 1. Read the installer log
+
+The common log records step boundaries and command execution results. See **[State & Logs](/reference/state-logs)** for locations.
+
+## 2. Run Full Configuration Validation
+
+Validation can reveal missing packages, unavailable libvirt resources, networking prerequisites, image problems or configuration mismatches.
+
+## 3. Re-run only the failed step
+
+Use **Execute Specific Step** after correcting the issue. Because the installers are step-based, a failure does not require a full reinstall.
+
+## Common checks
+
+### Virtualization / IOMMU
+
+Verify CPU virtualization support and IOMMU status before passthrough-dependent steps.
+
+### libvirt
+
+Confirm the libvirt service, VM definitions and virtual networks are present and healthy.
+
+### Host networking
+
+Review interfaces, addresses and routes before and after network conversion.
+
+### Storage
+
+Review disks, physical volumes, volume groups and logical volumes before provisioning.
+
+## Recovery principle
+
+Do not force state forward. Preserve logs, correct the failing prerequisite, and re-run the specific step.
