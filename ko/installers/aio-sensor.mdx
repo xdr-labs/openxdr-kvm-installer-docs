@@ -1,41 +1,452 @@
 ---
-title: "AIO + Sensor Installer"
-description: "현재 13-Step Workflow로 하나의 KVM Host에 AIO Data Processor와 Sensor를 배포합니다."
+title: "AIO & Sensor KVM Installer 사용자 가이드"
+description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber Open XDR AIO와 Sensor VM을 설치, 구성, 검증 및 운영하는 전체 가이드입니다."
 ---
 
-# AIO + Sensor Installer
+# Stellar Cyber Open XDR Platform
 
-`AIO-Sensor-Installer.sh`는 같은 KVM Host에 AIO Data Processor와 Sensor를 순차적으로 배포합니다.
+## AIO & Sensor KVM Installer – 사용자 가이드
 
-## 현재 13-Step Workflow
+## 개요
+
+본 문서는 **Stellar Cyber Open XDR AIO & Sensor KVM Installer**에 대한 종합 사용자 가이드입니다.
+
+Ubuntu Server 24.04 LTS가 실행 중인 KVM 호스트에서 **All-in-One(AIO) Open XDR 어플라이언스와 XDR Sensor 가상 머신을 설치, 구성, 검증 및 운영하는 방법**을 설명합니다.
+
+본 가이드는 가상화 인프라 환경에서 Open XDR 환경을 배포하고 관리하는 시스템 엔지니어 및 운영자를 대상으로 합니다.
+
+이 문서는 다음과 같은 실제 운영 시나리오를 반영합니다.
+
+- 초기 설치
+- 부분 재구성
+- 단계 재실행
+- 재부팅 또는 중단 이후 복구
+
+본 문서에 설명된 모든 절차는 설치 프로그램의 검증된 동작 방식을 따르며, 안정적이고 반복 가능하며 운영 환경에 적합한 배포를 보장하도록 설계되었습니다.
+
+## 1. 시스템 아키텍처
+
+### Dell R660 기반 예시 구성
+
+원본 가이드의 예시 아키텍처는 다음과 같습니다.
+
+| 구성 요소 | 예시 값 |
+| --- | --- |
+| KVM Host | Dell R660 / Ubuntu 24.04 |
+| AIO VM | 48 vCPU, 136 GB RAM |
+| MDS VM | 44 vCPU, 80 GB RAM |
+| Host Access | 1 GbE UTP, 로컬 전용 `192.168.0.100` |
+| Management & Data Link | 1 GbE 또는 10 GbE |
+| Sensor SPAN | PCI Passthrough |
+| OS / VM Disk | 1 × 1.92 TB — Ubuntu 24.04, AIO VM, MDS VM |
+| Data Lake | 6 × 3.84 TB — DLm 및 AIO용 |
+
+### 아키텍처 개요
+
+Stellar Cyber Open XDR 플랫폼은 KVM 가상화를 사용하는 단일 물리 서버에 배포됩니다.
+
+설치 프로그램은 다음 구성 요소를 자동으로 생성하고 구성합니다.
+
+- Ubuntu 24.04 기반 KVM 호스트
+- libvirt / qemu-kvm 가상화 계층
+- AIO 가상 머신 (Data Platform + Analyzer 통합)
+- Sensor 가상 머신(들)
+- NAT 기반 가상 네트워크
+- SPAN 트래픽을 위한 PCI Passthrough
+- AIO 및 Sensor 워크로드를 위한 LVM 기반 스토리지
+- CPU affinity 및 커널 수준 성능 튜닝
+
+설치 프로그램은 다음 작업을 완전히 자동화하여 수동 설정을 제거하도록 설계되었습니다.
+
+- 호스트 OS 준비 및 튜닝
+- 네트워크 구성 및 변환
+- 스토리지 레이아웃 생성
+- 가상 머신 라이프사이클 관리
+- PCI Passthrough 및 CPU pinning과 같은 성능 중요 설정
+
+## 2. 설치 전 준비 사항 (필수 준비 단계)
+
+### 시스템 요구사항
+
+설치 프로그램을 실행하기 전에 다음 조건이 충족되어야 합니다.
+
+- **root 권한이 필요함**
+
+설치 프로그램은 다음과 같은 저수준 시스템 작업을 수행합니다.
+
+- 네트워크 재구성
+- 커널 및 시스템 튜닝
+- 디스크 및 파일 시스템 설정
+- 가상 머신 생성 및 수정
+
+### 지원 운영체제
+
+- **Ubuntu Server 24.04 LTS만 지원**
+
+## 3. 준비 단계
+
+설치 프로그램을 준비하기 위해 다음 단계를 수행합니다.
+
+1. root 쉘로 전환합니다.
+
+```bash
+sudo -i
+```
+
+2. 현재 디렉터리에 설치 스크립트를 다운로드합니다.
+
+```bash
+curl -O https://raw.githubusercontent.com/xdr-labs/OpenXDR-KVM-Installer/main/AIO-Sensor-Installer.sh
+```
+
+3. 실행 권한을 부여합니다.
+
+```bash
+chmod +x AIO-Sensor-Installer.sh
+```
+
+4. 설치 프로그램을 실행합니다.
+
+```bash
+./AIO-Sensor-Installer.sh
+```
+
+## 4. NIC 준비 및 설계 가이드라인
+
+### 관리 NIC
+
+관리 NIC는 다음 용도로 사용됩니다.
+
+- KVM 호스트에 대한 원격 접속
+- AIO 웹 인터페이스 접근
+- 외부 관리 트래픽 처리
+
+### Sensor 네트워크 모드
+
+- **NAT 모드만 지원**
+- 기본 KVM `virbr0` 네트워크를 사용하여 구현됨
+- 이 설계는 배포를 단순화하고 운영 리스크를 줄임
+
+### SPAN 연결 방식
+
+- **PCI Passthrough만 지원**
+- 브리지 기반 SPAN 연결은 지원되지 않음
+- BIOS에서 IOMMU 활성화 필요
+- PCI Passthrough는 Sensor 워크로드에 대해 가장 높은 패킷 캡처 성능을 제공
+
+### NIC 준비 및 설계 가이드라인
+
+설치 중 NIC 선택을 단순화하기 위해, 설치 프로그램 실행 전에 필요한 NIC를 물리적으로 연결하는 것을 강력히 권장합니다.
+
+설치 프로그램은 **링크 상태를 기준으로 인터페이스를 식별**하므로, 케이블이 연결되어 있으면 각 NIC의 역할을 명확히 구분할 수 있습니다.
+
+## 5. 설치 프로그램 탐색
+
+설치 프로그램은 Whiptail로 구현된 대화형 메뉴 기반 인터페이스를 제공합니다.
+
+### 탐색 방법 안내
+
+- **Spacebar 또는 아래 화살표(↓)**: 메뉴 항목 간 이동
+- **Enter**: 선택
+- **q 또는 ESC**: 도움말 화면 종료 또는 이전 메뉴로 돌아가기
+
+### 상태 인식 실행 방식
+
+설치 프로그램은 **상태 인식 방식(state-aware)**으로 동작합니다.
+
+설치 상태는 다음 경로에 저장됩니다.
+
+```text
+/root/xdr-installer
+```
+
+- 완료된 단계가 기록됨
+- 재부팅 또는 중단 이후 다음 미완료 단계부터 재개됨
+
+모든 설치 상태를 초기화하고 처음부터 다시 시작하려면 다음을 실행합니다.
+
+```bash
+rm -rf /root/xdr-installer
+```
+
+### 필수 재부팅 단계
+
+설치 프로그램은 다음 단계 이후 자동으로 시스템 재부팅을 수행합니다.
+
+- **STEP 03 – 네트워크 변환 (netplan → ifupdown)**
+- **STEP 05 – 커널 및 시스템 수준 튜닝**
+
+이 재부팅은 필수입니다. 절대로 건너뛰지 마십시오.
+
+재부팅 후 수행 절차:
+
+1. 서버에 다시 로그인
+2. 설치 프로그램 재실행
+3. 메뉴 1 선택
+
+설치 프로그램은 자동으로 이어서 실행됩니다.
+
+### 메인 메뉴 옵션 개요
+
+#### 1. Auto Execute All Steps
+
+- 다음 미완료 단계부터 모든 단계를 자동 실행
+- 재부팅 후 마지막 완료 단계부터 자동 재개
+- 권장 용도
+  - 초기 설치
+  - 재부팅 후 이어서 진행
+
+#### 2. Select and Run Specific Step Only
+
+- 개별 단계를 독립적으로 실행
+- 권장 용도
+  - AIO VM 재배포
+  - Sensor VM 재배포
+  - 네트워크 변경
+  - 이미지 업데이트
+  - SPAN 설정 변경
+
+#### 3. Configuration
+
+설치 파라미터를 구성합니다.
+
+- `DRY_RUN` (default: `1`)
+- `AIO_VERSION`
+- `SENSOR_VERSION`
+- `SENSOR_NET_MODE` (`nat` only)
+- `SPAN_ATTACH_MODE` (`pci` only)
+- ACPS credentials
+  - username
+  - password
+  - URL
+
+#### 4. Full Configuration Validation
+
+전체 시스템 구성을 검증합니다.
+
+검사 항목:
+
+- KVM
+- AIO VM
+- Sensor VM
+- 네트워크
+- SPAN
+- 스토리지
+
+상세 로그와 함께 오류 및 경고를 표시합니다.
+
+#### 5. Script Usage Guide
+
+- 내장 도움말 가이드 표시
+
+#### 6. View Log
+
+- 설치 로그 파일 표시
+
+#### 7. Exit
+
+- 설치 프로그램 종료
+
+## 6. 설치 시나리오
+
+### 6.1 신규 설치 (초기 배포)
+
+이 시나리오는 Ubuntu 설치 직후 설치 프로그램을 실행하는 경우에 해당합니다.
+
+#### 초기 구성
+
+메인 메뉴에서 다음을 선택합니다.
+
+```text
+3) Configuration
+```
+
+설치 파라미터를 구성합니다.
+
+- `DRY_RUN` (default: `1`)
+  - 기본값: `1` (시뮬레이션 모드)
+  - 실제 설치를 수행하려면 `0`으로 설정
+- `AIO_VERSION`
+- `SENSOR_VERSION`
+- ACPS credentials
+  - username
+  - password
+  - URL
+- `AUTO_REBOOT` (default: `1`)
+- SPAN 모드는 `pci`로 고정
+- 네트워크 모드는 NAT로 고정
+
+구성이 완료되면 메인 메뉴로 돌아갑니다.
+
+#### 자동 실행
+
+다음을 선택합니다.
+
+```text
+1) Auto execute all steps
+```
+
+설치 프로그램은 다음 단계를 순차적으로 실행합니다.
+
+```text
+STEP 01 → STEP 02 → STEP 03 → … → STEP 13
+```
+
+재부팅이 필요하거나 오류가 발생하면 실행은 자동으로 중단됩니다.
+
+### 필수 재부팅 동작
+
+설치 프로그램은 다음 단계 이후 자동으로 호스트를 재부팅합니다.
+
+- **STEP 03 – 네트워크 설정 변경**
+- **STEP 05 – 커널 및 시스템 튜닝**
+
+재부팅 후 수행 절차:
+
+1. 다시 로그인
+2. 설치 프로그램 재실행
+3. 메뉴 1 선택
+
+다음 미완료 단계부터 자동으로 이어서 실행됩니다.
+
+### 6.2 개별 단계 실행 (특정 단계만 실행)
+
+이 모드는 전체 설치 흐름을 실행하지 않고 단일 설치 단계만 실행할 수 있도록 합니다.
+
+메인 메뉴에서 다음을 선택합니다.
+
+```text
+2) Select and run specific step only
+```
+
+#### 개별 Step 목록
 
 | Step | 작업 |
 | ---: | --- |
-| 1 | Hardware / NIC / SPAN NIC 선택 |
-| 2 | HWE Kernel 설치 |
-| 3 | NIC Rename / ifupdown 전환 / Network 구성 |
-| 4 | KVM / libvirt 설치 및 기본 구성 |
-| 5 | Kernel Parameter / KSM / Swap Tuning |
-| 6 | libvirt Hook + NTPsec |
-| 7 | AIO LVM Storage 구성 |
-| 8 | AIO Image/Download 준비 |
-| 9 | AIO VM 배포 |
-| 10 | Sensor LV 생성 + Image/Script 다운로드 |
-| 11 | Sensor VM 배포 |
+| 01 | Hardware / NIC / SPAN NIC Selection |
+| 02 | HWE Kernel Installation |
+| 03 | NIC Name / ifupdown Switch and Network Configuration |
+| 04 | KVM / Libvirt Installation and Basic Configuration |
+| 05 | Kernel Parameters / KSM / Swap Tuning |
+| 06 | libvirt Hooks Installation + NTPsec |
+| 07 | LVM Storage Configuration (AIO) |
+| 08 | AIO Download |
+| 09 | AIO VM Deployment |
+| 10 | Sensor LV Creation + Image/Script Download |
+| 11 | Sensor VM Deployment |
 | 12 | PCI Passthrough / CPU Affinity |
-| 13 | DP Appliance CLI Package 설치 |
+| 13 | Install DP Appliance CLI package |
 
-## 배포 순서
+#### 대표적인 사용 사례
+
+- AIO 가상 머신 재배포
+- Sensor 가상 머신 재배포
+- PCI Passthrough 또는 CPU affinity 재적용
+- 실패한 단계 재시도
+- 이미지 또는 아티팩트 재다운로드
+
+선택한 단계만 실행되며, 이미 완료된 다른 단계는 변경되지 않습니다.
+
+## 7. 설치 후 검증
+
+설치 완료 후 다음을 선택합니다.
 
 ```text
-Host 준비
-  → AIO Storage 준비
-  → AIO Image/Asset 준비
-  → AIO VM 배포
-  → Sensor Storage 및 Asset 준비
-  → Sensor VM 배포
-  → Sensor Data Path 구성
-  → Appliance CLI 설치
+4) Full configuration validation
 ```
 
-Step 3과 Step 5는 현재 Reboot 지점이며, 동일 Installer를 재실행하면 저장된 State에서 이어집니다.
+검증 항목은 다음을 포함합니다.
+
+- KVM 및 libvirt 서비스 상태
+- AIO 및 Sensor VM 상태 및 자동 시작 설정
+- 네트워크 구성
+- 스토리지 가용성 및 마운트 포인트
+
+경고가 표시되면 메뉴 2를 사용하여 해당 단계를 다시 실행하십시오.
+
+## 8. 설치 후 일반적인 변경 사항
+
+### 자동 재부팅 알림
+
+- **STEP 03은 항상 재부팅을 트리거합니다.**
+
+### 변경 시나리오
+
+#### 관리 NIC 또는 IP 변경
+
+```text
+STEP 01 → STEP 03
+```
+
+#### SPAN NIC 재구성 (PCI 전용)
+
+```text
+STEP 01 → STEP 03 → STEP 12
+```
+
+#### AIO VM 재배포
+
+```text
+STEP 07 → STEP 09 → STEP 12
+```
+
+<Warning>
+기존 VM은 삭제되며, ES 데이터 스토리지는 재사용할 수 없습니다.
+</Warning>
+
+#### Sensor VM 재배포
+
+```text
+STEP 11 → STEP 12
+```
+
+<Warning>
+기존 Sensor VM은 삭제됩니다.
+</Warning>
+
+## 9. AIO & Sensor 배포 이후
+
+### 기본 네트워크 구성
+
+- AIO IP: `192.168.122.2/24`
+- MDS IP: `192.168.122.3/24`
+- Gateway: `192.168.122.1` (KVM 내부 브리지)
+
+### 웹 UI 접속
+
+KVM 호스트의 관리 IP를 사용하여 Data Platform Web UI에 접속합니다.
+
+예시:
+
+```text
+https://10.10.10.10
+```
+
+설치 후 환경에 맞게 **Receiver IP**(기본값: DAm 내부 IP)를 업데이트하십시오.
+
+### CLI 접속
+
+Appliance CLI:
+
+```text
+console aio
+console mds
+```
+
+### SSH 접속
+
+- AIO: **port 2222**
+- MDS: **port 2223**
+
+## 10. 하드웨어 및 소프트웨어 요구사항
+
+[Ubuntu 24.04 설치 가이드](/ko/getting-started/installing-ubuntu-24-04) 및 Stellar Cyber 플랫폼 요구사항을 참고하십시오.
+
+## 11. BIOS 및 플랫폼 설정
+
+다음 BIOS 옵션이 활성화되어 있는지 확인하십시오.
+
+- Intel Virtualization Technology
+- VT-d / IOMMU
+
+이 설정들은 Sensor SPAN 연결에 필수인 PCI Passthrough를 사용하기 위해 반드시 필요합니다.
