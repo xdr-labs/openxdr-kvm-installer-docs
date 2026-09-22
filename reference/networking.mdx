@@ -1,0 +1,36 @@
+---
+title: "Networking"
+description: "Reference the management, VM, SPAN, SR-IOV and passthrough networking concepts used by the installers."
+---
+
+# Networking
+
+Networking is one of the highest-impact parts of the installer workflow.
+
+## Management vs VM addressing
+
+For the DP installer, the host management address and VM-internal addresses are intentionally separate.
+
+| Purpose | Current default |
+| --- | --- |
+| libvirt NAT network | `192.168.122.0/24` |
+| DL VM | `192.168.122.2` |
+| DA VM | `192.168.122.3` |
+
+The host management IP is derived from the selected management interface and must not be replaced by a VM NAT address.
+
+## Sensor data path
+
+Sensor deployments separate management connectivity from packet-observation interfaces. Depending on installer and configuration, SPAN interfaces can be attached through bridge handling or PCI passthrough.
+
+## High-performance path
+
+The current `6000-Sensor-Installer.sh` path is PCI-passthrough-oriented for SPAN attachment and pairs that with CPU-affinity/NUMA considerations.
+
+## Network conversion
+
+Step 3 in the current installer families performs NIC naming / ifupdown conversion and network configuration, then can reboot the host.
+
+<Warning>
+Always confirm console or out-of-band access before executing network conversion. A wrong NIC selection or address can remove remote connectivity.
+</Warning>
