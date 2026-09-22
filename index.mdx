@@ -1,0 +1,65 @@
+---
+title: "OpenXDR KVM Installer"
+description: "Deploy Stellar Cyber OpenXDR Data Processor and Sensor components on KVM through a guided, stateful installer workflow."
+---
+
+# OpenXDR KVM Installer
+
+OpenXDR KVM Installer automates the host-side work required to deploy Stellar Cyber OpenXDR components on KVM. Instead of manually assembling libvirt, storage, networking, VM images, passthrough, CPU placement, and reboot state, operators use a guided `whiptail` workflow with persistent state and validation.
+
+<Tip>
+**First deployment?** Start with **[Choose an Installer](/getting-started/choose-installer)**, review **[Requirements](/getting-started/requirements)**, keep **DRY_RUN enabled**, and then follow the installer-specific guide.
+</Tip>
+
+## What you can deploy
+
+<Columns cols={2}>
+  <Card title="Data Processor" icon="database" href="/installers/dp">
+    Prepare a KVM host, provision DL/DA storage, deploy DL-master and DA-master, configure high-performance networking, and install the appliance CLI.
+  </Card>
+  <Card title="Standard Sensor" icon="radar" href="/installers/sensor">
+    Deploy a modular Sensor VM with management networking and SPAN interface handling.
+  </Card>
+  <Card title="High-performance Sensor" icon="gauge-high" href="/installers/high-performance-sensor">
+    Deploy the dual-VM, NUMA-oriented Sensor path intended for higher-throughput environments.
+  </Card>
+  <Card title="AIO + Sensor" icon="layer-group" href="/installers/aio-sensor">
+    Deploy an AIO Data Processor and a Sensor on the same KVM host through one coordinated workflow.
+  </Card>
+</Columns>
+
+## What the installer automates
+
+| Area | Automation |
+| --- | --- |
+| Hardware | CPU, memory, disks, NICs, virtualization and IOMMU discovery |
+| KVM stack | KVM/libvirt installation and base configuration |
+| Networking | Management, NAT/bridge, SR-IOV, SPAN and passthrough workflows where applicable |
+| Storage | LVM-backed VM storage preparation |
+| VM deployment | Image preparation, VM definition and deployment |
+| Performance | CPU affinity, NUMA-aware placement and PCI passthrough where applicable |
+| Lifecycle | Step state, reboot handling and resume |
+| Safety | DRY_RUN, explicit confirmations and full configuration validation |
+
+## Common operating flow
+
+```text
+Inspect hardware
+  → validate configuration
+  → keep DRY_RUN enabled for the first pass
+  → configure installer inputs
+  → run all steps or one selected step
+  → reboot when the installer requires it
+  → run the same installer again to resume
+  → complete post-deployment validation
+```
+
+<Warning>
+The installers can change networking, storage, kernel configuration, virtualization settings, and VM definitions. Review the target host carefully and use DRY_RUN before real execution.
+</Warning>
+
+## Source projects
+
+- [OpenXDR KVM Installer](https://github.com/xdr-labs/OpenXDR-KVM-Installer) — installer implementation
+- [OpenXDR KVM Installer product page](https://xdr.ooo/products/openxdr-kvm-installer) — XDR Labs project overview
+- [Stellar Appliance CLI](https://github.com/xdr-labs/Stellar-appliance-cli) — post-deployment host operations
