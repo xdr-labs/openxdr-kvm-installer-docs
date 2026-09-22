@@ -1,0 +1,35 @@
+---
+title: "High-performance Sensor Installer"
+description: "Dual VM, NUMA-aware placement, PCI Passthrough 중심의 고성능 Sensor 경로를 배포합니다."
+---
+
+# High-performance Sensor Installer
+
+`6000-Sensor-Installer.sh`는 Dual VM과 NUMA를 중심으로 한 High-performance Sensor 배포 경로입니다.
+
+## 현재 10-Step Workflow
+
+| Step | 작업 |
+| ---: | --- |
+| 1 | Hardware / NIC / CPU / Memory / SPAN NIC 선택 |
+| 2 | HWE Kernel 설치 |
+| 3 | NIC Rename / ifupdown 전환 / Network 구성 |
+| 4 | KVM / libvirt 설치 및 기본 구성 |
+| 5 | Kernel Parameter / KSM / Swap Tuning |
+| 6 | libvirt Hook 설치 |
+| 7 | Sensor LV 생성 + Image/Script 다운로드 |
+| 8 | Sensor VM 배포 |
+| 9 | PCI Passthrough / CPU Affinity |
+| 10 | DP Appliance CLI Package 설치 |
+
+## 성능 모델
+
+이 Installer는 고성능 Sensor 환경을 위해 NUMA Visibility, CPU Placement, Direct Device Assignment를 중요하게 다룹니다.
+
+## SPAN Attachment
+
+현재 High-performance Script는 SPAN Interface를 PCI Passthrough 중심으로 구성합니다. 실행 전 IOMMU, IOMMU Group, Dedicated SPAN NIC, NUMA/CPU Placement를 확인하십시오.
+
+## State 위치
+
+Root로 실행할 때 현재 `/opt/xdr-installer`를 사용합니다. 다른 현재 Installer 계열이 일반적으로 Root 실행 시 `/root/xdr-installer`를 사용하는 것과 다릅니다.
