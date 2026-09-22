@@ -1,0 +1,29 @@
+---
+title: "Reboot & Resume"
+description: "Understand intentional reboot points, persistent state and safe continuation."
+---
+
+# Reboot & Resume
+
+The installers are stateful so host-level changes that require reboot do not force the entire deployment to restart.
+
+## Current reboot points
+
+The current scripts configure automatic reboot after:
+
+- **Step 3** — NIC rename / ifupdown conversion and network configuration
+- **Step 5** — kernel tuning
+
+The exact step names differ slightly by installer, but these IDs are consistent across the active families.
+
+## After reboot
+
+Run the **same installer** again from the same source and state context, then choose **Auto Execute All Steps**. The installer starts from the first incomplete step.
+
+## State semantics
+
+Completed state is persisted only after a step reaches its successful completion path. A failed or canceled step should not advance the completed-step marker.
+
+<Note>
+Do not manually edit the state file merely to bypass a failed step. Correct the underlying condition and re-run the affected step.
+</Note>
