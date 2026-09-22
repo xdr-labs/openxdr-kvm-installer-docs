@@ -1,0 +1,39 @@
+---
+title: "Architecture"
+description: "Understand how the Ubuntu KVM host, libvirt, storage and OpenXDR VMs fit together."
+---
+
+# Architecture
+
+The project turns a general-purpose Ubuntu server into a repeatable OpenXDR KVM deployment platform.
+
+```mermaid
+flowchart TB
+    H["Ubuntu KVM Host"] --> K["KVM / libvirt"]
+    K --> DP["Data Processor<br/>DL / DA or AIO"]
+    K --> S["OpenXDR Sensor"]
+    N["Management / NAT / Bridge"] --> DP
+    N --> S
+    P["SPAN / SR-IOV / PCI Passthrough"] --> S
+    P --> DP
+    L["LVM-backed Storage"] --> DP
+    L --> S
+    C["Persistent Config / State / Logs"] --> H
+```
+
+## Layers
+
+### Host
+The Ubuntu host provides CPU, memory, disks, NICs, kernel features and virtualization capabilities.
+
+### KVM / libvirt
+The installer creates or configures the virtualization layer used to run OpenXDR VMs.
+
+### Storage
+LVM-backed volumes are prepared according to the selected installer and component topology.
+
+### Networking
+The deployment can include host management, libvirt/NAT or bridge connectivity, DP data connectivity, Sensor SPAN interfaces, and direct device assignment where required.
+
+### Lifecycle state
+Persistent configuration, state and logs allow deployment to pause for reboot, resume, and retry individual steps.
