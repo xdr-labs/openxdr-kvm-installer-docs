@@ -105,6 +105,7 @@
                 "group": "시작하기",
                 "pages": [
                   "ko/index",
+                  "ko/getting-started/deployment-guide",
                   "ko/getting-started/choose-installer",
                   "ko/getting-started/requirements",
                   "ko/getting-started/installing-ubuntu-24-04",
