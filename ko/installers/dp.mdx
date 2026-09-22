@@ -351,6 +351,26 @@ STEP 01 → STEP 02 → STEP 03 → …
 2) Select and run specific step only
 ```
 
+개별 Step 선택 화면에는 다음 단계가 표시됩니다.
+
+| Step | 작업 |
+| ---: | --- |
+| 01 | Detect and select hardware / NIC / disks |
+| 02 | Install HWE kernel |
+| 03 | Rename NICs / switch to ifupdown and configure networking |
+| 04 | Install and configure KVM / libvirt |
+| 05 | Tune kernel parameters / KSM / swap |
+| 06 | Configure SR-IOV drivers + NTPsec |
+| 07 | LVM storage (DL/DA root + data) |
+| 08 | libvirt hooks and OOM recovery scripts |
+| 09 | Download DP image and deployment scripts |
+| 10 | Deploy DL-master VM |
+| 11 | Deploy DA-master VM |
+| 12 | SR-IOV / CPU Affinity / PCI Passthrough |
+| 13 | Install DP Appliance CLI package |
+
+실행 절차:
+
 1. 실행할 단계 선택
 2. 실행 확인
 3. 해당 단계만 실행된 후 메뉴로 복귀
