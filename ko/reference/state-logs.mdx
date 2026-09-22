@@ -1,0 +1,44 @@
+---
+title: "State & Logs"
+description: "Installer Configuration, Persistent State와 Log File 위치를 확인합니다."
+---
+
+# State & Logs
+
+Installer는 실패와 Reboot 이후에도 Resume할 수 있도록 Persistent File을 사용합니다.
+
+## DP / Standard Sensor / AIO + Sensor
+
+Root 실행 시 일반적으로 다음 경로를 사용합니다.
+
+```text
+/root/xdr-installer/
+└── state/
+    ├── xdr_install.conf
+    ├── xdr_install.state
+    └── xdr_install.log
+```
+
+Standard Sensor와 AIO Script는 Root가 아닌 경우 실행 User의 Home Directory를 사용합니다.
+
+## High-performance Sensor
+
+현재 `6000-Sensor-Installer.sh`는 Root 실행 시 다음 경로를 사용합니다.
+
+```text
+/opt/xdr-installer/
+└── state/
+    ├── xdr_install.conf
+    ├── xdr_install.state
+    └── xdr_install.log
+```
+
+## File 역할
+
+- `xdr_install.conf` — Persistent Operator Configuration
+- `xdr_install.state` — Completed Step와 Last-run Metadata
+- `xdr_install.log` — Execution / Troubleshooting Log
+
+<Warning>
+Configuration에는 Credential이나 Private Infrastructure 정보가 포함될 수 있습니다. 외부 공유 전 반드시 Secret을 제거하거나 Masking하십시오.
+</Warning>
