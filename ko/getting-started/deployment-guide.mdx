@@ -1,0 +1,286 @@
+---
+title: "요구사항 기반 배포 가이드"
+description: "인프라 유형, 성능 요구사항, 운영 제약 조건을 기준으로 Stellar Cyber Open XDR Platform의 권장 배포 방식을 선택합니다."
+---
+
+# Stellar Cyber Open XDR Platform
+
+## 요구사항 기반 배포 가이드
+
+## 개요
+
+본 가이드는 인프라 유형, 성능 요구사항, 운영 제약 조건을 기준으로 **Stellar Cyber Open XDR Platform의 권장 배포 방식**을 설명합니다.
+
+설치 프로그램의 내부 동작 방식보다는, 운영자가 다음 사항을 결정하는 데 도움을 주는 것을 목표로 합니다.
+
+- 어떤 설치 프로그램을 사용할 것인지
+- 어떤 네트워크 모드 또는 연결 방식을 선택할 것인지
+- 성능, 안정성, 운영 단순성 간의 균형을 어떻게 맞출 것인지
+
+본 가이드는 다음 환경에 적용됩니다.
+
+- 베어메탈 서버 배포
+- 가상화 또는 프라이빗 클라우드 환경
+- Data Processor(DP), Sensor, AIO 배포 시나리오
+
+## 배포 환경별 권장 구성
+
+| 배포 환경 | 대상 구성 요소 | 권장 설치 프로그램 | 네트워크 모드 | SPAN / 클러스터 인터페이스 모드 | 권장 사용 사례 |
+| --- | --- | --- | --- | --- | --- |
+| 베어메탈 (3대 이상 서버) | Data Processor (클러스터) | Data Processor Installer | NAT | SR-IOV | 노드 간 최대 성능이 요구되는 대규모 운영 환경 DP 클러스터 |
+| 베어메탈 (2대 서버, 스위치 사용) | Data Processor (클러스터) | Data Processor Installer | NAT | SR-IOV | 향후 확장성을 고려한 고속 2노드 클러스터 |
+| 베어메탈 (2대 서버, 직접 연결) | Data Processor (클러스터) | Data Processor Installer | NAT | Bridge | 스위치 없는 토폴로지, Master + Worker / Warm Standby |
+| 베어메탈 (단일 서버) | Sensor | Modular Sensor Installer | NAT 또는 Bridge | PCI Passthrough | 하드웨어 자원을 최대한 활용한 고성능 패킷 캡처 |
+| 베어메탈 (단일 서버) | AIO + Sensor | AIO & Sensor Installer | NAT | PCI Passthrough (Sensor) | 제한된 하드웨어 환경에서의 컴팩트 배포 |
+| 가상화 / 프라이빗 클라우드 | Data Processor | Modular Sensor Installer | NAT | Bridge | 물리 하드웨어 직접 접근이 불가능한 DP 배포 |
+| 가상화 / 프라이빗 클라우드 | Sensor | Modular Sensor Installer | NAT 또는 Bridge | Bridge | PCI 패스스루가 제한된 환경 |
+| 가상화 / 프라이빗 클라우드 | AIO 전용 | AIO & Sensor Installer | NAT 또는 Bridge | N/A | 평가용, 중앙 분석, 경량 환경 |
+| 보안 격리 Sensor 배포 | Sensor 전용 | Modular Sensor Installer | Bridge | PCI Passthrough 또는 Bridge | 호스트와 Sensor 네트워크의 엄격한 분리 |
+
+## 배포 결정 매트릭스
+
+## 1. 베어메탈 서버 배포
+
+### 1.1 Data Processor 배포
+
+#### 물리 서버 3대 이상 (클러스터 배포)
+
+Data Processor를 3대 이상의 물리 서버에 배포하는 경우, 각 서버는 **Data Processor Installer 가이드**에 따라 개별적으로 설치해야 합니다.
+
+권장 접근 방식:
+
+- 모든 서버를 DP 클러스터로 구성
+- 설치 프로그램의 **Configuration → Cluster Interface Mode** 사용
+- Cluster Interface Mode를 **SR-IOV**로 설정
+
+#### SR-IOV가 권장되는 이유
+
+- 각 DP 노드는 물리 NIC과 직접 통신
+- 클러스터 트래픽이 가상 스위치 계층을 우회
+- 노드 간 지연 시간이 최소화됨
+- 가능한 최고 수준의 클러스터 성능 제공
+
+이 배포 모델은 운영 규모의 DP 클러스터에 권장됩니다.
+
+#### 2 노드 서버 클러스터
+
+네트워크 구성에 따라 두 가지 권장 방식이 있습니다.
+
+##### 10GbE 스위치가 있는 경우
+
+- Cluster Interface Mode를 **SR-IOV**로 설정
+- 두 서버를 스위치에 연결
+
+이 구성은 다음을 제공합니다.
+
+- 높은 처리량
+- 향후 확장 가능한 구조
+
+##### 스위치가 없는 경우 (직접 연결)
+
+- Cluster Interface Mode를 **Bridge**로 설정
+- 고속 NIC를 사용하여 두 서버를 직접 연결
+
+이 방식은 다음 상황에서 특히 유용합니다.
+
+- 한 노드가 Master 역할을 수행하는 경우
+- 두 번째 노드가 Worker 또는 Warm Standby 역할인 경우
+- 단순한 스위치 없는 토폴로지가 필요한 경우
+
+Bridge 모드는 추가 인프라 없이 Layer-2 수준에서 두 서버 간 직접 통신을 가능하게 합니다.
+
+### 1.2 베어메탈 환경에서의 Sensor 배포
+
+베어메탈 서버에서 Sensor를 배포하는 경우:
+
+- **Modular Sensor Installer 가이드**를 참고
+- 시스템 자원을 최대한 활용하기 위해 Sensor를 물리 하드웨어에 직접 배포
+- SPAN NIC는 **PCI Passthrough** 방식으로 연결
+  - 기본값 및 권장 방식
+
+#### 주요 특징
+
+- 각 SPAN NIC는 Sensor에 직접 패스스루됨
+- 가상화 오버헤드가 발생하지 않음
+- 최대 수준의 패킷 캡처 및 처리 성능 확보
+
+다음 조건을 만족하는 경우, 여러 개의 SPAN NIC를 연결할 수 있습니다.
+
+- NIC가 PCI 패스스루를 지원
+- 하드웨어 자원이 충분함
+
+이 배포 방식은 고처리량·고정밀 트래픽 캡처 환경에 권장됩니다.
+
+## 2. 단일 서버에서 AIO와 Sensor 배포
+
+하드웨어 자원이 제한된 경우, 하나의 물리 서버에 AIO와 Sensor를 함께 배포할 수 있습니다.
+
+권장 절차:
+
+- **AIO & Sensor Installer 가이드** 참고
+- 동일한 호스트에 두 구성 요소 배포
+
+### 중요한 성능 고려 사항
+
+기술적으로 다음과 같은 구성이 가능합니다.
+
+- NUMA node 0의 가용 vCPU 수를 초과하여 vCPU 할당
+- CPU pinning 단계를 생략
+- AIO가 여러 NUMA 노드의 CPU를 사용하도록 허용
+
+그러나 이는 다음 이유로 권장되지 않습니다.
+
+- 메모리 접근이 NUMA 경계를 넘어 발생
+- 지연 시간이 증가
+- 전체 시스템 성능 저하
+
+### 권장 사항
+
+- AIO CPU 할당을 단일 NUMA 노드 내로 제한
+- 가능한 경우 항상 CPU pinning 수행
+- 다중 NUMA 할당은 최후의 수단으로만 사용
+
+## 3. 가상화 또는 프라이빗 클라우드 환경에서의 배포
+
+프라이빗 클라우드 또는 가상화 환경에서는 일반적으로 물리 하드웨어에 대한 직접 접근이 제한됩니다.
+
+### 3.1 Data Processor 배포
+
+가상화 환경에서 Data Processor를 배포하는 경우:
+
+- **Data Processor Installer 가이드** 참고
+- Cluster Interface Mode를 **Bridge**로 설정
+
+#### Bridge 모드가 필요한 이유
+
+- 물리 NIC 패스스루가 일반적으로 불가능
+- SR-IOV가 제한되거나 지원되지 않는 경우가 많음
+- Bridge 모드는 가상 네트워크를 통해 DP 노드 간 통신을 가능하게 함
+
+#### 선택적 아키텍처 예시
+
+- 하나의 KVM 호스트에 DL Master 배포
+- 다른 KVM 호스트에 DA Master 배포
+- L2 브리지를 사용하여 두 노드 연결
+
+### 3.2 가상화 환경에서의 Sensor 배포
+
+Sensor 배포 시:
+
+- **Modular Sensor Installer 가이드** 참고
+- SPAN NIC를 **Bridge 모드**로 구성
+
+이 방식은 다음 특성을 가집니다.
+
+- 절대적인 성능을 일부 포기하고 유연성을 확보
+- PCI 패스스루를 사용할 수 없는 환경에서도 안정적으로 동작
+- 프라이빗 클라우드, 테스트 환경, 규제 제한 환경에 적합
+
+### 3.3 AIO 배포
+
+가상화 환경에서는:
+
+- **AIO & Sensor Installer 가이드** 참고
+- Sensor 없이 AIO만 단독 배포
+
+이 방식은 주로 다음 용도로 사용됩니다.
+
+- 평가 환경
+- 경량 배포 환경
+
+## 4. Sensor 전용 배포 옵션
+
+### 보안 또는 운영을 위한 네트워크 분리
+
+일부 환경에서는 다음 목적을 위해 Sensor VM 네트워크를 KVM 호스트 네트워크와 분리해야 합니다.
+
+- 보안 격리
+- 운영 가시성 확보
+- 관리 정책 준수
+
+이 경우:
+
+- **Modular Sensor Installer 가이드** 참고
+- Sensor Network Mode를 **Bridge**로 설정
+
+이를 통해 다음이 가능해집니다.
+
+- Sensor VM이 전용 물리 인터페이스 사용
+- KVM 호스트는 별도의 관리 네트워크 유지
+- 관리 트래픽과 Sensor 트래픽의 명확한 분리
+
+<Note>
+Sensor 네트워크의 기본 모드는 NAT 모드입니다.
+</Note>
+
+## 5. 네트워크 용어 설명
+
+본 섹션에서는 설치 프로그램 및 배포 가이드 전반에서 사용되는 주요 네트워크 용어를 설명합니다.
+
+### 브리지 모드 (Sensor)
+
+브리지 모드는 가상 머신을 Layer-2 수준에서 물리 또는 가상 네트워크에 직접 연결합니다.
+
+간단히 말하면:
+
+- VM은 동일 네트워크 상의 물리 서버처럼 동작
+- 자체 MAC 주소를 가짐
+- 주소 변환 없이 트래픽이 흐름
+
+#### 사용 시점
+
+- 고성능 네트워킹
+- 명확한 네트워크 분리
+- 서버 간 직접 통신
+
+### NAT 모드 (Data Processor, AIO, Sensor)
+
+NAT(Network Address Translation) 모드는 VM을 KVM 호스트 뒤에 배치합니다.
+
+간단히 말하면:
+
+- VM은 내부 사설 IP 사용
+- 호스트가 게이트웨이 역할 수행
+- 외부 시스템에서는 호스트 IP만 보임
+
+#### 사용 시점
+
+- 단순한 배포 환경
+- 제한된 IP 자원 환경
+
+#### 트레이드오프
+
+- 설정은 간단
+- 접근 및 관리 측면에서 추가적인 운영 고려 필요
+
+### PCI Passthrough (Sensor)
+
+PCI 패스스루는 물리 NIC를 가상 머신에 직접 할당합니다.
+
+간단히 말하면:
+
+- VM이 베어메탈처럼 NIC를 직접 제어
+- 가상 스위치나 호스트 네트워크 스택이 개입하지 않음
+- 네이티브에 가까운 성능 제공
+
+#### 사용 시점
+
+- 고처리량 Sensor 배포
+- SPAN 또는 미러링 트래픽 수집
+- 베어메탈 또는 전용 하드웨어 환경
+
+### SR-IOV (Data Processor)
+
+SR-IOV(Single Root I/O Virtualization)는 하나의 물리 NIC를 여러 개의 가상 NIC로 분할할 수 있게 합니다.
+
+간단히 말하면:
+
+- 하나의 물리 NIC가 여러 개의 경량 가상 인터페이스로 분리됨
+- 각 가상 인터페이스를 VM에 할당 가능
+- Bridge 모드보다 성능은 높지만 관리 복잡도는 증가
+
+#### 사용 시점
+
+- Data Processor 클러스터 인터페이스
+- 다중 노드 고성능 클러스터 통신
+- 하드웨어 및 BIOS가 SR-IOV를 지원하는 환경
