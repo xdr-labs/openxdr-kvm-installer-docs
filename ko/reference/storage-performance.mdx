@@ -1,0 +1,33 @@
+---
+title: "Storage & Performance"
+description: "LVM Storage, CPU Placement, NUMA 및 Direct Device Assignment를 정리합니다."
+---
+
+# Storage & Performance
+
+Installer는 VM용 Local Storage를 준비하고, 성능 민감 경로에서는 CPU와 Device Placement를 조정합니다.
+
+## LVM
+
+Topology에 따라 다음 Storage를 준비할 수 있습니다.
+
+- DL Root/Data
+- DA Root/Data
+- AIO
+- Sensor VM Image/Data
+
+실행 전 선택한 Block Device와 기존 Volume Group을 확인하십시오. 사용되지 않는 것처럼 보이는 Disk라도 Host 상태를 확인하기 전에는 안전하다고 가정하지 않습니다.
+
+## CPU와 NUMA
+
+Standard 경로는 자동 Resource Calculation을 사용할 수 있습니다. High-performance Sensor 경로는 NUMA를 중심으로 CPU Affinity와 VM Placement를 수행합니다.
+
+## SR-IOV / PCI Passthrough
+
+Direct Device Assignment 전 다음을 확인합니다.
+
+- BIOS IOMMU 활성화
+- IOMMU Group
+- 대상 NIC의 전용 사용 여부
+- Host Management Connectivity 유지 여부
+- Rollback 시 Device 복구 절차
