@@ -1,0 +1,40 @@
+---
+title: "빠른 시작"
+description: "Source를 Clone하고 DRY_RUN, Validation, Installer 실행과 Resume 흐름을 시작합니다."
+---
+
+# 빠른 시작
+
+## 1. Source Repository Clone
+
+```bash
+git clone https://github.com/xdr-labs/OpenXDR-KVM-Installer.git
+cd OpenXDR-KVM-Installer
+sudo -i
+```
+
+## 2. Installer 선택
+
+```bash
+./DP-Installer.sh
+./Sensor-Installer.sh
+./6000-Sensor-Installer.sh
+./AIO-Sensor-Installer.sh
+```
+
+## 3. DRY_RUN 유지
+
+DRY_RUN은 기본적으로 활성화되어 있습니다. Configuration Menu에서 Version, Credential, NIC, Storage, Deployment Input을 먼저 확인합니다.
+
+## 4. Full Configuration Validation 실행
+
+**OK / WARN / FAIL** 결과를 확인하고 FAIL을 모두 해결한 뒤 실제 배포를 시작합니다.
+
+## 5. 실행 방식 선택
+
+- **Auto Execute All Steps** — 첫 미완료 Step부터 자동 진행
+- **Execute Specific Step** — 선택한 Step만 실행하거나 Retry
+
+## 6. Reboot 후 Resume
+
+Network 또는 Kernel 단계에서 Reboot가 발생하면 동일 Installer를 다시 실행하고 Auto Execute를 선택합니다. 저장된 State를 기준으로 다음 미완료 Step부터 이어집니다.
