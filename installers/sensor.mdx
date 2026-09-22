@@ -1,0 +1,42 @@
+---
+title: "Standard Sensor Installer"
+description: "Deploy a standard modular OpenXDR Sensor VM through the current 10-step KVM workflow."
+---
+
+# Standard Sensor Installer
+
+`Sensor-Installer.sh` is dedicated to Sensor VM installation and host-side preparation. It does not deploy DL or DA.
+
+## Current 10-step flow
+
+| Step | Operation |
+| ---: | --- |
+| 1 | Hardware / NIC / CPU / memory / SPAN NIC selection |
+| 2 | HWE kernel installation |
+| 3 | NIC rename / ifupdown switch and network configuration |
+| 4 | KVM / libvirt installation and base configuration |
+| 5 | Kernel parameters / KSM / swap tuning |
+| 6 | libvirt hooks installation + NTPsec |
+| 7 | Sensor LV creation + image/script download |
+| 8 | Sensor VM deployment |
+| 9 | Sensor VM network & SPAN interface configuration |
+| 10 | Install DP Appliance CLI package |
+
+## Network and SPAN
+
+The standard Sensor path supports host/VM networking plus SPAN interface handling. The current script exposes SPAN attachment behavior for PCI passthrough or bridge-based operation, depending on configuration and prerequisites.
+
+<Warning>
+PCI passthrough requires IOMMU support and changes device ownership from the host to the VM. Validate the selected interfaces carefully.
+</Warning>
+
+## Execution characteristics
+
+- menu-driven `whiptail` interface
+- explicit confirmation before system-changing actions
+- DRY_RUN first
+- state-based resume
+- read-only Full Configuration Validation
+- step-level retry after a failure
+
+Steps 3 and 5 are configured reboot points. Re-run the same installer after reboot.
