@@ -1,0 +1,33 @@
+---
+title: "Storage & Performance"
+description: "Reference LVM storage preparation, CPU placement, NUMA and direct-device assignment."
+---
+
+# Storage & Performance
+
+The installers prepare local VM storage and, for performance-sensitive paths, tune CPU and device placement.
+
+## LVM
+
+Depending on topology, the installer can create LVM-backed storage for:
+
+- DL root/data
+- DA root/data
+- AIO
+- Sensor VM images/data
+
+Before execution, confirm the selected block devices and existing volume groups. Do not assume an unallocated disk is safe to reuse without reviewing the host.
+
+## CPU and NUMA
+
+Standard deployments can use automatically calculated resources. The high-performance Sensor path is explicitly NUMA-oriented and uses CPU-affinity logic to keep VM processing aligned with the intended hardware layout.
+
+## SR-IOV and PCI passthrough
+
+Before enabling direct device assignment:
+
+- enable IOMMU in BIOS
+- inspect IOMMU groups
+- confirm the NIC is dedicated to the target VM role
+- verify the host will retain management connectivity
+- plan how the device is restored if rollback is required
