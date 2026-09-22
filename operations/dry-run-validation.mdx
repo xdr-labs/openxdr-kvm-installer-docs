@@ -1,0 +1,50 @@
+---
+title: "DRY_RUN & Validation"
+description: "Use DRY_RUN and Full Configuration Validation to inspect a deployment before making system changes."
+---
+
+# DRY_RUN & Validation
+
+The installer family is designed to make host changes visible before execution.
+
+## DRY_RUN
+
+DRY_RUN defaults to enabled.
+
+When `DRY_RUN=1`:
+
+- commands are displayed rather than executed
+- the operator still sees the normal confirmation flow
+- destructive/system-changing commands are not executed
+- the workflow can be inspected in the same step order as real execution
+
+<Warning>
+DRY_RUN is not a substitute for reviewing the target host. It helps expose intended changes but cannot prove that every production dependency will behave identically.
+</Warning>
+
+## Full Configuration Validation
+
+Validation is read-only and checks the active environment and configuration. The common result model is:
+
+- **OK** — requirement satisfied
+- **WARN** — review or recommendation
+- **FAIL** — blocking problem
+
+A FAIL must be corrected before deployment.
+
+## Recommended gate
+
+<Steps>
+  <Step title="Run with DRY_RUN enabled">
+    Walk through the selected installer and verify detected NICs, disks, versions, image inputs and VM parameters.
+  </Step>
+  <Step title="Run Full Configuration Validation">
+    Resolve every blocking result and review warnings.
+  </Step>
+  <Step title="Confirm recovery access">
+    Ensure console/out-of-band access and rollback or recovery procedures are available.
+  </Step>
+  <Step title="Disable DRY_RUN only for the approved execution">
+    Re-check the configuration summary before confirming system-changing steps.
+  </Step>
+</Steps>
