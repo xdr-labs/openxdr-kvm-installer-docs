@@ -1,33 +1,469 @@
 ---
-title: "Standard Sensor Installer"
-description: "현재 10-Step Workflow로 Standard Modular OpenXDR Sensor VM을 배포합니다."
+title: "Sensor KVM Installer 사용자 가이드"
+description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber Open XDR Sensor VM을 설치, 구성, 검증 및 운영하는 전체 절차입니다."
 ---
 
-# Standard Sensor Installer
+# Stellar Cyber Open XDR Platform
 
-`Sensor-Installer.sh`는 Sensor VM과 Host-side 준비 전용 Installer이며 DL/DA를 배포하지 않습니다.
+## Sensor KVM Installer – 사용자 가이드
 
-## 현재 10-Step Workflow
+## 개요
 
-| Step | 작업 |
-| ---: | --- |
-| 1 | Hardware / NIC / CPU / Memory / SPAN NIC 선택 |
-| 2 | HWE Kernel 설치 |
-| 3 | NIC Rename / ifupdown 전환 / Network 구성 |
-| 4 | KVM / libvirt 설치 및 기본 구성 |
-| 5 | Kernel Parameter / KSM / Swap Tuning |
-| 6 | libvirt Hook + NTPsec |
-| 7 | Sensor LV 생성 + Image/Script 다운로드 |
-| 8 | Sensor VM 배포 |
-| 9 | Sensor VM Network & SPAN Interface 구성 |
-| 10 | DP Appliance CLI Package 설치 |
+본 문서는 **Stellar Cyber Open XDR Sensor KVM Installer**에 대한 종합 사용자 가이드입니다.
 
-## Network 및 SPAN
+Ubuntu Server 24.04 LTS가 설치된 KVM 호스트에서 **Stellar Cyber XDR Sensor 가상 머신을 설치, 구성, 검증 및 운영하는 방법**을 설명합니다.
 
-Standard Sensor 경로는 Management/VM Network와 별도로 SPAN Interface를 처리합니다. 현재 Script는 Configuration에 따라 PCI Passthrough 또는 Bridge 방식의 SPAN Attachment를 지원합니다.
+본 가이드는 운영 환경에서 Sensor 노드를 배포하고 관리하는 시스템 엔지니어 및 플랫폼 운영자를 대상으로 합니다.
+
+여기에 설명된 모든 절차는 설치 스크립트의 실제 동작 방식과 설계에 기반하고 있으며, 안정적이고 반복 가능하며 운영적으로 안전한 배포를 보장합니다.
+
+## 1. 시스템 아키텍처
+
+### 아키텍처 개요
+
+Stellar Cyber XDR Sensor는 KVM 가상화를 사용하는 물리 서버 상에서 단일 가상 머신으로 배포됩니다.
+
+설치 프로그램은 다음 구성 요소를 자동으로 설정합니다.
+
+- Ubuntu 24.04 기반 KVM 호스트
+- libvirt / qemu-kvm 가상화 계층
+- XDR Sensor 가상 머신
+- NAT 또는 L2 브리지 기반 Sensor 네트워크
+- PCI 패스스루 기반 SPAN 트래픽 수집
+- LVM 기반 전용 스토리지
+- 커널 및 CPU 성능 튜닝
+
+설치 프로그램은 다음 항목을 자동화하여 수동 개입을 최소화하도록 설계되었습니다.
+
+- 호스트 OS 준비 및 성능 튜닝
+- 네트워크 토폴로지 구성
+- 스토리지 프로비저닝
+- Sensor VM 라이프사이클 관리
+- PCI 패스스루 기반 고속 패킷 수집
+
+## 2. 설치 전 준비 사항 (필수 준비 단계)
+
+### 시스템 요구사항
+
+설치 프로그램 실행 전에 다음 조건을 반드시 충족해야 합니다.
+
+- **root 권한이 필요함**
+- 설치 프로그램은 다음과 같은 시스템 수준 작업을 수행합니다.
+  - 네트워크 설정 변경
+  - 커널 및 GRUB 설정 수정
+  - 디스크 및 파일 시스템 구성
+  - 가상 머신 생성 및 수정
+
+### 지원 운영체제
+
+- **Ubuntu Server 24.04 LTS만 지원**
+
+### 준비 단계
+
+1. root 쉘로 전환합니다.
+
+```bash
+sudo -i
+```
+
+2. 현재 디렉터리에 설치 스크립트를 다운로드합니다.
+
+```bash
+curl -O https://raw.githubusercontent.com/xdr-labs/OpenXDR-KVM-Installer/main/Sensor-Installer.sh
+```
+
+3. 실행 권한을 부여합니다.
+
+```bash
+chmod +x Sensor-Installer.sh
+```
+
+4. 설치 프로그램을 실행합니다.
+
+```bash
+./Sensor-Installer.sh
+```
+
+## 3. Sensor 네트워크 모드
+
+설치 프로그램은 서로 다른 운영 요구사항을 충족하기 위해 두 가지 Sensor 네트워크 모드를 지원합니다.
+
+### NAT 모드
+
+- KVM 호스트와 Sensor VM이 하나의 외부 IP 주소를 공유
+- libvirt 내부 NAT 네트워크(`virbr0`) 사용
+- Sensor VM에 고정 내부 IP 할당
+  - 기본값: `192.168.122.2`
+- 다음 이유로 설치 및 관리 시 추가적인 주의가 필요함
+  - 외부 접근이 간접적으로 이루어짐
+  - 포트 포워딩 및 관리 트래픽 흐름을 고려해야 함
+
+#### 대표적인 사용 사례
+
+- Lab, POC 및 운영 환경
+- 외부 노출이 제한된 단순한 배포 환경
+- IP 자원이 제한된 환경
+
+> 관리 인터페이스는 NAT 모드, SPAN NIC은 Bridge 모드로 구성할 수 있습니다.
+
+### 브리지 모드
+
+- Sensor VM이 **전용 L2 브리지**를 통해 연결됨
+- Sensor 트래픽이 KVM 호스트와 완전히 분리됨
+- 고성능 물리 NIC 필요
+- Appliance CLI는 Sensor 브리지에 ACL을 적용할 수 없음
+
+#### 권장 사용 시나리오
+
+- 고성능 Sensor 배포가 필요한 경우
+- 10GbE 이상의 인터페이스를 사용하는 환경
+- 보안 정책상 호스트와 Sensor 인터페이스의 엄격한 분리가 필요한 경우
+- 운영 환경에서 고성능 Sensor 노드를 배포하는 경우
+
+> 관리 인터페이스는 Bridge 모드, SPAN NIC은 PCI 패스스루 모드로 구성할 수 있습니다.
+
+## 4. SPAN 연결 방식
+
+설치 프로그램은 배포 환경에 따라 두 가지 SPAN 연결 방식을 지원합니다.
+
+### PCI 패스스루 (기본 방식)
+
+- 물리 SPAN NIC을 Sensor VM에 직접 패스스루
+- 최대 패킷 처리량과 최소 지연 시간 제공
+- 가상 스위칭 계층을 완전히 우회
+
+#### 주요 특징
+
+- 표준 PCI 패스스루 방식만 사용
+- BIOS에서 IOMMU 활성화 필요
+- 대부분의 물리 환경에서 기본값이자 권장 방식
+
+### 브리지 모드 (SPAN)
+
+- SPAN 트래픽을 L2 브리지를 통해 연결
+- 주로 다음 환경에서 사용됨
+  - 프라이빗 클라우드 환경
+  - 가상화 또는 중첩 가상화 환경
+  - PCI 패스스루 사용이 제한된 환경
+
+이 방식은 성능을 일부 희생하는 대신 유연성과 호환성을 제공합니다.
+
+### NIC 준비 및 설계 가이드라인
+
+설치 과정에서 NIC 선택을 단순화하기 위해 설치 프로그램 실행 전에 필요한 NIC를 물리적으로 연결하는 것을 강력히 권장합니다.
+
+설치 프로그램은 링크 상태를 기준으로 인터페이스를 식별하므로, 케이블이 연결되어 있으면 각 NIC의 역할을 명확히 구분할 수 있습니다.
+
+## 5. 설치 프로그램 탐색 및 실행 모델
+
+### 메뉴 탐색 방법
+
+설치 프로그램은 대화형 메뉴 기반 인터페이스를 제공합니다.
+
+- **Spacebar / ↓** : 앞으로 스크롤
+- **↑** : 뒤로 스크롤
+- **q** : 도움말 또는 가이드 화면 종료
+
+### 상태 인식 실행 방식
+
+설치 프로그램의 실행 상태는 다음 경로에 저장됩니다.
+
+```text
+/root/xdr-installer
+```
+
+완료된 단계가 기록되며, 이를 통해 설치 프로그램은 다음을 수행할 수 있습니다.
+
+- 재부팅 후 자동으로 이어서 실행
+- 이미 완료된 단계 건너뛰기
+- 선택한 단계의 안전한 재실행
+
+모든 설치 상태를 초기화하려면 다음 명령을 실행합니다.
+
+```bash
+rm -rf /root/xdr-installer
+```
+
+### DRY-RUN 모드
+
+- 기본값: `DRY_RUN=1`
+- 모든 작업은 시뮬레이션으로만 수행
+- 실제 시스템 변경은 적용되지 않음
+
+실제 배포 전에 반드시 다음과 같이 설정해야 합니다.
+
+```text
+DRY_RUN=0
+```
+
+메뉴 **3) Configuration**에서 설정합니다.
+
+### 메인 메뉴 옵션 개요
+
+#### 1) Auto Execute All Steps
+
+- 다음 미완료 단계부터 모든 단계를 자동으로 실행
+- 재부팅 후 마지막 완료 단계부터 자동으로 재개
+- 권장 용도
+  - 초기 설치
+  - 재부팅 후 이어서 진행
+
+#### 2) Select and Run Specific Step Only
+
+- 개별 단계를 독립적으로 실행
+- 권장 용도
+  - Sensor VM 재배포
+  - 네트워크 변경
+  - 이미지 업데이트
+  - SPAN 설정 변경
+
+#### 3) Configuration
+
+설치 파라미터를 구성합니다.
+
+- `DRY_RUN` (기본값: `1`)
+- `SENSOR_VERSION`
+- `SENSOR_NET_MODE` (`nat` / `bridge`)
+- `SPAN_ATTACH_MODE` (`pci` / `bridge`)
+- ACPS 자격증명
+  - username
+  - password
+  - URL
+
+#### 4) Full Configuration Validation
+
+전체 시스템 구성을 검증합니다.
+
+검증 항목:
+
+- KVM
+- Sensor VM
+- 네트워크
+- SPAN
+- 스토리지
+
+상세 로그와 함께 오류 및 경고를 출력합니다.
+
+#### 5) Script Usage Guide
+
+- 내장 도움말 가이드 표시
+
+#### 6) View Log
+
+- 설치 로그 파일 표시
+
+#### 7) Exit
+
+- 설치 프로그램 종료
+
+## 6. 설치 시나리오
+
+### 6.1 신규 설치 (초기 배포)
+
+메인 메뉴에서 다음을 선택합니다.
+
+1. **3) Configuration**
+2. 다음 항목을 설정합니다.
+   - `DRY_RUN = 0`
+   - `SENSOR_VERSION`
+   - `SENSOR_NET_MODE` (`nat` / `bridge`)
+   - `SPAN_ATTACH_MODE` (`pci` / `bridge`)
+   - ACPS credentials
+
+메인 메뉴로 돌아간 후 다음을 선택합니다.
+
+- **1) Auto Execute All Steps**
+
+설치 프로그램은 다음 단계를 순차적으로 실행합니다.
+
+```text
+STEP 01 → STEP 02 → STEP 03 → … → STEP 10
+```
+
+재부팅이 필요하거나 오류가 발생하면 실행은 자동으로 중단됩니다.
+
+### 필수 재부팅 동작
+
+설치 프로그램은 다음 단계 이후 자동으로 호스트를 재부팅합니다.
+
+- **STEP 03 – 네트워크 설정 변경**
+- **STEP 05 – 커널 및 시스템 튜닝**
+
+각 재부팅 이후:
+
+1. 다시 로그인
+2. 설치 프로그램 재실행
+3. 메뉴 1 선택
+
+다음 미완료 단계부터 자동으로 이어서 실행됩니다.
+
+### 6.2 특정 단계만 실행
+
+다음 메뉴를 선택합니다.
+
+- **2) Select and Run Specific Step Only**
+
+이 모드는 다음과 같은 상황에서 사용됩니다.
+
+- 네트워크 또는 SPAN 설정 변경
+- Sensor VM 재배포
+- 튜닝 또는 hook 재적용
+- 부분 실패 복구
+
+선택한 단계만 실행됩니다.
+
+## 7. 설치 후 검증
+
+설치 완료 후 다음 메뉴를 선택합니다.
+
+- **4) Full Configuration Validation**
+
+### 검증 범위
+
+검증 과정에서는 다음 항목을 확인합니다.
+
+- 커널 및 IOMMU 설정
+- NIC 및 인터페이스 상태
+- KVM 및 libvirt 서비스 상태
+- Sensor VM 상태 및 자동 시작 설정
+- 네트워크 브리지 및 라우팅
+- 스토리지 및 마운트 포인트
+- 시스템 튜닝 파라미터
+
+WARN 메시지가 표시되면 메뉴 2를 사용하여 해당 단계를 다시 실행하십시오.
+
+## 8. 설치 후 일반적인 변경 사항
+
+### 자동 재부팅 알림
+
+- **STEP 03은 항상 시스템 재부팅을 발생시킵니다.**
+
+### 변경 시나리오
+
+#### 관리 네트워크 모드 변경 (bridge ↔ nat)
+
+- Sensor VM 재배포 필요
+- 다음 단계 재실행
+
+```text
+STEP 01 → STEP 03 → STEP 04 → STEP 08 → STEP 09
+```
+
+#### SPAN 모드 또는 NIC 변경
+
+다음 단계 재실행:
+
+```text
+STEP 01 → STEP 03 → STEP 09
+```
+
+#### 네트워크 모드별 변경 사항
+
+모드는 유지하고 인터페이스 또는 IP만 변경하는 경우입니다.
+
+**브리지 모드**
+
+- `HOST_NIC` 또는 `DATA_NIC` 변경
+
+```text
+STEP 01 → STEP 03
+```
+
+- `HOST_NIC` IP만 변경
+
+```text
+STEP 03
+```
+
+**NAT 모드**
+
+- `HOST_NIC` (관리 업링크) 변경
+
+```text
+STEP 01 → STEP 03
+```
+
+- `HOST_NIC` IP만 변경
+
+```text
+STEP 03
+```
+
+#### SPAN 연결 방식 변경 (PCI Passthrough ↔ Bridge)
+
+다음 단계 재실행:
+
+```text
+STEP 01 → STEP 03 → STEP 09
+```
+
+#### Sensor VM 재배포
+
+```text
+STEP 08 → STEP 09
+```
 
 <Warning>
-PCI Passthrough는 IOMMU가 필요하며 선택한 Device를 Host에서 VM으로 넘깁니다. 대상 NIC를 반드시 검증하십시오.
+기존 Sensor VM은 삭제됩니다.
 </Warning>
 
-Step 3과 Step 5는 현재 Reboot 지점입니다.
+#### 다른 Sensor 버전 배포
+
+```text
+STEP 07 → STEP 08 → STEP 09
+```
+
+## 9. Sensor 배포 이후
+
+### 기본 네트워크 설정 (NAT 모드)
+
+- IP: `192.168.122.2/24`
+- Gateway: `192.168.122.1` (KVM 내부 브리지)
+
+### CLI 접속
+
+Appliance CLI:
+
+```text
+console mds
+```
+
+### SSH 접속
+
+- Sensor VM: **포트 2222**
+
+## 10. 하드웨어 및 소프트웨어 요구사항
+
+Ubuntu 24.04 설치 문서를 참고하십시오.
+
+### 실무 기준 요약 (운영 가이드)
+
+- **OS: Ubuntu Server 24.04 LTS**
+  - OS 설치 시 SSH만 사용하는 것을 권장
+- **CPU: 12 vCPU 이상 권장**
+  - Sensor VM 사이징은 자동 계산됨
+- **메모리: 16GB 이상 권장**
+  - Sensor VM 사이징은 자동 계산됨
+- **디스크**
+  - `ubuntu-vg` 사용
+  - STEP 07 이전에 충분한 여유 공간 확보
+  - 모니터링:
+
+```bash
+df -h
+vgs
+lvs
+```
+
+- **NIC**
+  - 관리용 (Host/MGT): SSH/관리용 1GbE 이상
+  - SPAN (데이터): 트래픽 미러링용
+    - 성능을 위해 PCI 패스스루 권장
+    - 패스스루 제한 환경에서는 브리지 모드 지원
+
+## 11. BIOS 및 플랫폼 설정
+
+다음 BIOS 옵션이 활성화되어 있는지 확인하십시오.
+
+- Intel Virtualization Technology
+- VT-d / IOMMU
