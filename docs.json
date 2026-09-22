@@ -124,6 +124,7 @@
               {
                 "group": "운영",
                 "pages": [
+                  "ko/operations/appliance-cli",
                   "ko/operations/dry-run-validation",
                   "ko/operations/reboot-resume",
                   "ko/operations/troubleshooting"
