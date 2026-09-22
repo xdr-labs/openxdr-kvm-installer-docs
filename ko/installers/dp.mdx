@@ -1,0 +1,46 @@
+---
+title: "Data Processor Installer"
+description: "현재 14-Step DP Workflow로 KVM Host와 DL/DA Data Processor VM을 배포합니다."
+---
+
+# Data Processor Installer
+
+`DP-Installer.sh`는 Standalone Data Processor를 위한 Host-level Installer와 Orchestrator입니다.
+
+## 구성 대상
+
+- KVM/libvirt Host
+- Management 및 DP Network
+- DL/DA LVM Storage
+- DL-master VM
+- DA-master VM
+- SR-IOV / CPU Affinity / PCI Passthrough
+- DP Appliance CLI
+- DP Configuration Backup용 NFS Backup Server 설정
+
+## 현재 14-Step Workflow
+
+| Step | 작업 |
+| ---: | --- |
+| 1 | Hardware / NIC / Disk 탐지 및 선택 |
+| 2 | HWE Kernel 설치 |
+| 3 | NIC Rename, ifupdown 전환, Network 구성 |
+| 4 | KVM / libvirt 설치 및 구성 |
+| 5 | Kernel Parameter / KSM / Swap Tuning |
+| 6 | SR-IOV Driver와 NTPsec 구성 |
+| 7 | DL/DA Root + Data LVM 구성 |
+| 8 | libvirt Hook 및 OOM Recovery Script 설치 |
+| 9 | DP Image 및 Deployment Script 다운로드 |
+| 10 | DL-master VM 배포 |
+| 11 | DA-master VM 배포 |
+| 12 | SR-IOV / CPU Affinity / PCI Passthrough |
+| 13 | DP Appliance CLI Package 설치 |
+| 14 | DP Configuration Backup용 NFS Backup Server 구성 |
+
+## Network Model
+
+현재 기본값은 libvirt NAT `192.168.122.0/24`, DL `192.168.122.2`, DA `192.168.122.3`입니다. Host Management IP는 선택한 Management NIC에서 가져오며 VM 내부 NAT 주소와 분리됩니다.
+
+## Reboot
+
+현재 Step 3과 Step 5 이후 Auto Reboot가 설정되어 있습니다. Reboot 후 동일 `DP-Installer.sh`를 다시 실행하여 저장된 State에서 이어갑니다.
