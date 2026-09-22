@@ -1,0 +1,44 @@
+---
+title: "State & Logs"
+description: "Find installer configuration, persistent state and log files."
+---
+
+# State & Logs
+
+The installers keep persistent files so deployments can resume and be diagnosed after failures or reboots.
+
+## DP / standard Sensor / AIO + Sensor
+
+When run as root, these families normally use:
+
+```text
+/root/xdr-installer/
+└── state/
+    ├── xdr_install.conf
+    ├── xdr_install.state
+    └── xdr_install.log
+```
+
+The standard Sensor and AIO scripts use the invoking user's home directory when they are not run as root.
+
+## High-performance Sensor
+
+The current `6000-Sensor-Installer.sh` uses this root execution path:
+
+```text
+/opt/xdr-installer/
+└── state/
+    ├── xdr_install.conf
+    ├── xdr_install.state
+    └── xdr_install.log
+```
+
+## File roles
+
+- `xdr_install.conf` — persistent operator configuration
+- `xdr_install.state` — completed-step state and last-run metadata
+- `xdr_install.log` — append-oriented execution and troubleshooting log
+
+<Warning>
+Configuration files can contain environment-specific values. Do not publish credentials or private infrastructure information when sharing logs or config files.
+</Warning>
