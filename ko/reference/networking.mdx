@@ -1,0 +1,36 @@
+---
+title: "네트워크"
+description: "Management, VM, SPAN, SR-IOV, PCI Passthrough Network 개념을 정리합니다."
+---
+
+# 네트워크
+
+Network는 Installer에서 가장 영향도가 큰 영역 중 하나입니다.
+
+## Management와 VM Address 분리
+
+DP Installer에서 Host Management Address와 VM 내부 Address는 의도적으로 분리됩니다.
+
+| 용도 | 현재 기본값 |
+| --- | --- |
+| libvirt NAT Network | `192.168.122.0/24` |
+| DL VM | `192.168.122.2` |
+| DA VM | `192.168.122.3` |
+
+Host Management IP는 선택한 Management Interface에서 가져오며 VM NAT Address로 대체하지 않습니다.
+
+## Sensor Data Path
+
+Sensor 배포는 Management Connectivity와 Packet Observation용 SPAN Interface를 분리합니다. Installer와 설정에 따라 Bridge 또는 PCI Passthrough로 SPAN Interface를 연결합니다.
+
+## High-performance Path
+
+현재 `6000-Sensor-Installer.sh`는 SPAN 연결을 PCI Passthrough 중심으로 구성하고 CPU Affinity/NUMA를 함께 고려합니다.
+
+## Network 전환
+
+현재 Installer Family의 Step 3은 NIC Naming, ifupdown 전환, Network 구성을 수행하며 이후 Reboot가 발생할 수 있습니다.
+
+<Warning>
+Network 변경 전 Console 또는 Out-of-Band Access를 확보하십시오. 잘못된 NIC나 Address 선택은 Remote Connectivity를 끊을 수 있습니다.
+</Warning>
