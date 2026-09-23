@@ -7,6 +7,10 @@ description: "배포 전 Host, BIOS, OS, Storage, Network 및 Access 요구사�
 
 정확한 자원 크기는 OpenXDR 구성 요소와 실제 워크로드에 따라 달라집니다. Production 배포 전 Stellar sizing과 현재 Installer 설정을 함께 검증하십시오.
 
+<Note>
+이 한국어 문서의 설치 절차와 화면 예시는 **Ubuntu Server 24.04 LTS**를 기준으로 합니다. Source Installer에는 일부 이전 Ubuntu/DP 릴리스용 호환 경로가 남아 있으므로, Legacy 배포에서는 현재 Source와 대상 OpenXDR 릴리스의 지원 범위를 별도로 확인하십시오.
+</Note>
+
 ## 공통 요구사항
 
 - 선택한 Installer가 지원하는 Ubuntu Server
@@ -20,9 +24,11 @@ description: "배포 전 Host, BIOS, OS, Storage, Network 및 Access 요구사�
 - Package와 Stellar Component Image 다운로드에 필요한 Network Access
 - Network/Storage 변경 전 Recovery Plan
 
-## OS 가이드
+## OS 기준
 
-현재 프로젝트 문서는 Sensor/AIO 계열에서 Ubuntu Server 20.04, 22.04, 24.04를 다룹니다. DP Installer는 Ubuntu 16.04 기반의 과거 DP 환경을 포함한 추가 경로도 지원합니다. 실제 실행 전 선택한 DP/Component version과 현재 Installer를 반드시 대조하십시오.
+이 문서 집합의 운영 절차는 **Ubuntu Server 24.04 LTS**를 기준으로 설명합니다.
+
+현재 Source에는 이전 Ubuntu 또는 과거 DP 릴리스용 호환 코드가 존재할 수 있지만, 이 문서의 24.04 절차가 그대로 적용된다고 가정해서는 안 됩니다. Legacy 배포는 반드시 현재 Installer Source, 대상 OpenXDR 버전, Stellar 지원 기준을 함께 대조하십시오.
 
 ## Sensor/AIO 공통 시작 기준
 
