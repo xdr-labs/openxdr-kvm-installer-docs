@@ -1,11 +1,9 @@
 ---
-title: "요구사항 기반 배포 가이드"
+title: "배포 방식 선택 가이드"
 description: "인프라 유형, 성능 요구사항, 운영 제약 조건을 기준으로 Stellar Cyber Open XDR Platform의 권장 배포 방식을 선택합니다."
 ---
 
-# Stellar Cyber Open XDR Platform
-
-## 요구사항 기반 배포 가이드
+# 배포 방식 선택 가이드
 
 ![OpenXDR KVM Installer 요구사항 기반 배포 가이드](/images/KVM-Installer/1.png)
 
@@ -25,6 +23,10 @@ description: "인프라 유형, 성능 요구사항, 운영 제약 조건을 기
 - 가상화 또는 프라이빗 클라우드 환경
 - Data Processor(DP), Sensor, AIO 배포 시나리오
 
+<Tip>
+구성 요소만 빠르게 고르려면 **[설치 프로그램 선택](/ko/getting-started/choose-installer)**부터 확인하십시오. 이 페이지는 네트워크와 토폴로지까지 결정해야 할 때 사용합니다.
+</Tip>
+
 ## 배포 환경별 권장 구성
 
 | 배포 환경 | 대상 구성 요소 | 권장 설치 프로그램 | 네트워크 모드 | SPAN / 클러스터 인터페이스 모드 | 권장 사용 사례 |
@@ -34,12 +36,12 @@ description: "인프라 유형, 성능 요구사항, 운영 제약 조건을 기
 | 베어메탈 (2대 서버, 직접 연결) | Data Processor (클러스터) | Data Processor Installer | NAT | Bridge | 스위치 없는 토폴로지, Master + Worker / Warm Standby |
 | 베어메탈 (단일 서버) | Sensor | Modular Sensor Installer | NAT 또는 Bridge | PCI Passthrough | 하드웨어 자원을 최대한 활용한 고성능 패킷 캡처 |
 | 베어메탈 (단일 서버) | AIO + Sensor | AIO & Sensor Installer | NAT | PCI Passthrough (Sensor) | 제한된 하드웨어 환경에서의 컴팩트 배포 |
-| 가상화 / 프라이빗 클라우드 | Data Processor | Modular Sensor Installer | NAT | Bridge | 물리 하드웨어 직접 접근이 불가능한 DP 배포 |
+| 가상화 / 프라이빗 클라우드 | Data Processor | Data Processor Installer | NAT | Bridge | SR-IOV를 사용할 수 없는 가상 네트워크 기반 DP 배포 |
 | 가상화 / 프라이빗 클라우드 | Sensor | Modular Sensor Installer | NAT 또는 Bridge | Bridge | PCI 패스스루가 제한된 환경 |
-| 가상화 / 프라이빗 클라우드 | AIO 전용 | AIO & Sensor Installer | NAT 또는 Bridge | N/A | 평가용, 중앙 분석, 경량 환경 |
+| 가상화 / 프라이빗 클라우드 | AIO + Sensor | AIO & Sensor Installer | NAT | PCI Passthrough (Sensor) | 물리 PCI Passthrough를 제공하는 가상화 환경에서만 사용 |
 | 보안 격리 Sensor 배포 | Sensor 전용 | Modular Sensor Installer | Bridge | PCI Passthrough 또는 Bridge | 호스트와 Sensor 네트워크의 엄격한 분리 |
 
-## 배포 결정 매트릭스
+## 상세 배포 결정 기준
 
 ## 1. 베어메탈 서버 배포
 
@@ -178,17 +180,15 @@ Sensor 배포 시:
 - PCI 패스스루를 사용할 수 없는 환경에서도 안정적으로 동작
 - 프라이빗 클라우드, 테스트 환경, 규제 제한 환경에 적합
 
-### 3.3 AIO 배포
+### 3.3 AIO + Sensor 배포
 
-가상화 환경에서는:
+현재 **AIO & Sensor Installer**의 표준 Auto Execute 흐름은 AIO와 Sensor를 함께 배포합니다.
 
-- **AIO & Sensor Installer 가이드** 참고
-- Sensor 없이 AIO만 단독 배포
+- 관리 네트워크는 **NAT 모드**
+- Sensor SPAN 연결은 **PCI Passthrough**
+- 따라서 물리 PCI Passthrough를 제공하지 않는 프라이빗 클라우드에서는 이 경로가 적합하지 않을 수 있습니다.
 
-이 방식은 주로 다음 용도로 사용됩니다.
-
-- 평가 환경
-- 경량 배포 환경
+AIO만 단독으로 필요한 경우에는 Auto Execute 전체 흐름을 그대로 적용하지 말고, 대상 OpenXDR 릴리스와 운영 설계에서 AIO-only 구성이 지원되는지 먼저 확인하십시오.
 
 ## 4. Sensor 전용 배포 옵션
 
