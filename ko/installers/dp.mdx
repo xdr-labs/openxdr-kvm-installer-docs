@@ -3,9 +3,7 @@ title: "DP KVM Installer 사용자 가이드"
 description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber Open XDR Data Platform을 설치, 구성, 검증 및 운영하는 사용자 가이드입니다."
 ---
 
-# Stellar Cyber Open XDR Platform
-
-## DP KVM Installer – 사용자 가이드
+# DP KVM Installer 사용자 가이드
 
 ![OpenXDR KVM Installer 전체 설치 흐름 개요](/images/DP-Installer/1.png)
 
@@ -79,10 +77,10 @@ Stellar Cyber Open XDR Platform은 KVM 가상화를 사용하여 단일 물리 �
 - 디스크 및 파일 시스템 설정
 - 가상 머신 생성 및 수정
 
-### 지원 운영체제
+### 문서 기준 운영체제
 
-- **Ubuntu Server 24.04 LTS만 지원**
-- 다른 버전은 지원되지 않음
+- 이 한국어 가이드는 **Ubuntu Server 24.04 LTS** 기준입니다.
+- 현재 `DP-Installer.sh`에는 과거 DP/Ubuntu 릴리스용 호환 경로도 존재하므로 Legacy 배포 시에는 Source와 대상 릴리스 지원 범위를 별도로 확인하십시오.
 
 ### 준비 단계
 
@@ -311,7 +309,7 @@ rm -rf /root/xdr-installer
 설치 프로그램은 다음 단계를 순차적으로 실행합니다.
 
 ```text
-STEP 01 → STEP 02 → STEP 03 → …
+STEP 01 → STEP 02 → STEP 03 → … → STEP 14
 ```
 
 #### 필수 재부팅 단계
@@ -382,6 +380,7 @@ STEP 01 → STEP 02 → STEP 03 → …
 | 11 | Deploy DA-master VM |
 | 12 | SR-IOV / CPU Affinity / PCI Passthrough |
 | 13 | Install DP Appliance CLI package |
+| 14 | Configure NFS backup server (DP configuration backup only) |
 
 실행 절차:
 
@@ -390,6 +389,12 @@ STEP 01 → STEP 02 → STEP 03 → …
 3. 해당 단계만 실행된 후 메뉴로 복귀
 
 이 방식은 관련 없는 구성 요소에 불필요한 변경을 피함으로써 위험을 최소화합니다.
+
+#### STEP 14 — NFS 백업 서버 구성
+
+현재 DP Installer의 마지막 단계는 **DP configuration backup용 NFS export**를 구성합니다. 이 단계는 Data Lake 데이터 백업이 아니라 DP 구성 백업을 위한 기능입니다.
+
+기본 설정에는 `/stellarcyber` export 경로와 DL 내부 주소를 기준으로 한 허용 클라이언트 값이 포함되므로, 실제 환경에 맞는 값인지 Configuration에서 확인한 뒤 적용하십시오.
 
 #### 중요 참고 사항
 
@@ -504,10 +509,12 @@ console da-master
 
 ## 9. BIOS 및 플랫폼 설정
 
-다음 BIOS 옵션이 활성화되어 있는지 확인하십시오.
+다음 기능이 플랫폼 요구사항에 맞게 구성되어 있는지 확인하십시오.
 
 - Intel Virtualization Technology
 - VT-d / IOMMU
-- SR-IOV Global Enable
+- 클러스터 NIC의 SR-IOV 기능
 
-클러스터 트래픽에 사용되는 물리 NIC에서 **SR-IOV가 활성화되어 있는지 항상 확인**하십시오.
+<Warning>
+**SR-IOV Global Enable**의 BIOS 값은 서버/NIC 플랫폼에 따라 다를 수 있습니다. 이 문서의 Dell 예시는 NIC 장치 단위 SR-IOV 설정을 사용하므로, Global 설정을 일괄적으로 Enabled로 변경하지 마십시오. 서버와 NIC 펌웨어 문서 및 [Ubuntu 24.04 설치 가이드](/ko/getting-started/installing-ubuntu-24-04)의 해당 플랫폼 예시를 함께 확인하십시오.
+</Warning>
