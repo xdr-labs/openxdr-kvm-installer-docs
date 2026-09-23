@@ -11,17 +11,17 @@
     "links": [
       {
         "type": "github",
-        "href": "https://github.com/xdr-labs/OpenXDR-KVM-Installer"
+        "href": "https://github.com/xdr-labs/openxdr-kvm-installer-docs"
       }
     ],
     "primary": {
       "type": "button",
-      "label": "Source",
+      "label": "Installer Source",
       "href": "https://github.com/xdr-labs/OpenXDR-KVM-Installer"
     }
   },
   "search": {
-    "prompt": "Search KVM Installer docs..."
+    "prompt": "문서 검색 / Search KVM Installer docs..."
   },
   "seo": {
     "indexing": "navigable",
@@ -99,13 +99,12 @@
         "language": "ko",
         "tabs": [
           {
-            "tab": "배포 가이드",
+            "tab": "설치 및 배포",
             "groups": [
               {
                 "group": "시작하기",
                 "pages": [
                   "ko/index",
-                  "ko/getting-started/deployment-guide",
                   "ko/getting-started/choose-installer",
                   "ko/getting-started/requirements",
                   "ko/getting-started/installing-ubuntu-24-04",
@@ -113,7 +112,13 @@
                 ]
               },
               {
-                "group": "Installer 가이드",
+                "group": "배포 설계",
+                "pages": [
+                  "ko/getting-started/deployment-guide"
+                ]
+              },
+              {
+                "group": "설치 가이드",
                 "pages": [
                   "ko/installers/dp",
                   "ko/installers/sensor",
@@ -122,7 +127,7 @@
                 ]
               },
               {
-                "group": "운영",
+                "group": "운영 및 복구",
                 "pages": [
                   "ko/operations/appliance-cli",
                   "ko/operations/dry-run-validation",
