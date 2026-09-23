@@ -99,22 +99,17 @@
         "language": "ko",
         "tabs": [
           {
-            "tab": "설치 및 배포",
+            "tab": "설치·운영 가이드",
             "groups": [
               {
                 "group": "시작하기",
                 "pages": [
                   "ko/index",
                   "ko/getting-started/choose-installer",
+                  "ko/getting-started/deployment-guide",
                   "ko/getting-started/requirements",
                   "ko/getting-started/installing-ubuntu-24-04",
                   "ko/getting-started/quickstart"
-                ]
-              },
-              {
-                "group": "배포 설계",
-                "pages": [
-                  "ko/getting-started/deployment-guide"
                 ]
               },
               {
@@ -129,10 +124,10 @@
               {
                 "group": "운영 및 복구",
                 "pages": [
-                  "ko/operations/appliance-cli",
                   "ko/operations/dry-run-validation",
                   "ko/operations/reboot-resume",
-                  "ko/operations/troubleshooting"
+                  "ko/operations/troubleshooting",
+                  "ko/operations/appliance-cli"
                 ]
               }
             ]
