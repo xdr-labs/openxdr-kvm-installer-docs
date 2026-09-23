@@ -1,42 +1,478 @@
 ---
-title: "Standard Sensor Installer"
-description: "Deploy a standard modular OpenXDR Sensor VM through the current 10-step KVM workflow."
+title: "Sensor KVM Installer User Guide"
+description: "Complete procedure for installing, configuring, validating, and operating a Stellar Cyber OpenXDR Sensor VM on an Ubuntu Server 24.04 LTS KVM host."
 ---
 
-# Standard Sensor Installer
+# Sensor KVM Installer User Guide
 
-`Sensor-Installer.sh` is dedicated to Sensor VM installation and host-side preparation. It does not deploy DL or DA.
+![OpenXDR KVM Sensor Installer quick reference](/images/Sensor-Installer/1.png)
 
-## Current 10-step flow
+## Overview
 
-| Step | Operation |
-| ---: | --- |
-| 1 | Hardware / NIC / CPU / memory / SPAN NIC selection |
-| 2 | HWE kernel installation |
-| 3 | NIC rename / ifupdown switch and network configuration |
-| 4 | KVM / libvirt installation and base configuration |
-| 5 | Kernel parameters / KSM / swap tuning |
-| 6 | libvirt hooks installation + NTPsec |
-| 7 | Sensor LV creation + image/script download |
-| 8 | Sensor VM deployment |
-| 9 | Sensor VM network & SPAN interface configuration |
-| 10 | Install DP Appliance CLI package |
+This document is the comprehensive user guide for the **Stellar Cyber OpenXDR Sensor KVM Installer**.
 
-## Network and SPAN
+It explains how to **install, configure, validate, and operate a Stellar Cyber XDR Sensor virtual machine** on a KVM host running Ubuntu Server 24.04 LTS.
 
-The standard Sensor path supports host/VM networking plus SPAN interface handling. The current script exposes SPAN attachment behavior for PCI passthrough or bridge-based operation, depending on configuration and prerequisites.
+This guide is intended for system engineers and platform operators who deploy and manage Sensor nodes in operational environments.
+
+The procedures are based on the installer's actual behavior and design to support stable, repeatable, and operationally safe deployments.
+
+## 1. System Architecture
+
+### Architecture Overview
+
+Stellar Cyber XDR Sensor is deployed as a single virtual machine on a physical server using KVM virtualization.
+
+The installer automatically configures:
+
+- Ubuntu 24.04 KVM host
+- libvirt / qemu-kvm virtualization layer
+- XDR Sensor virtual machine
+- NAT or L2 bridge-based Sensor networking
+- PCI-passthrough-based SPAN traffic collection
+- dedicated LVM-based storage
+- kernel and CPU performance tuning
+
+The installer automates:
+
+- host OS preparation and performance tuning
+- network topology configuration
+- storage provisioning
+- Sensor VM lifecycle management
+- high-speed packet capture using PCI passthrough
+
+## 2. Pre-Installation Preparation
+
+### System Requirements
+
+Before running the installer:
+
+- **root privileges are required**
+- the installer performs system-level operations including:
+  - network changes
+  - kernel and GRUB modification
+  - disk and filesystem configuration
+  - virtual-machine creation and modification
+
+### Documented Operating System
+
+- This guide is based on **Ubuntu Server 24.04 LTS**.
+- The source installer may retain compatibility code for older Ubuntu releases. For legacy deployment, verify the current source and the support scope of the target OpenXDR release separately.
+
+### Preparation Steps
+
+1. Switch to a root shell.
+
+```bash
+sudo -i
+```
+
+2. Download the installer into the current directory.
+
+```bash
+curl -O https://raw.githubusercontent.com/xdr-labs/OpenXDR-KVM-Installer/main/Sensor-Installer.sh
+```
+
+3. Make it executable.
+
+```bash
+chmod +x Sensor-Installer.sh
+```
+
+4. Run the installer.
+
+```bash
+./Sensor-Installer.sh
+```
+
+## 3. Sensor Network Modes
+
+The installer supports two Sensor network modes for different operational requirements.
+
+### NAT Mode
+
+- the KVM host and Sensor VM share one external IP address
+- uses the libvirt internal NAT network (`virbr0`)
+- assigns a fixed internal address to the Sensor VM
+  - default: `192.168.122.2`
+- requires additional operational consideration because:
+  - external access is indirect
+  - port forwarding and management traffic flow must be considered
+
+#### Typical Use Cases
+
+- lab, POC, and production environments
+- simple deployments with limited external exposure
+- environments with limited IP address resources
+
+> The management interface can use NAT mode while SPAN NICs use Bridge mode.
+
+![NAT management interface with Bridge SPAN example](/images/Sensor-Installer/2.png)
+
+### Bridge Mode
+
+- the Sensor VM connects through a **dedicated L2 bridge**
+- Sensor traffic is separated from the KVM host
+- requires a high-performance physical NIC
+- Appliance CLI cannot apply ACLs to the Sensor bridge
+
+#### Recommended Use Cases
+
+- high-performance Sensor deployments
+- environments using 10GbE or faster interfaces
+- environments requiring strict separation between host and Sensor interfaces
+- production deployments of high-performance Sensor nodes
+
+> The management interface can use Bridge mode while SPAN NICs use PCI Passthrough.
+
+![Bridge management interface with PCI Passthrough SPAN example](/images/Sensor-Installer/3.png)
+
+## 4. SPAN Attachment Methods
+
+The installer supports two SPAN attachment methods.
+
+### PCI Passthrough (Default)
+
+- passes a physical SPAN NIC directly to the Sensor VM
+- provides maximum packet throughput and minimum latency
+- completely bypasses the virtual-switch layer
+
+#### Key Characteristics
+
+- uses standard PCI passthrough
+- requires IOMMU to be enabled in BIOS
+- default and recommended for most physical environments
+
+### Bridge Mode (SPAN)
+
+- connects SPAN traffic through an L2 bridge
+- primarily used in:
+  - private-cloud environments
+  - virtualized or nested-virtualization environments
+  - environments where PCI passthrough is restricted
+
+This trades some performance for greater flexibility and compatibility.
+
+### NIC Preparation and Design Guidance
+
+Physically connect the NICs required by the deployment before running the installer.
+
+The installer identifies interfaces using link state, so connected cables make NIC roles easier to distinguish.
+
+![Sensor SPAN NIC selection screen](/images/Sensor-Installer/4.png)
+
+## 5. Installer Navigation and Execution Model
+
+### Menu Navigation
+
+The installer provides an interactive menu-driven interface.
+
+- **Spacebar / ↓**: scroll forward
+- **↑**: scroll backward
+- **q**: exit a help or guide screen
+
+### State-Aware Execution
+
+Execution state is stored under:
+
+```text
+/root/xdr-installer
+```
+
+Completed steps are recorded, allowing the installer to:
+
+- resume automatically after reboot
+- skip already completed steps
+- safely rerun a selected step
+
+To clear all installer state:
+
+```bash
+rm -rf /root/xdr-installer
+```
+
+### DRY-RUN Mode
+
+- default: `DRY_RUN=1`
+- operations are simulated
+- no real system changes are applied
+
+Before real deployment, change it to:
+
+```text
+DRY_RUN=0
+```
+
+Use **3) Configuration**.
+
+### Main Menu Overview
+
+#### 1) Auto Execute All Steps
+
+- runs all steps beginning with the next incomplete step
+- resumes after reboot from the last completed step
+- recommended for:
+  - initial installation
+  - continuing after reboot
+
+#### 2) Select and Run Specific Step Only
+
+- runs one step independently
+- recommended for:
+  - Sensor VM redeployment
+  - network changes
+  - image updates
+  - SPAN changes
+
+#### 3) Configuration
+
+Configures:
+
+- `DRY_RUN` (default: `1`)
+- `SENSOR_VERSION`
+- `SENSOR_NET_MODE` (`nat` / `bridge`)
+- `SPAN_ATTACH_MODE` (`pci` / `bridge`)
+- ACPS credentials
+  - username
+  - password
+  - URL
+
+#### 4) Full Configuration Validation
+
+Validates:
+
+- KVM
+- Sensor VM
+- networking
+- SPAN
+- storage
+
+Detailed errors and warnings are displayed.
+
+#### 5) Script Usage Guide
+
+- displays the built-in help guide
+
+#### 6) View Log
+
+- displays the installer log
+
+#### 7) Exit
+
+- exits the installer
+
+## 6. Installation Scenarios
+
+### 6.1 New Installation
+
+From the main menu:
+
+1. select **3) Configuration**
+2. configure:
+   - `DRY_RUN = 0`
+   - `SENSOR_VERSION`
+   - `SENSOR_NET_MODE` (`nat` / `bridge`)
+   - `SPAN_ATTACH_MODE` (`pci` / `bridge`)
+   - ACPS credentials
+
+Return to the main menu and select:
+
+- **1) Auto Execute All Steps**
+
+![Sensor Installer Auto Execute All Steps screen](/images/Sensor-Installer/5.png)
+
+The installer runs:
+
+```text
+STEP 01 → STEP 02 → STEP 03 → … → STEP 10
+```
+
+Execution stops automatically if a reboot is required or an error occurs.
+
+### Mandatory Reboots
+
+The host is automatically rebooted after:
+
+- **STEP 03 – network configuration changes**
+- **STEP 05 – kernel and system tuning**
+
+After each reboot:
+
+1. log in again
+2. relaunch the installer
+3. select Menu 1
+
+The installer resumes from the next incomplete step.
+
+### 6.2 Run a Specific Step
+
+Select:
+
+- **2) Select and Run Specific Step Only**
+
+![Sensor Installer specific-step selection screen](/images/Sensor-Installer/6.png)
+
+Use this mode for:
+
+- network or SPAN changes
+- Sensor VM redeployment
+- reapplying tuning or hooks
+- recovery from a partial failure
+
+Only the selected step is executed.
+
+## 7. Post-Installation Validation
+
+After installation, select:
+
+- **4) Full Configuration Validation**
+
+![Sensor Installer Full Configuration Validation results](/images/Sensor-Installer/7.png)
+
+### Validation Scope
+
+Validation checks:
+
+- kernel and IOMMU configuration
+- NIC and interface status
+- KVM and libvirt service status
+- Sensor VM status and autostart
+- network bridges and routing
+- storage and mount points
+- system tuning parameters
+
+If WARN messages appear, use Menu 2 to rerun the relevant step.
+
+## 8. Common Post-Installation Changes
+
+### Automatic Reboot Notice
+
+- **STEP 03 always triggers a system reboot.**
+
+### Change Scenarios
+
+#### Change Management Network Mode (bridge ↔ nat)
+
+- Sensor VM redeployment is required
+- rerun:
+
+```text
+STEP 01 → STEP 03 → STEP 04 → STEP 08 → STEP 09
+```
+
+#### Change SPAN Mode or NIC
+
+Rerun:
+
+```text
+STEP 01 → STEP 03 → STEP 09
+```
+
+#### Changes While Keeping the Same Network Mode
+
+**Bridge mode**
+
+- change `HOST_NIC` or `DATA_NIC`
+
+```text
+STEP 01 → STEP 03
+```
+
+- change only the `HOST_NIC` IP
+
+```text
+STEP 03
+```
+
+**NAT mode**
+
+- change `HOST_NIC` (management uplink)
+
+```text
+STEP 01 → STEP 03
+```
+
+- change only the `HOST_NIC` IP
+
+```text
+STEP 03
+```
+
+#### Change SPAN Attachment Method (PCI Passthrough ↔ Bridge)
+
+Rerun:
+
+```text
+STEP 01 → STEP 03 → STEP 09
+```
+
+#### Redeploy the Sensor VM
+
+```text
+STEP 08 → STEP 09
+```
 
 <Warning>
-PCI passthrough requires IOMMU support and changes device ownership from the host to the VM. Validate the selected interfaces carefully.
+The existing Sensor VM is deleted.
 </Warning>
 
-## Execution characteristics
+#### Deploy a Different Sensor Version
 
-- menu-driven `whiptail` interface
-- explicit confirmation before system-changing actions
-- DRY_RUN first
-- state-based resume
-- read-only Full Configuration Validation
-- step-level retry after a failure
+```text
+STEP 07 → STEP 08 → STEP 09
+```
 
-Steps 3 and 5 are configured reboot points. Re-run the same installer after reboot.
+## 9. After Sensor Deployment
+
+### Default Network Configuration (NAT Mode)
+
+- IP: `192.168.122.2/24`
+- Gateway: `192.168.122.1` (KVM internal bridge)
+
+### CLI Access
+
+Appliance CLI:
+
+```text
+console mds
+```
+
+### SSH Access
+
+- Sensor VM: **port 2222**
+
+## 10. Hardware and Software Requirements
+
+See the Ubuntu 24.04 installation guide.
+
+### Practical Operational Summary
+
+- **OS: Ubuntu Server 24.04 LTS**
+  - installing only SSH with the OS is recommended
+- **CPU: 12 vCPU or more recommended**
+  - Sensor VM sizing is calculated automatically
+- **Memory: 16 GB or more recommended**
+  - Sensor VM sizing is calculated automatically
+- **Disk**
+  - uses `ubuntu-vg`
+  - ensure sufficient free space before STEP 07
+  - monitor with:
+
+```bash
+df -h
+vgs
+lvs
+```
+
+- **NIC**
+  - management (Host/MGT): 1GbE or faster for SSH/management
+  - SPAN (data): traffic mirroring
+    - PCI passthrough recommended for performance
+    - Bridge mode supported where passthrough is restricted
+
+## 11. BIOS and Platform Settings
+
+Verify that these BIOS options are enabled:
+
+- Intel Virtualization Technology
+- VT-d / IOMMU
