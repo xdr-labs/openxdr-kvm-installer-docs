@@ -7,6 +7,8 @@ description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber Open XDR
 
 ## KVM Installer – 사용자 가이드
 
+![OpenXDR KVM Installer 전체 설치 흐름 개요](/images/DP-Installer/1.png)
+
 ## 개요
 
 본 문서는 **Stellar Cyber Open XDR Platform KVM Installer**에 대한 종합 사용자 가이드입니다.
@@ -19,9 +21,13 @@ Ubuntu Server 24.04 LTS가 실행 중인 KVM 호스트에서 **Open XDR Platform
 
 본 문서에 설명된 모든 절차는 검증된 설치 프로그램의 동작 방식과 모범 사례(best practices)를 따르며, 안정적이고 반복 가능하며 운영 환경에 적합한 배포를 보장합니다.
 
+![OpenXDR KVM Installer 메인 메뉴](/images/DP-Installer/2.png)
+
 ## 1. 시스템 아키텍처
 
 ### Dell R660 기반 예시 구성
+
+![Dell R660 기반 Data Platform KVM 아키텍처 예시](/images/DP-Installer/3.png)
 
 원본 가이드의 예시 아키텍처는 다음과 같습니다.
 
@@ -145,6 +151,8 @@ Host Access NIC은 로컬 전용 유지보수 및 문제 해결을 목적으로 
 설치 중 NIC 선택을 단순화하기 위해, 설치 프로그램 실행 전에 필요한 NIC를 물리적으로 연결하는 것을 강력히 권장합니다.
 
 설치 프로그램은 **링크 상태를 기준으로 인터페이스를 식별**하므로, 케이블이 연결되어 있으면 각 NIC의 역할을 명확히 구분할 수 있습니다.
+
+![Management NIC 선택 화면](/images/DP-Installer/4.png)
 
 ## 3. 설치 프로그램 탐색
 
@@ -273,6 +281,8 @@ rm -rf /root/xdr-installer
 3) Configuration
 ```
 
+![DP Installer Configuration 화면](/images/DP-Installer/5.png)
+
 다음 항목을 설정합니다.
 
 - **DRY_RUN**
@@ -295,6 +305,8 @@ rm -rf /root/xdr-installer
 ```text
 1) Auto execute all steps
 ```
+
+![DP Installer Auto Execute All Steps 화면](/images/DP-Installer/6.png)
 
 설치 프로그램은 다음 단계를 순차적으로 실행합니다.
 
@@ -351,6 +363,8 @@ STEP 01 → STEP 02 → STEP 03 → …
 2) Select and run specific step only
 ```
 
+![DP Installer 개별 Step 선택 화면](/images/DP-Installer/7.png)
+
 개별 Step 선택 화면에는 다음 단계가 표시됩니다.
 
 | Step | 작업 |
@@ -391,6 +405,8 @@ STEP 01 → STEP 02 → STEP 03 → …
 ```text
 4) Full Configuration Validation
 ```
+
+![DP Installer Full Configuration Validation 결과 화면](/images/DP-Installer/8.png)
 
 ### 검증 범위
 
