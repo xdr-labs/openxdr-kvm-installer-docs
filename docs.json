@@ -8,12 +8,6 @@
   },
   "favicon": "/favicon.svg",
   "navbar": {
-    "links": [
-      {
-        "type": "github",
-        "href": "https://github.com/xdr-labs/openxdr-kvm-installer-docs"
-      }
-    ],
     "primary": {
       "type": "button",
       "label": "Installer Source",
