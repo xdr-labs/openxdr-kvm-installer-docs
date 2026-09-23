@@ -46,7 +46,9 @@
                 "pages": [
                   "index",
                   "getting-started/choose-installer",
+                  "getting-started/deployment-guide",
                   "getting-started/requirements",
+                  "getting-started/installing-ubuntu-24-04",
                   "getting-started/quickstart"
                 ]
               },
@@ -64,7 +66,8 @@
                 "pages": [
                   "operations/dry-run-validation",
                   "operations/reboot-resume",
-                  "operations/troubleshooting"
+                  "operations/troubleshooting",
+                  "operations/appliance-cli"
                 ]
               }
             ]
