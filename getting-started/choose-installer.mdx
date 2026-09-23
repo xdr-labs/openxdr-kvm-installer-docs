@@ -1,36 +1,47 @@
 ---
 title: "Choose an Installer"
-description: "Select the OpenXDR KVM Installer that matches the component and topology you need to deploy."
+description: "Select the OpenXDR KVM Installer that matches the component, topology, and network model you need to deploy."
 ---
 
 # Choose an Installer
 
-Use the deployment target, expected topology, and performance model to select one installer. Each script is stateful and menu-driven, but its VM topology and host changes are different.
+Choose one installer based on the deployment target, topology, and performance requirements.
 
-| Installer | Use it for | Current step count |
-| --- | --- | ---: |
-| `DP-Installer.sh` | Standalone Data Processor with DL-master and DA-master | 14 |
-| `Sensor-Installer.sh` | Standard modular Sensor | 10 |
-| `6000-Sensor-Installer.sh` | High-performance dual-VM / NUMA-oriented Sensor | 10 |
-| `AIO-Sensor-Installer.sh` | Integrated AIO Data Processor + Sensor | 13 |
+| Installer | Use it for | Primary network characteristics | Current step count |
+| --- | --- | --- | ---: |
+| `DP-Installer.sh` | DL-master / DA-master Data Processor | NAT + Cluster Bridge/SR-IOV | 14 |
+| `Sensor-Installer.sh` | Standard Modular Sensor | NAT/Bridge + SPAN PCI/Bridge | 10 |
+| `6000-Sensor-Installer.sh` | Dual-VM / NUMA High-performance Sensor | NAT + SPAN PCI Passthrough | 10 |
+| `AIO-Sensor-Installer.sh` | Integrated AIO Data Processor + Sensor | NAT + Sensor SPAN PCI Passthrough | 13 |
 
-## Decision guide
+<Columns cols={2}>
+  <Card title="DP KVM Installer" icon="database" href="/installers/dp">
+    Deploy a Data Processor based on DL-master and DA-master.
+  </Card>
+  <Card title="Standard Sensor" icon="radar" href="/installers/sensor">
+    Use for standard Sensor deployments requiring NAT/Bridge management and PCI/Bridge SPAN options.
+  </Card>
+  <Card title="High-performance Sensor" icon="gauge-high" href="/installers/high-performance-sensor">
+    Use for dual-VM, NUMA, PCI Passthrough-focused high-performance Sensor deployments.
+  </Card>
+  <Card title="AIO + Sensor" icon="layer-group" href="/installers/aio-sensor">
+    Deploy AIO and Sensor together on one KVM host.
+  </Card>
+</Columns>
+
+## Decision Guide
 
 <Steps>
   <Step title="Need DL and DA Data Processor VMs?">
-    Use **DP-Installer.sh**. It includes DP image preparation, DL/DA deployment, SR-IOV/CPU-affinity work, appliance CLI installation, and a final NFS backup configuration step.
+    Use **DP-Installer.sh**. It includes DP image preparation, DL/DA deployment, SR-IOV/CPU affinity, Appliance CLI installation, and NFS backup configuration.
   </Step>
-  <Step title="Need only a standard modular Sensor?">
-    Use **Sensor-Installer.sh**. It prepares the host, creates Sensor storage, deploys the Sensor VM, and configures Sensor networking/SPAN connectivity.
+  <Step title="Need only a Standard Modular Sensor?">
+    Use **Sensor-Installer.sh**. It handles Sensor storage, VM deployment, and network/SPAN configuration.
   </Step>
-  <Step title="Need a higher-throughput Sensor topology?">
-    Use **6000-Sensor-Installer.sh**. This path is designed around dual Sensor VMs and NUMA-aware placement, with PCI passthrough for SPAN traffic.
+  <Step title="Need a high-performance Sensor topology?">
+    Use **6000-Sensor-Installer.sh**. This path centers on dual VMs, NUMA-aware placement, and PCI Passthrough.
   </Step>
-  <Step title="Need AIO and Sensor on one KVM host?">
-    Use **AIO-Sensor-Installer.sh**. It prepares AIO storage and image, deploys the AIO VM, then creates and deploys the Sensor path on the same host.
+  <Step title="Need AIO and Sensor on one host?">
+    Use **AIO-Sensor-Installer.sh**. It deploys AIO first, then continues with the Sensor path on the same host.
   </Step>
 </Steps>
-
-<Note>
-Do not mix state files from different installer families on the same installation workflow. Run the script that matches the intended topology and keep its state/configuration together.
-</Note>
