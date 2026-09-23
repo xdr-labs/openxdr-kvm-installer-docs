@@ -1,18 +1,33 @@
 ---
-title: "Installer 선택"
-description: "배포할 OpenXDR 구성 요소와 토폴로지에 맞는 Installer를 선택합니다."
+title: "설치 프로그램 선택"
+description: "배포할 OpenXDR 구성 요소와 토폴로지에 맞는 설치 프로그램을 선택합니다."
 ---
 
-# Installer 선택
+# 설치 프로그램 선택
 
-배포 대상, 토폴로지, 성능 요구사항에 따라 하나의 Installer를 선택합니다.
+배포 대상, 토폴로지, 성능 요구사항에 따라 하나의 설치 프로그램을 선택합니다.
 
-| Installer | 용도 | 현재 Step 수 |
-| --- | --- | ---: |
-| `DP-Installer.sh` | DL-master / DA-master 기반 Standalone Data Processor | 14 |
-| `Sensor-Installer.sh` | Standard Modular Sensor | 10 |
-| `6000-Sensor-Installer.sh` | Dual VM / NUMA 기반 High-performance Sensor | 10 |
-| `AIO-Sensor-Installer.sh` | AIO Data Processor + Sensor 통합 배포 | 13 |
+| 설치 프로그램 | 용도 | 주요 네트워크 특성 | 현재 Step 수 |
+| --- | --- | --- | ---: |
+| `DP-Installer.sh` | DL-master / DA-master 기반 Data Processor | NAT + Cluster Bridge/SR-IOV | 14 |
+| `Sensor-Installer.sh` | Standard Modular Sensor | NAT/Bridge + SPAN PCI/Bridge | 10 |
+| `6000-Sensor-Installer.sh` | Dual VM / NUMA 기반 High-performance Sensor | NAT + SPAN PCI Passthrough | 10 |
+| `AIO-Sensor-Installer.sh` | AIO Data Processor + Sensor 통합 배포 | NAT + Sensor SPAN PCI Passthrough | 13 |
+
+<Columns cols={2}>
+  <Card title="DP KVM Installer" icon="database" href="/ko/installers/dp">
+    DL-master와 DA-master 기반 Data Processor를 배포합니다.
+  </Card>
+  <Card title="Standard Sensor" icon="radar" href="/ko/installers/sensor">
+    NAT/Bridge와 PCI/Bridge SPAN 구성이 필요한 일반 Sensor 배포에 사용합니다.
+  </Card>
+  <Card title="High-performance Sensor" icon="gauge-high" href="/ko/installers/high-performance-sensor">
+    Dual VM, NUMA, PCI Passthrough 중심의 고성능 Sensor 배포에 사용합니다.
+  </Card>
+  <Card title="AIO + Sensor" icon="layer-group" href="/ko/installers/aio-sensor">
+    하나의 KVM Host에 AIO와 Sensor를 통합 배포합니다.
+  </Card>
+</Columns>
 
 ## 선택 기준
 
