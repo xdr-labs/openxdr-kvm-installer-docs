@@ -12,7 +12,7 @@ Operator-focused documentation for deploying and operating Stellar Cyber OpenXDR
 | --- | --- |
 | Choose the correct installer | [설치 프로그램 선택](https://kvm.xdr.ooo/ko/getting-started/choose-installer) |
 | Check host and BIOS requirements | [요구사항](https://kvm.xdr.ooo/ko/getting-started/requirements) |
-| Install Ubuntu Server 24.04 | [Ubuntu 24.04.3 Server 설치 가이드](https://kvm.xdr.ooo/ko/getting-started/installing-ubuntu-24-04) |
+| Install Ubuntu Server 24.04 | [Ubuntu Server 24.04 LTS 설치 가이드](https://kvm.xdr.ooo/ko/getting-started/installing-ubuntu-24-04) |
 | Choose a topology / network model | [배포 방식 선택 가이드](https://kvm.xdr.ooo/ko/getting-started/deployment-guide) |
 | Run a first deployment | [빠른 시작](https://kvm.xdr.ooo/ko/getting-started/quickstart) |
 | Troubleshoot a failed step | [Troubleshooting](https://kvm.xdr.ooo/ko/operations/troubleshooting) |
