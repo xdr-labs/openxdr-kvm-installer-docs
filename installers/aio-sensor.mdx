@@ -1,41 +1,459 @@
 ---
-title: "AIO + Sensor Installer"
-description: "Deploy an AIO Data Processor and Sensor on one KVM host through the current 13-step workflow."
+title: "AIO & Sensor KVM Installer User Guide"
+description: "Complete guide for installing, configuring, validating, and operating Stellar Cyber OpenXDR AIO and Sensor VMs on an Ubuntu Server 24.04 LTS KVM host."
 ---
 
-# AIO + Sensor Installer
+# AIO & Sensor KVM Installer User Guide
 
-`AIO-Sensor-Installer.sh` coordinates deployment of an AIO Data Processor and a Sensor on the same KVM host.
+![AIO & Sensor KVM Installer complete installation flow](/images/AIO-Sensor/1.png)
 
-## Current 13-step flow
+## Overview
 
-| Step | Operation |
-| ---: | --- |
-| 1 | Hardware / NIC / SPAN NIC selection |
-| 2 | HWE kernel installation |
-| 3 | NIC rename / ifupdown switch and network configuration |
-| 4 | KVM / libvirt installation and base configuration |
-| 5 | Kernel parameters / KSM / swap tuning |
-| 6 | libvirt hooks installation + NTPsec |
-| 7 | LVM storage configuration for AIO |
-| 8 | AIO image/download preparation |
-| 9 | AIO VM deployment |
-| 10 | Sensor LV creation + image/script download |
-| 11 | Sensor VM deployment |
-| 12 | PCI passthrough / CPU affinity |
-| 13 | Install DP Appliance CLI package |
+This document is the comprehensive user guide for the **Stellar Cyber OpenXDR AIO & Sensor KVM Installer**.
 
-## Deployment sequence
+It explains how to **install, configure, validate, and operate an All-in-One (AIO) OpenXDR appliance and an XDR Sensor virtual machine** on a KVM host running Ubuntu Server 24.04 LTS.
 
-```text
-Prepare host
-  → prepare AIO storage
-  → obtain AIO image/assets
-  → deploy AIO VM
-  → create Sensor storage and obtain Sensor assets
-  → deploy Sensor VM
-  → attach/tune Sensor data path
-  → install appliance CLI
+This guide is intended for system engineers and operators who deploy and manage OpenXDR environments on virtualized infrastructure.
+
+It reflects real operational scenarios including:
+
+- initial installation
+- partial reconfiguration
+- step reruns
+- recovery after reboot or interruption
+
+The procedures follow validated installer behavior and are designed to support stable, repeatable, production-oriented deployments.
+
+## 1. System Architecture
+
+### Example Dell R660 Configuration
+
+![Example Dell R660 AIO and Sensor KVM architecture](/images/AIO-Sensor/2.png)
+
+| Component | Example value |
+| --- | --- |
+| KVM Host | Dell R660 / Ubuntu 24.04 |
+| AIO VM | 48 vCPU, 136 GB RAM |
+| MDS VM | 44 vCPU, 80 GB RAM |
+| Host Access | 1 GbE UTP, local-only `192.168.0.100` |
+| Management & Data Link | 1 GbE or 10 GbE |
+| Sensor SPAN | PCI Passthrough |
+| OS / VM Disk | 1 × 1.92 TB — Ubuntu 24.04, AIO VM, MDS VM |
+| Data Lake | 6 × 3.84 TB — for DLm and AIO |
+
+### Architecture Overview
+
+Stellar Cyber OpenXDR Platform is deployed on one physical server using KVM virtualization.
+
+The installer automatically creates and configures:
+
+- Ubuntu 24.04 KVM host
+- libvirt / qemu-kvm virtualization layer
+- AIO virtual machine (integrated Data Platform + Analyzer)
+- Sensor virtual machine(s)
+- NAT-based virtual networking
+- PCI Passthrough for SPAN traffic
+- LVM-based storage for AIO and Sensor workloads
+- CPU affinity and kernel-level performance tuning
+
+The installer automates:
+
+- host OS preparation and tuning
+- network configuration and conversion
+- storage layout creation
+- virtual-machine lifecycle management
+- performance-critical configuration such as PCI Passthrough and CPU pinning
+
+## 2. Pre-Installation Preparation
+
+### System Requirements
+
+Before running the installer:
+
+- **root privileges are required**
+
+The installer performs low-level operations including:
+
+- network reconfiguration
+- kernel and system tuning
+- disk and filesystem configuration
+- virtual-machine creation and modification
+
+### Documented Operating System
+
+- This guide is based on **Ubuntu Server 24.04 LTS**.
+- For legacy Ubuntu/OpenXDR combinations, verify the current source installer and target-release support scope separately.
+
+## 3. Preparation Steps
+
+1. Switch to a root shell.
+
+```bash
+sudo -i
 ```
 
-Steps 3 and 5 are configured reboot points. Persistent state allows the same installer to resume after reboot without restarting completed work.
+2. Download the installer into the current directory.
+
+```bash
+curl -O https://raw.githubusercontent.com/xdr-labs/OpenXDR-KVM-Installer/main/AIO-Sensor-Installer.sh
+```
+
+3. Make it executable.
+
+```bash
+chmod +x AIO-Sensor-Installer.sh
+```
+
+4. Run the installer.
+
+```bash
+./AIO-Sensor-Installer.sh
+```
+
+## 4. NIC Preparation and Design Guidance
+
+### Management NIC
+
+The Management NIC is used for:
+
+- remote access to the KVM host
+- access to the AIO web interface
+- external management traffic
+
+### Sensor Network Mode
+
+- **NAT mode only**
+- implemented using the default KVM `virbr0` network
+- this design simplifies deployment and reduces operational risk
+
+### SPAN Attachment
+
+- **PCI Passthrough only**
+- bridge-based SPAN attachment is not supported
+- IOMMU must be enabled in BIOS
+- PCI Passthrough provides the highest packet-capture performance for the Sensor workload
+
+### NIC Preparation
+
+Physically connect required NICs before running the installer.
+
+The installer identifies interfaces using **link state**, so connected cables help distinguish NIC roles during selection.
+
+![NAT uplink NIC selection screen](/images/AIO-Sensor/3.png)
+
+## 5. Installer Navigation
+
+The installer provides an interactive menu-driven interface implemented with Whiptail.
+
+### Navigation
+
+- **Spacebar or Down Arrow (↓)**: move through menu items
+- **Enter**: select
+- **q or ESC**: exit a help screen or return to the previous menu
+
+### State-Aware Execution
+
+The installer is **state-aware**.
+
+Installation state is stored under:
+
+```text
+/root/xdr-installer
+```
+
+- completed steps are recorded
+- after reboot or interruption, execution resumes from the next incomplete step
+
+To clear all installation state and restart from the beginning:
+
+```bash
+rm -rf /root/xdr-installer
+```
+
+### Mandatory Reboot Steps
+
+The installer automatically reboots after:
+
+- **STEP 03 – network conversion (netplan → ifupdown)**
+- **STEP 05 – kernel and system-level tuning**
+
+These reboots are mandatory and must not be skipped.
+
+After reboot:
+
+1. log in again
+2. relaunch the installer
+3. select Menu 1
+
+The installer resumes automatically.
+
+### Main Menu Overview
+
+#### 1. Auto Execute All Steps
+
+- runs all steps beginning with the next incomplete step
+- resumes after reboot from the last completed step
+- recommended for:
+  - initial installation
+  - continuing after reboot
+
+#### 2. Select and Run Specific Step Only
+
+- runs one selected step independently
+- recommended for:
+  - AIO VM redeployment
+  - Sensor VM redeployment
+  - network changes
+  - image updates
+  - SPAN configuration changes
+
+#### 3. Configuration
+
+Configures:
+
+- `DRY_RUN` (default: `1`)
+- `AIO_VERSION`
+- `SENSOR_VERSION`
+- `SENSOR_NET_MODE` (`nat` only)
+- `SPAN_ATTACH_MODE` (`pci` only)
+- ACPS credentials
+  - username
+  - password
+  - URL
+
+#### 4. Full Configuration Validation
+
+Validates:
+
+- KVM
+- AIO VM
+- Sensor VM
+- networking
+- SPAN
+- storage
+
+Detailed errors and warnings are displayed.
+
+#### 5. Script Usage Guide
+
+- displays the built-in help guide
+
+#### 6. View Log
+
+- displays the installer log
+
+#### 7. Exit
+
+- exits the installer
+
+## 6. Installation Scenarios
+
+### 6.1 New Installation
+
+This scenario applies immediately after Ubuntu installation.
+
+#### Initial Configuration
+
+From the main menu, select:
+
+```text
+3) Configuration
+```
+
+![AIO & Sensor Installer Configuration screen](/images/AIO-Sensor/4.png)
+
+Configure:
+
+- `DRY_RUN` (default: `1`)
+  - default: `1` (simulation mode)
+  - set to `0` only for real installation
+- `AIO_VERSION`
+- `SENSOR_VERSION`
+- ACPS credentials
+  - username
+  - password
+  - URL
+- `AUTO_REBOOT` (default: `1`)
+- SPAN mode is fixed to `pci`
+- network mode is fixed to NAT
+
+Return to the main menu after configuration.
+
+#### Auto Execute
+
+Select:
+
+```text
+1) Auto execute all steps
+```
+
+![AIO & Sensor Installer Auto Execute All Steps](/images/AIO-Sensor/5.png)
+
+The installer runs:
+
+```text
+STEP 01 → STEP 02 → STEP 03 → … → STEP 13
+```
+
+Execution stops automatically if a reboot is required or an error occurs.
+
+### Mandatory Reboot Behavior
+
+The host is automatically rebooted after:
+
+- **STEP 03 – network configuration changes**
+- **STEP 05 – kernel and system tuning**
+
+After reboot:
+
+1. log in again
+2. relaunch the installer
+3. select Menu 1
+
+The installer resumes from the next incomplete step.
+
+### 6.2 Run a Specific Step
+
+Use this mode to run one installation step without executing the full workflow.
+
+From the main menu, select:
+
+```text
+2) Select and run specific step only
+```
+
+![AIO & Sensor Installer specific-step selection](/images/AIO-Sensor/6.png)
+
+#### Step List
+
+| Step | Task |
+| ---: | --- |
+| 01 | Hardware / NIC / SPAN NIC Selection |
+| 02 | HWE Kernel Installation |
+| 03 | NIC Name / ifupdown Switch and Network Configuration |
+| 04 | KVM / Libvirt Installation and Basic Configuration |
+| 05 | Kernel Parameters / KSM / Swap Tuning |
+| 06 | libvirt Hooks Installation + NTPsec |
+| 07 | LVM Storage Configuration (AIO) |
+| 08 | AIO Download |
+| 09 | AIO VM Deployment |
+| 10 | Sensor LV Creation + Image/Script Download |
+| 11 | Sensor VM Deployment |
+| 12 | PCI Passthrough / CPU Affinity |
+| 13 | Install DP Appliance CLI package |
+
+#### Typical Use Cases
+
+- redeploy the AIO VM
+- redeploy the Sensor VM
+- reapply PCI Passthrough or CPU affinity
+- retry a failed step
+- redownload an image or artifact
+
+Only the selected step runs; other completed steps are not changed.
+
+## 7. Post-Installation Validation
+
+After installation, select:
+
+```text
+4) Full configuration validation
+```
+
+![AIO & Sensor Installer Full Configuration Validation results](/images/AIO-Sensor/7.png)
+
+Validation includes:
+
+- KVM and libvirt service status
+- AIO and Sensor VM status and autostart
+- network configuration
+- storage availability and mount points
+
+If warnings appear, use Menu 2 to rerun the relevant step.
+
+## 8. Common Post-Installation Changes
+
+### Automatic Reboot Notice
+
+- **STEP 03 always triggers a reboot.**
+
+### Change Scenarios
+
+#### Change Management NIC or IP
+
+```text
+STEP 01 → STEP 03
+```
+
+#### Reconfigure SPAN NICs (PCI only)
+
+```text
+STEP 01 → STEP 03 → STEP 12
+```
+
+#### Redeploy the AIO VM
+
+```text
+STEP 07 → STEP 09 → STEP 12
+```
+
+<Warning>
+The existing VM is deleted and the ES data store cannot be reused.
+</Warning>
+
+#### Redeploy the Sensor VM
+
+```text
+STEP 11 → STEP 12
+```
+
+<Warning>
+The existing Sensor VM is deleted.
+</Warning>
+
+## 9. After AIO & Sensor Deployment
+
+### Default Network Configuration
+
+- AIO IP: `192.168.122.2/24`
+- MDS IP: `192.168.122.3/24`
+- Gateway: `192.168.122.1` (KVM internal bridge)
+
+### Web UI Access
+
+Use the KVM host Management IP to access the Data Platform web UI.
+
+Example:
+
+```text
+https://10.10.10.10
+```
+
+After deployment, update the **Receiver IP** for the environment. The default is the internal DAm address.
+
+### CLI Access
+
+Appliance CLI:
+
+```text
+console aio
+console mds
+```
+
+### SSH Access
+
+- AIO: **port 2222**
+- MDS: **port 2223**
+
+## 10. Hardware and Software Requirements
+
+See the **[Ubuntu 24.04 Installation Guide](/getting-started/installing-ubuntu-24-04)** and the Stellar Cyber platform requirements.
+
+## 11. BIOS and Platform Settings
+
+Verify that these BIOS options are enabled:
+
+- Intel Virtualization Technology
+- VT-d / IOMMU
+
+These settings are required for PCI Passthrough used by Sensor SPAN attachment.
