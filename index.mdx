@@ -1,65 +1,179 @@
 ---
 title: "OpenXDR KVM Installer"
-description: "Deploy Stellar Cyber OpenXDR Data Processor and Sensor components on KVM through a guided, stateful installer workflow."
+description: "A script-based automation framework for deploying and operating Stellar Cyber OpenXDR components in KVM-based Linux environments."
 ---
 
 # OpenXDR KVM Installer
 
-OpenXDR KVM Installer automates the host-side work required to deploy Stellar Cyber OpenXDR components on KVM. Instead of manually assembling libvirt, storage, networking, VM images, passthrough, CPU placement, and reboot state, operators use a guided `whiptail` workflow with persistent state and validation.
+## Documentation Overview
+
+This site provides operator-focused documentation for **OpenXDR KVM Installer**, a **script-based automation framework for deploying and operating Stellar Cyber OpenXDR components in KVM-based Linux environments**.
+
+OpenXDR KVM Installer automates host-side work required to deploy Stellar Cyber OpenXDR components on KVM. Instead of manually configuring libvirt, storage, networking, VM images, passthrough, CPU placement, and reboot state, it provides `whiptail`-based workflows, persistent state, and validation.
+
+The installer is designed to **standardize and automate** common deployment tasks and reduce operational complexity:
+
+- prepare KVM / libvirt host environments
+- deploy Data Processor (DP) and Sensor virtual machines
+- configure network interfaces, bridges, and PCI passthrough
+- support Auto Execute or step-by-step execution
+- validate host configuration and deployment state
+
+All installation workflows use an **interactive menu-driven interface**, allowing operators to run only the required steps or execute an end-to-end deployment.
 
 <Tip>
-**First deployment?** Start with **[Choose an Installer](/getting-started/choose-installer)**, review **[Requirements](/getting-started/requirements)**, keep **DRY_RUN enabled**, and then follow the installer-specific guide.
+**First deployment?** Follow **[Choose an Installer](/getting-started/choose-installer)** → **[Deployment Method](/getting-started/deployment-guide)** → **[Requirements](/getting-started/requirements)** → **[Prepare Ubuntu 24.04](/getting-started/installing-ubuntu-24-04)** → **[Quickstart](/getting-started/quickstart)**.
 </Tip>
 
-## What you can deploy
+## Quick Path
 
 <Columns cols={2}>
-  <Card title="Data Processor" icon="database" href="/installers/dp">
-    Prepare a KVM host, provision DL/DA storage, deploy DL-master and DA-master, configure high-performance networking, and install the appliance CLI.
+  <Card title="1. Choose an Installer" icon="list-check" href="/getting-started/choose-installer">
+    Select DP, Standard Sensor, High-performance Sensor, or AIO + Sensor for the target deployment.
   </Card>
-  <Card title="Standard Sensor" icon="radar" href="/installers/sensor">
-    Deploy a modular Sensor VM with management networking and SPAN interface handling.
+  <Card title="2. Choose a Deployment Model" icon="diagram-project" href="/getting-started/deployment-guide">
+    Decide the network model and topology for bare metal, clusters, and private-cloud environments.
   </Card>
-  <Card title="High-performance Sensor" icon="gauge-high" href="/installers/high-performance-sensor">
-    Deploy the dual-VM, NUMA-oriented Sensor path intended for higher-throughput environments.
+  <Card title="3. Check Requirements" icon="clipboard-check" href="/getting-started/requirements">
+    Verify CPU, memory, storage, BIOS, NIC, and access requirements.
   </Card>
-  <Card title="AIO + Sensor" icon="layer-group" href="/installers/aio-sensor">
-    Deploy an AIO Data Processor and a Sensor on the same KVM host through one coordinated workflow.
+  <Card title="4. Prepare Ubuntu 24.04" icon="ubuntu" href="/getting-started/installing-ubuntu-24-04">
+    Prepare BIOS, OS, storage, and networking on the KVM host.
+  </Card>
+  <Card title="5. Quickstart" icon="play" href="/getting-started/quickstart">
+    Start the first deployment with DRY_RUN, validation, real execution, and reboot/resume.
+  </Card>
+  <Card title="Troubleshooting" icon="screwdriver-wrench" href="/operations/troubleshooting">
+    Diagnose failures using validation, logs, and step-level reruns.
   </Card>
 </Columns>
 
-## What the installer automates
+## Who This Documentation Is For
+
+- **Stellar Cyber system administrators** operating on-premises XDR infrastructure
+- **deployment engineers and operators** performing PoC, staging, or production installations
+
+## Deployment Targets
+
+<Columns cols={2}>
+  <Card title="Data Processor" icon="database" href="/installers/dp">
+    Prepare the KVM host and configure DL/DA storage, DL-master/DA-master VMs, and high-performance networking.
+  </Card>
+  <Card title="Standard Sensor" icon="radar" href="/installers/sensor">
+    Deploy a Standard Modular Sensor VM with management networking and SPAN interfaces.
+  </Card>
+  <Card title="High-performance Sensor" icon="gauge-high" href="/installers/high-performance-sensor">
+    Deploy the dual-VM, NUMA-focused high-performance Sensor path.
+  </Card>
+  <Card title="AIO + Sensor" icon="layer-group" href="/installers/aio-sensor">
+    Deploy AIO Data Processor and Sensor together on one KVM host.
+  </Card>
+</Columns>
+
+## Design Principles
+
+### ① Repeatability
+
+- installation steps are deterministic
+- steps can be re-executed safely
+- PoC, staging, and production environments can follow the same workflow
+
+### ② Operational Transparency
+
+- actions are visible through logs and validation
+- operators can see what the automation is doing
+
+### ③ Selective Automation
+
+- run the complete automated deployment
+- or execute only specific steps for the current scenario
+
+### ④ Field-Driven Design
+
+- workflows are based on real deployment and operational requirements rather than only lab assumptions
+
+## Scope and Coverage
+
+This documentation covers the lifecycle of deploying Stellar Cyber OpenXDR components on KVM hosts.
+
+Included:
+
+- host preparation and baseline configuration
+- VM deployment and resource allocation
+- networking and PCI passthrough
+- post-deployment validation and health checks
+
+Primary target environments:
+
+- **on-premises**
+- **KVM-based Linux**
+- **Ubuntu LTS** as the primary documented platform
+
+## Automation Scope
 
 | Area | Automation |
 | --- | --- |
-| Hardware | CPU, memory, disks, NICs, virtualization and IOMMU discovery |
-| KVM stack | KVM/libvirt installation and base configuration |
-| Networking | Management, NAT/bridge, SR-IOV, SPAN and passthrough workflows where applicable |
-| Storage | LVM-backed VM storage preparation |
-| VM deployment | Image preparation, VM definition and deployment |
-| Performance | CPU affinity, NUMA-aware placement and PCI passthrough where applicable |
-| Lifecycle | Step state, reboot handling and resume |
-| Safety | DRY_RUN, explicit confirmations and full configuration validation |
+| Hardware | Detect CPU, memory, disks, NICs, virtualization, and IOMMU |
+| KVM Stack | Install and configure KVM/libvirt |
+| Networking | Management, NAT/bridge, SR-IOV, SPAN, passthrough |
+| Storage | Prepare LVM-based VM storage |
+| VM Deployment | Prepare images, define VMs, and deploy components |
+| Performance | CPU affinity, NUMA-aware placement, PCI passthrough |
+| Lifecycle | Step state, reboot, resume |
+| Safety | DRY_RUN, explicit confirmation, full configuration validation |
 
-## Common operating flow
+## What This Installer Does
+
+- automates repetitive and error-prone deployment tasks
+- enforces a consistent installation order and dependency handling
+- supports both step-level execution and continuous Auto Execute
+- validates system readiness and configuration correctness
+- supports recovery and continuation from partially completed installations
+
+## What This Installer Does Not Do
+
+- replace official product documentation or architecture decisions
+- automatically tune performance beyond documented best practices
+- completely abstract Linux or KVM operational knowledge
+- act as a general-purpose VM management platform
+
+<Warning>
+Basic familiarity with **Linux, KVM, and networking** is still required.
+</Warning>
+
+## Common Operational Flow
 
 ```text
-Inspect hardware
-  → validate configuration
-  → keep DRY_RUN enabled for the first pass
-  → configure installer inputs
-  → run all steps or one selected step
-  → reboot when the installer requires it
-  → run the same installer again to resume
-  → complete post-deployment validation
+Check hardware
+  → Configure installer inputs with DRY_RUN enabled
+  → Review the complete DRY_RUN flow
+  → Run Full Configuration Validation
+  → Resolve FAIL results and re-check inputs
+  → Set DRY_RUN=0
+  → Run all steps or a specific step
+  → Reboot when required
+  → Relaunch the same installer and resume
+  → Perform post-deployment validation
 ```
 
 <Warning>
-The installers can change networking, storage, kernel configuration, virtualization settings, and VM definitions. Review the target host carefully and use DRY_RUN before real execution.
+The installer can modify networking, storage, kernel settings, virtualization configuration, and VM definitions. Always complete DRY_RUN and Full Configuration Validation before real execution.
 </Warning>
 
-## Source projects
+## Source Code and Contributions
 
-- [OpenXDR KVM Installer](https://github.com/xdr-labs/OpenXDR-KVM-Installer) — installer implementation
-- [OpenXDR KVM Installer product page](https://xdr.ooo/products/openxdr-kvm-installer) — XDR Labs project overview
-- [Stellar Appliance CLI](https://github.com/xdr-labs/Stellar-appliance-cli) — post-deployment host operations
+The installer source is maintained on GitHub and continues to evolve based on field feedback.
+
+➡ **[Project Repository](https://github.com/xdr-labs/OpenXDR-KVM-Installer)**
+
+Feedback is welcome for:
+
+- bug reports
+- improvement proposals
+- issues found during operations
+
+## Related Projects
+
+- [OpenXDR KVM Installer](https://github.com/xdr-labs/OpenXDR-KVM-Installer)
+- [XDR Labs](https://xdr.ooo/)
+- [Stellar Appliance CLI](https://github.com/xdr-labs/Stellar-appliance-cli)
