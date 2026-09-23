@@ -1,45 +1,39 @@
 ---
 title: "Requirements"
-description: "Review host, BIOS, operating system, storage, network and access requirements before deployment."
+description: "Review host, BIOS, operating system, storage, network, and access requirements before deployment."
 ---
 
 # Requirements
 
-Exact sizing depends on the selected OpenXDR component and target workload. Validate the current installer configuration and Stellar sizing before production deployment.
+Exact resource sizing depends on the selected OpenXDR component and actual workload. Before production deployment, validate both Stellar sizing and the current installer configuration.
 
-## Common prerequisites
+<Note>
+The installation procedures and screenshots in this documentation are based on **Ubuntu Server 24.04 LTS**. The source installers may retain compatibility paths for some older Ubuntu/DP releases. For legacy deployment, verify the current source and the support scope of the target OpenXDR release separately.
+</Note>
+
+## Common Requirements
 
 - Ubuntu Server supported by the selected installer
-- Root privileges for system-changing installation steps
-- Intel VT-x or AMD-V hardware virtualization enabled in BIOS
-- Intel VT-d or AMD-Vi when SR-IOV or PCI passthrough is required
-- `whiptail` installed
-- Sufficient CPU, memory and local storage for the target VMs
-- Management connectivity to the host
-- Additional SPAN/data interfaces for Sensor deployments as required
-- Network access to required packages and Stellar component images
-- Change/recovery plan before changing host networking or storage
+- Root privileges for system-changing operations
+- Intel VT-x or AMD-V enabled in BIOS
+- Intel VT-d or AMD-Vi when SR-IOV/PCI passthrough is used
+- `whiptail`
+- sufficient CPU, memory, and local storage for the target VMs
+- host management connectivity
+- additional SPAN/data interfaces for Sensor deployments
+- network access required to download packages and Stellar component images
+- a recovery plan before network/storage changes
 
-## OS guidance
+## OS Baseline
 
-The current project documentation covers Ubuntu Server 20.04, 22.04 and 24.04 for the Sensor/AIO families. The DP installer also contains support for older DP deployment paths, including Ubuntu 16.04-based environments. Always verify the selected DP/component version against the active installer before proceeding.
+The operational procedures in this documentation use **Ubuntu Server 24.04 LTS** as the baseline.
 
-## Common Sensor/AIO baseline
+The current source may contain compatibility code for older Ubuntu or historical DP releases, but do not assume that the 24.04 procedure applies unchanged. For legacy deployments, compare the current installer source, target OpenXDR version, and Stellar support criteria.
 
-The project README identifies **12 vCPU**, **16 GB memory**, and approximately **100 GB free storage** as a common starting baseline for standard Sensor/AIO paths. Actual production sizing can be higher and the installers perform resource calculations where applicable.
+## Common Sensor/AIO Starting Baseline
 
-## BIOS checklist
-
-```text
-Hardware virtualization: Enabled
-IOMMU / VT-d / AMD-Vi: Enabled when passthrough is required
-NUMA visibility: Required for the high-performance Sensor path
-```
-
-## Host safety checks
+The current project README identifies **12 vCPU**, **16 GB memory**, and approximately **100 GB free storage** as a common starting point for Standard Sensor/AIO paths. Production sizing may be higher, and the installers calculate some resources automatically.
 
 <Warning>
-Network and storage steps are potentially disruptive. Confirm console or out-of-band access before changing NIC names, switching network configuration, or provisioning disks.
+NIC renaming, the ifupdown transition, and disk provisioning can disrupt remote access or existing data. Secure console or out-of-band access first.
 </Warning>
-
-Run the installer's **Full Configuration Validation** before real execution. Blocking failures must be corrected before deployment.
