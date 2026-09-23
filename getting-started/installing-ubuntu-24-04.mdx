@@ -1,0 +1,242 @@
+---
+title: "Ubuntu Server 24.04 LTS Installation Guide"
+description: "Ubuntu Server 24.04 LTS installation, BIOS, storage, profile, and network preparation for OpenXDR KVM deployment."
+---
+
+# Ubuntu Server 24.04 LTS Installation Guide
+
+This guide describes how to install **Ubuntu Server 24.04 LTS** on a server that will run OpenXDR KVM Installer.
+
+<Note>
+This guide is based on the Ubuntu Server **24.04 LTS series**. For a new installation, use the latest 24.04 LTS point release provided by Canonical. **As of September 23, 2026, the latest installation media is 24.04.5 LTS.** The screenshots below were captured on a 24.04.3 environment, so some wording may differ on newer point releases.
+</Note>
+
+![Ubuntu Server 24.04 LTS installation flow overview](/images/Installing-Ubuntu-24.04/1.png)
+
+## 1. Example Server Hardware
+
+| Item | Example specification |
+| --- | --- |
+| CPU | Intel Xeon Gold 6542Y × 2 (2.9 GHz, 24 cores / 48 threads, Hyper-Threading, 60 MB cache, 250 W, DDR5-5200 support) |
+| Memory | 256 GB (32 GB RDIMM × 8, 5600 MT/s, ECC) |
+| OS disk | 1 × 1.92 TB SATA SSD |
+| Data Lake disks | 23 TB total (3.84 TB SATA SSD × 6) — for DLm and AIO |
+| NIC | Broadcom 5720 dual-port 1 GbE (onboard LOM) |
+| NIC | Intel i350 quad-port 1 GbE |
+| NIC | Intel E810-XXV dual-port 10/25 GbE SFP28 |
+
+### Example Disk Layout
+
+- **1 × 1.92 TB**
+  - Ubuntu 24.04
+  - DLm VM
+  - DAm VM
+- **6 × 3.84 TB**
+  - Data Lake
+
+![Example Ubuntu and Data Lake disk layout](/images/Installing-Ubuntu-24.04/2.png)
+
+## 2. BIOS Configuration (SR-IOV & Virtualization)
+
+<Warning>
+Verify these settings before installing the operating system.
+</Warning>
+
+### Entering the BIOS
+
+1. Power on the server.
+2. Press **F2** to enter the **BIOS Setup Utility**.
+
+### Required BIOS Settings
+
+#### ① CPU Virtualization
+
+Path:
+
+```text
+System BIOS
+ └─ Processor Settings
+     └─ Virtual Technology: Enabled
+```
+
+- typical default: **Enabled**
+- verify that it remains **Enabled**
+
+#### ② IOMMU / Direct I/O
+
+For deployments that use SR-IOV or PCI Passthrough, enable:
+
+- Intel platforms: **VT-d / IOMMU**
+- AMD platforms: **AMD-Vi / IOMMU**
+
+Menu names and locations vary by server vendor and BIOS version. Follow the firmware documentation for the target platform.
+
+#### ③ SR-IOV (when using SR-IOV for a DP cluster)
+
+On Dell servers with Intel X710/E810-family NICs, verify **both the server BIOS Global/System SR-IOV setting and the NIC-level SR-IOV setting**.
+
+A common Dell/Intel configuration flow is:
+
+```text
+System BIOS
+ └─ Global SR-IOV: Enabled
+
+Device Settings
+ └─ Select NIC (Intel X710 / E810)
+     └─ Device Level Configuration
+         └─ Virtualization Mode: SR-IOV
+```
+
+<Warning>
+SR-IOV configuration varies by server model, NIC, and firmware version. **Do not apply a blanket rule that Global SR-IOV must be Disabled.** If you use an SR-IOV Cluster Interface with the DP Installer, enable SR-IOV according to the server/NIC vendor documentation. For simple Sensor PCI Passthrough, IOMMU/VT-d is more fundamental than SR-IOV itself.
+</Warning>
+
+![Dell NIC Device Level Configuration SR-IOV setting](/images/Installing-Ubuntu-24.04/3.png)
+
+## 3. Prepare Ubuntu Server 24.04 LTS Installation Media
+
+- Download the ISO:
+  - https://ubuntu.com/download/server
+- Create a UEFI-bootable USB device.
+- Connect the USB device to a **rear USB port (USB 1 or 2 recommended)**.
+
+## 4. Boot the Installer
+
+1. Power on the server.
+2. Press **F11 → Boot Manager**.
+3. Select:
+
+```text
+One-shot UEFI Boot Menu
+ └─ Disk connected to rear USB 1 or 2
+```
+
+![Selecting the Ubuntu installation USB in Dell Boot Manager](/images/Installing-Ubuntu-24.04/4.png)
+
+## 5. Choose the Ubuntu Installation Entry
+
+When the GRUB menu appears, use the following option for the standard flow in this guide.
+
+### Recommended
+
+- **Try or Install Ubuntu Server** (default)
+
+Ubuntu Server 24.04 LTS uses the GA kernel by default for Server installation, while HWE is also a supported option. OpenXDR KVM Installer has a separate **HWE Kernel installation step (STEP 02)**, so this guide recommends using the default Server installation path and allowing the installer to manage the later kernel transition.
+
+<Note>
+If specific newer hardware requires the HWE kernel during OS installation, the HWE boot option can be used. Do not generalize a boot or live-filesystem problem seen on an older server/media combination to every Ubuntu 24.04 HWE installation. For hardware-specific problems, first verify the latest 24.04 LTS installation media and the server vendor's support information.
+</Note>
+
+![Ubuntu Server GRUB installation menu](/images/Installing-Ubuntu-24.04/5.png)
+
+## 6. Network Configuration During Installation
+
+If DHCP is available and an address is assigned automatically:
+
+- verify the interface
+- select **Done**
+
+No additional configuration is required at this stage.
+
+![Ubuntu Server network configuration during installation](/images/Installing-Ubuntu-24.04/6.png)
+
+## 7. Guided Storage
+
+<Warning>
+This is one of the most important steps. Select the disk carefully.
+</Warning>
+
+### Disk selection matters for
+
+- DLm & DAm deployment
+- AIO & MDS deployment
+
+### Disk selection is less significant for
+
+- Sensor-only deployment
+  - the Ubuntu installation disk does not determine the Sensor data layout
+
+### Configuration
+
+1. Select **Use an entire disk**.
+2. Select **only the 1.79 TB / 1.92 TB OS disk**.
+   - **Do not select Data Lake disks.**
+3. Enable:
+   - **Set up this disk as an LVM group**
+4. Select **Done**.
+5. Review and confirm the changes.
+
+![Ubuntu Server Guided Storage disk configuration](/images/Installing-Ubuntu-24.04/7.png)
+
+## 8. Profile Configuration (Example)
+
+| Item | Example value |
+| --- | --- |
+| Your name | `stellar` |
+| Your server's name | `m6000d` |
+| Username | `stellar` |
+| Password | Unique, strong temporary password |
+| Confirm password | Same as above |
+
+Select **Done** after entering the values.
+
+<Warning>
+The account names shown in this documentation are examples only. **Do not use or reuse a fixed password such as `stellar`.** In production, use a unique password that meets your organization's password policy and manage credentials securely after installation.
+</Warning>
+
+![Ubuntu Server Profile configuration](/images/Installing-Ubuntu-24.04/8.png)
+
+## 9. Complete Installation
+
+- continue through the remaining installation steps
+- reboot when installation completes
+- remove the USB device before the reboot
+
+![Ubuntu Server SSH configuration](/images/Installing-Ubuntu-24.04/9.png)
+
+![Ubuntu Server installation complete](/images/Installing-Ubuntu-24.04/10.png)
+
+## 10. Basic Network Configuration After Installation
+
+A static IP address is recommended for SSH access.
+
+### Edit the Netplan configuration
+
+```bash
+sudo vi /etc/netplan/00-installer-config.yaml
+```
+
+### Example
+
+```yaml
+network:
+  version: 2
+  ethernets:
+    eno8303:
+      dhcp4: false
+      addresses:
+        - 10.4.0.200/24
+      routes:
+        - to: default
+          via: 10.4.0.254
+      nameservers:
+        addresses:
+          - 8.8.8.8
+          - 8.8.4.4
+```
+
+### Apply
+
+```bash
+sudo netplan apply
+```
+
+## 11. Verify the Configuration
+
+```bash
+ip addr show
+ip route
+ping 8.8.8.8
+```
+
+If these commands work as expected, the host is ready for SSH access.
