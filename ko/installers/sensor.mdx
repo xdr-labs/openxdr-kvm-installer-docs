@@ -7,6 +7,8 @@ description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber Open XDR
 
 ## Sensor KVM Installer – 사용자 가이드
 
+![OpenXDR KVM Sensor Installer 빠른 참조 가이드](/images/Sensor-Installer/1.png)
+
 ## 개요
 
 본 문서는 **Stellar Cyber Open XDR Sensor KVM Installer**에 대한 종합 사용자 가이드입니다.
@@ -106,6 +108,8 @@ chmod +x Sensor-Installer.sh
 
 > 관리 인터페이스는 NAT 모드, SPAN NIC은 Bridge 모드로 구성할 수 있습니다.
 
+![NAT 관리 인터페이스와 Bridge SPAN 구성 예시](/images/Sensor-Installer/2.png)
+
 ### 브리지 모드
 
 - Sensor VM이 **전용 L2 브리지**를 통해 연결됨
@@ -121,6 +125,8 @@ chmod +x Sensor-Installer.sh
 - 운영 환경에서 고성능 Sensor 노드를 배포하는 경우
 
 > 관리 인터페이스는 Bridge 모드, SPAN NIC은 PCI 패스스루 모드로 구성할 수 있습니다.
+
+![Bridge 관리 인터페이스와 PCI Passthrough SPAN 구성 예시](/images/Sensor-Installer/3.png)
 
 ## 4. SPAN 연결 방식
 
@@ -153,6 +159,8 @@ chmod +x Sensor-Installer.sh
 설치 과정에서 NIC 선택을 단순화하기 위해 설치 프로그램 실행 전에 필요한 NIC를 물리적으로 연결하는 것을 강력히 권장합니다.
 
 설치 프로그램은 링크 상태를 기준으로 인터페이스를 식별하므로, 케이블이 연결되어 있으면 각 NIC의 역할을 명확히 구분할 수 있습니다.
+
+![Sensor SPAN NIC 선택 화면](/images/Sensor-Installer/4.png)
 
 ## 5. 설치 프로그램 탐색 및 실행 모델
 
@@ -274,6 +282,8 @@ DRY_RUN=0
 
 - **1) Auto Execute All Steps**
 
+![Sensor Installer Auto Execute All Steps 화면](/images/Sensor-Installer/5.png)
+
 설치 프로그램은 다음 단계를 순차적으로 실행합니다.
 
 ```text
@@ -303,6 +313,8 @@ STEP 01 → STEP 02 → STEP 03 → … → STEP 10
 
 - **2) Select and Run Specific Step Only**
 
+![Sensor Installer 개별 Step 선택 화면](/images/Sensor-Installer/6.png)
+
 이 모드는 다음과 같은 상황에서 사용됩니다.
 
 - 네트워크 또는 SPAN 설정 변경
@@ -317,6 +329,8 @@ STEP 01 → STEP 02 → STEP 03 → … → STEP 10
 설치 완료 후 다음 메뉴를 선택합니다.
 
 - **4) Full Configuration Validation**
+
+![Sensor Installer Full Configuration Validation 결과 화면](/images/Sensor-Installer/7.png)
 
 ### 검증 범위
 
