@@ -22,32 +22,31 @@ OpenXDR KVM Installer는 Stellar Cyber OpenXDR 구성 요소를 KVM에 배포할
 모든 설치 절차는 **대화형 메뉴 기반 인터페이스**를 통해 실행되며, 운영자는 **필요한 단계만 선택 실행**하거나 **처음부터 끝까지 자동 배포**를 수행할 수 있습니다.
 
 <Tip>
-**처음 배포합니까?** **[Installer 선택](/ko/getting-started/choose-installer)** → **[요구사항](/ko/getting-started/requirements)** → **DRY_RUN 유지** → Installer별 가이드 순서로 진행합니다.
+**처음 배포합니까?** **[Installer 선택](/ko/getting-started/choose-installer)** → **[배포 방식 설계](/ko/getting-started/deployment-guide)** → **[요구사항](/ko/getting-started/requirements)** → **[Ubuntu 24.04 준비](/ko/getting-started/installing-ubuntu-24-04)** → **[빠른 시작](/ko/getting-started/quickstart)** 순서로 진행하십시오.
 </Tip>
 
 ## 빠른 경로
 
 <Columns cols={2}>
-  <Card title="설치 프로그램 선택" icon="list-check" href="/ko/getting-started/choose-installer">
+  <Card title="1. 설치 프로그램 선택" icon="list-check" href="/ko/getting-started/choose-installer">
     DP, Standard Sensor, High-performance Sensor, AIO + Sensor 중 배포 대상에 맞는 Installer를 선택합니다.
   </Card>
-  <Card title="배포 방식 설계" icon="diagram-project" href="/ko/getting-started/deployment-guide">
-    베어메탈, 클러스터, 프라이빗 클라우드 등 토폴로지에 맞는 네트워크와 배포 방식을 결정합니다.
+  <Card title="2. 배포 방식 설계" icon="diagram-project" href="/ko/getting-started/deployment-guide">
+    베어메탈, 클러스터, 프라이빗 클라우드에 맞는 네트워크와 토폴로지를 결정합니다.
   </Card>
-  <Card title="Ubuntu 24.04 설치" icon="ubuntu" href="/ko/getting-started/installing-ubuntu-24-04">
+  <Card title="3. 요구사항 확인" icon="clipboard-check" href="/ko/getting-started/requirements">
+    CPU, Memory, Storage, BIOS, NIC 및 접근 요구사항을 확인합니다.
+  </Card>
+  <Card title="4. Ubuntu 24.04 준비" icon="ubuntu" href="/ko/getting-started/installing-ubuntu-24-04">
     KVM Host의 BIOS, OS, Storage, Network 준비 절차를 확인합니다.
+  </Card>
+  <Card title="5. 빠른 시작" icon="play" href="/ko/getting-started/quickstart">
+    DRY_RUN, Validation, 실제 실행, Reboot/Resume 순서로 첫 배포를 시작합니다.
   </Card>
   <Card title="문제 해결" icon="screwdriver-wrench" href="/ko/operations/troubleshooting">
     Validation, Log, Step 단위 재실행으로 실패 원인을 확인합니다.
   </Card>
 </Columns>
-
-## 시작하기
-
-- **처음 설치하는 경우**  
-  → 네비게이션 메뉴에 안내된 **권장 설치 흐름**부터 시작하세요.
-- **기존 환경 문제 해결 또는 설정 변경 목적**이라면  
-  → 필요한 설정 또는 검증 섹션으로 바로 이동하시면 됩니다.
 
 ## 이 문서의 대상
 
@@ -55,11 +54,6 @@ OpenXDR KVM Installer는 Stellar Cyber OpenXDR 구성 요소를 KVM에 배포할
 
 - 온프레미스 XDR 인프라를 운영하는 **Stellar Cyber 시스템 관리자**
 - PoC, 스테이징, 운영 환경 배포를 수행하는 **구축 및 배포 담당자**
-
-## 이 문서를 사용하는 방법
-
-- 네비게이션 메뉴를 따라 **권장 설치 흐름**을 순차적으로 진행하거나
-- 필요에 따라 **특정 설정, 검증, 트러블슈팅 항목으로 바로 이동**할 수 있습니다.
 
 ## 배포 대상
 
@@ -163,6 +157,8 @@ Hardware 확인
   → Installer 입력값 구성 (DRY_RUN 유지)
   → DRY_RUN으로 전체 흐름 점검
   → Full Configuration Validation
+  → FAIL 해결 및 입력값 재확인
+  → DRY_RUN=0 전환
   → 전체 Step 또는 개별 Step 실행
   → 필요한 시점에 Reboot
   → 동일 Installer 재실행 후 Resume
