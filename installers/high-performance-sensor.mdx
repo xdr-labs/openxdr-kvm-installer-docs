@@ -1,35 +1,43 @@
 ---
 title: "High-performance Sensor Installer"
-description: "Deploy the dual-VM, NUMA-oriented high-performance Sensor path with PCI passthrough."
+description: "Deploy the high-performance Sensor path using dual VMs, NUMA-aware placement, and PCI Passthrough."
 ---
 
 # High-performance Sensor Installer
 
-`6000-Sensor-Installer.sh` is the high-performance Sensor path. It uses the same operator model as the standard Sensor installer while targeting a dual-VM, NUMA-oriented deployment.
+`6000-Sensor-Installer.sh` is the High-performance Sensor deployment path using **dual VMs, NUMA-aware CPU placement, NAT management networking, and PCI Passthrough SPAN**.
 
-## Current 10-step flow
+## Current 10-Step Workflow
 
-| Step | Operation |
+| Step | Task |
 | ---: | --- |
-| 1 | Hardware / NIC / CPU / memory / SPAN NIC selection |
-| 2 | HWE kernel installation |
-| 3 | NIC rename / ifupdown switch and network configuration |
-| 4 | KVM / libvirt installation and base configuration |
+| 1 | Hardware / NIC / CPU / Memory / SPAN NIC selection |
+| 2 | HWE Kernel installation |
+| 3 | NIC rename / ifupdown transition / network configuration |
+| 4 | KVM / libvirt installation and baseline configuration |
 | 5 | Kernel parameters / KSM / swap tuning |
-| 6 | libvirt hooks installation |
+| 6 | libvirt hook installation |
 | 7 | Sensor LV creation + image/script download |
 | 8 | Sensor VM deployment |
-| 9 | PCI passthrough / CPU affinity |
-| 10 | Install DP Appliance CLI package |
+| 9 | PCI Passthrough / CPU Affinity |
+| 10 | DP Appliance CLI package installation |
 
-## Performance model
+## Performance Model
 
-The project describes this installer as a dual-VM path intended for high-throughput Sensor deployments. NUMA visibility, CPU placement and direct device assignment are therefore more important than in a standard Sensor deployment.
+This installer treats NUMA visibility, CPU placement, and direct device assignment as important parts of a high-performance Sensor deployment.
 
-## SPAN attachment
+## Network / SPAN Constraints
 
-The current high-performance script is PCI-passthrough-oriented for SPAN interfaces. Confirm IOMMU, IOMMU grouping, dedicated SPAN NICs, and NUMA/CPU placement before execution.
+The current `6000-Sensor-Installer.sh` uses:
 
-## State location
+- Sensor management network: **NAT**
+- SPAN attachment: **PCI Passthrough only**
+- high-performance placement: NUMA-aware CPU Affinity
 
-When run as root, this installer currently uses `/opt/xdr-installer`. This differs from the other current installer families, which normally use `/root/xdr-installer` when run as root.
+If your virtualized environment requires Bridge SPAN, review the **[Standard Sensor Installer](/installers/sensor)** first.
+
+Before execution, verify IOMMU, IOMMU groups, dedicated SPAN NICs, and NUMA/CPU placement.
+
+## State Location
+
+When run as root, this installer currently uses `/opt/xdr-installer`. This differs from the other current installer family, which generally uses `/root/xdr-installer` for root execution.
