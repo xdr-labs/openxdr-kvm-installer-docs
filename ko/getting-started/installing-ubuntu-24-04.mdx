@@ -7,6 +7,8 @@ description: "OpenXDR KVM 배포를 위한 Ubuntu 24.04.3 Server 설치, BIOS, S
 
 이 문서는 OpenXDR KVM Installer를 실행할 서버에 **Ubuntu 24.04.3 Server**를 설치하기 위한 절차를 설명합니다.
 
+![Ubuntu 24.04.3 Server 전체 설치 흐름 개요](/images/Installing-Ubuntu-24.04/1.png)
+
 ## 1. 예시 서버 하드웨어 사양
 
 | 항목 | 상세 내용 |
@@ -27,6 +29,8 @@ description: "OpenXDR KVM 배포를 위한 Ubuntu 24.04.3 Server 설치, BIOS, S
   - DAm VM
 - **6 × 3.84 TB**
   - Data Lake
+
+![Ubuntu 및 Data Lake 디스크 구성 예시](/images/Installing-Ubuntu-24.04/2.png)
 
 ## 2. BIOS 설정 (SR-IOV & 가상화)
 
@@ -84,6 +88,8 @@ Device Settings
 - SR-IOV는 NIC 장치 단위에서 이미 활성화되어 있으므로 Global SR-IOV를 켤 필요가 없음
 - Global SR-IOV를 Enabled로 설정하면 예기치 않은 동작이나 문제를 유발할 수 있음
 
+![Dell NIC Device Level Configuration의 SR-IOV 설정](/images/Installing-Ubuntu-24.04/3.png)
+
 ## 3. Ubuntu 24.04.3 설치 미디어 준비
 
 - ISO 다운로드:
@@ -101,6 +107,8 @@ Device Settings
 One-shot UEFI Boot Menu
  └─ 후면 USB 1 또는 2에 연결된 디스크
 ```
+
+![Dell Boot Manager에서 Ubuntu 설치 USB 선택](/images/Installing-Ubuntu-24.04/4.png)
 
 ## 5. Ubuntu 설치 메뉴 선택
 
@@ -123,6 +131,8 @@ Attempt interactive netboot from a URL?
 ```
 </Warning>
 
+![Ubuntu Server GRUB 설치 메뉴](/images/Installing-Ubuntu-24.04/5.png)
+
 ## 6. 네트워크 설정 (설치 중)
 
 DHCP가 사용 가능하고 IP가 자동 할당되면:
@@ -131,6 +141,8 @@ DHCP가 사용 가능하고 IP가 자동 할당되면:
 - **Done** 클릭
 
 이 단계에서는 추가 설정이 필요하지 않습니다.
+
+![Ubuntu Server 설치 중 네트워크 설정 화면](/images/Installing-Ubuntu-24.04/6.png)
 
 ## 7. 디스크 자동 설정 (Guided Storage)
 
@@ -158,6 +170,8 @@ DHCP가 사용 가능하고 IP가 자동 할당되면:
 4. **Done**
 5. 변경 사항 확인 후 진행
 
+![Ubuntu Server Guided Storage 디스크 설정 화면](/images/Installing-Ubuntu-24.04/7.png)
+
 ## 8. 프로파일 설정 (예시)
 
 | 항목 | 값 |
@@ -170,11 +184,17 @@ DHCP가 사용 가능하고 IP가 자동 할당되면:
 
 입력 후 **Done**을 클릭합니다.
 
+![Ubuntu Server Profile configuration 화면](/images/Installing-Ubuntu-24.04/8.png)
+
 ## 9. 설치 완료
 
 - 나머지 설치 단계 진행
 - 설치 완료 후 재부팅
 - 재부팅 전에 USB 제거
+
+![Ubuntu Server SSH configuration 화면](/images/Installing-Ubuntu-24.04/9.png)
+
+![Ubuntu Server Installation complete 화면](/images/Installing-Ubuntu-24.04/10.png)
 
 ## 10. 기본 네트워크 설정 (설치 후)
 
