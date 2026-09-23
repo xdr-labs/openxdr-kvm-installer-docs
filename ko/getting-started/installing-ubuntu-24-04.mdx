@@ -1,13 +1,17 @@
 ---
-title: "Ubuntu 24.04.3 Server 설치 가이드"
-description: "OpenXDR KVM 배포를 위한 Ubuntu 24.04.3 Server 설치, BIOS, Storage, Profile 및 Network 설정 절차입니다."
+title: "Ubuntu Server 24.04 LTS 설치 가이드"
+description: "OpenXDR KVM 배포를 위한 Ubuntu Server 24.04 LTS 설치, BIOS, Storage, Profile 및 Network 설정 절차입니다."
 ---
 
-# Ubuntu 24.04.3 Server 설치 가이드
+# Ubuntu Server 24.04 LTS 설치 가이드
 
-이 문서는 OpenXDR KVM Installer를 실행할 서버에 **Ubuntu 24.04.3 Server**를 설치하기 위한 절차를 설명합니다.
+이 문서는 OpenXDR KVM Installer를 실행할 서버에 **Ubuntu Server 24.04 LTS**를 설치하기 위한 절차를 설명합니다.
 
-![Ubuntu 24.04.3 Server 전체 설치 흐름 개요](/images/Installing-Ubuntu-24.04/1.png)
+<Note>
+이 가이드는 Ubuntu Server **24.04 LTS 계열**을 기준으로 합니다. 새 설치에는 Canonical이 제공하는 최신 24.04 LTS point release를 사용하십시오. **2026년 9월 23일 기준 최신 설치 미디어는 24.04.5 LTS**입니다. 아래 화면 이미지는 24.04.3 환경에서 촬영된 것이므로 최신 point release에서 일부 화면 문구가 달라질 수 있습니다.
+</Note>
+
+![Ubuntu Server 24.04 LTS 전체 설치 흐름 개요](/images/Installing-Ubuntu-24.04/1.png)
 
 ## 1. 예시 서버 하드웨어 사양
 
@@ -58,39 +62,38 @@ System BIOS
 - 기본값: **Enabled**
 - 반드시 **Enabled** 상태인지 확인
 
-#### ② SR-IOV 글로벌 설정
+#### ② IOMMU / Direct I/O 설정
 
-경로:
+SR-IOV 또는 PCI Passthrough를 사용하는 배포에서는 다음 기능이 활성화되어 있어야 합니다.
+
+- Intel 플랫폼: **VT-d / IOMMU**
+- AMD 플랫폼: **AMD-Vi / IOMMU**
+
+메뉴 이름과 위치는 서버 제조사와 BIOS 버전에 따라 다르므로 해당 플랫폼의 펌웨어 문서를 기준으로 확인합니다.
+
+#### ③ SR-IOV 설정 (DP Cluster에서 SR-IOV를 사용하는 경우)
+
+Dell 서버와 Intel X710/E810 계열 NIC에서 SR-IOV를 사용할 때는 **서버 BIOS의 Global/System SR-IOV 설정과 NIC 장치 수준의 SR-IOV 설정을 함께 확인**합니다.
+
+Dell/Intel 가이드의 일반적인 설정 흐름:
 
 ```text
 System BIOS
- └─ Integrated Devices
-     └─ SR-IOV Global Enable: Disabled
-```
+ └─ Global SR-IOV: Enabled
 
-<Warning>
-기본값은 Enabled인 경우가 많지만 반드시 **Disabled**로 유지해야 합니다.
-</Warning>
-
-#### ③ NIC 단위 SR-IOV 설정 (X710 / E810)
-
-경로:
-
-```text
 Device Settings
  └─ NIC 선택 (Intel X710 / E810)
      └─ Device Level Configuration
          └─ Virtualization Mode: SR-IOV
 ```
 
-설명:
-
-- SR-IOV는 NIC 장치 단위에서 이미 활성화되어 있으므로 Global SR-IOV를 켤 필요가 없음
-- Global SR-IOV를 Enabled로 설정하면 예기치 않은 동작이나 문제를 유발할 수 있음
+<Warning>
+SR-IOV 설정은 서버 모델, NIC, 펌웨어 버전에 따라 다를 수 있습니다. **Global SR-IOV를 일괄적으로 Disabled로 두는 규칙은 적용하지 마십시오.** DP Installer에서 SR-IOV Cluster Interface를 사용할 경우 해당 서버/NIC 제조사 문서에 따라 SR-IOV를 활성화하십시오. Sensor의 단순 PCI Passthrough는 SR-IOV 자체보다 IOMMU/VT-d 활성화가 핵심입니다.
+</Warning>
 
 ![Dell NIC Device Level Configuration의 SR-IOV 설정](/images/Installing-Ubuntu-24.04/3.png)
 
-## 3. Ubuntu 24.04.3 설치 미디어 준비
+## 3. Ubuntu Server 24.04 LTS 설치 미디어 준비
 
 - ISO 다운로드:
   - https://ubuntu.com/download/server
@@ -112,24 +115,17 @@ One-shot UEFI Boot Menu
 
 ## 5. Ubuntu 설치 메뉴 선택
 
-GRUB 메뉴가 나타나면 다음 항목을 선택합니다.
+GRUB 메뉴가 나타나면 이 문서의 표준 설치 흐름에서는 다음 항목을 선택합니다.
 
-### 선택
+### 권장 선택
 
 - **Try or Install Ubuntu Server** (기본 옵션)
 
-### 선택 금지
+Ubuntu Server 24.04 LTS에서는 Server 설치가 기본적으로 GA 커널을 사용하며 HWE 커널도 지원되는 선택지입니다. OpenXDR KVM Installer에는 별도의 **HWE Kernel 설치 단계(STEP 02)**가 있으므로, 이 가이드에서는 기본 Server 설치 경로를 사용한 뒤 Installer가 커널 전환을 관리하도록 권장합니다.
 
-- **Ubuntu Server with HWE Kernel**
-
-<Warning>
-HWE 커널을 선택하면 다음과 같은 네트워크 오류 루프가 발생할 수 있습니다.
-
-```text
-Unable to find a medium containing a live file system
-Attempt interactive netboot from a URL?
-```
-</Warning>
+<Note>
+특정 최신 하드웨어가 설치 단계부터 HWE 커널을 필요로 하는 경우에는 HWE 부팅 옵션을 사용할 수 있습니다. 과거 특정 서버/미디어 조합에서 발생한 부팅 또는 live filesystem 오류를 모든 Ubuntu 24.04 HWE 설치에 일반화하지 마십시오. 하드웨어별 문제가 있으면 최신 24.04 LTS 설치 미디어와 해당 서버 제조사의 지원 정보를 먼저 확인하십시오.
+</Note>
 
 ![Ubuntu Server GRUB 설치 메뉴](/images/Installing-Ubuntu-24.04/5.png)
 
@@ -179,10 +175,14 @@ DHCP가 사용 가능하고 IP가 자동 할당되면:
 | Your name | `stellar` |
 | Your server's name | `m6000d` |
 | Username | `stellar` |
-| Password | `stellar` |
-| Confirm password | `stellar` |
+| Password | 고유한 강력한 임시 비밀번호 |
+| Confirm password | 위와 동일 |
 
 입력 후 **Done**을 클릭합니다.
+
+<Warning>
+문서 예시에 표시된 계정명은 예시일 뿐입니다. **`stellar` 같은 고정 비밀번호를 사용하거나 재사용하지 마십시오.** 운영 환경에서는 조직의 비밀번호 정책을 충족하는 고유한 비밀번호를 설정하고 설치 후 자격 증명을 안전하게 관리하십시오.
+</Warning>
 
 ![Ubuntu Server Profile configuration 화면](/images/Installing-Ubuntu-24.04/8.png)
 
@@ -213,10 +213,12 @@ network:
   version: 2
   ethernets:
     eno8303:
-      dhcp4: no
+      dhcp4: false
       addresses:
         - 10.4.0.200/24
-      gateway4: 10.4.0.254
+      routes:
+        - to: default
+          via: 10.4.0.254
       nameservers:
         addresses:
           - 8.8.8.8
