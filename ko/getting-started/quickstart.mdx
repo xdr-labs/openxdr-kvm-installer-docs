@@ -5,15 +5,19 @@ description: "Source를 Clone하고 DRY_RUN, Validation, Installer 실행과 Res
 
 # 빠른 시작
 
-## 1. Source Repository Clone
+## 1. Root Shell에서 Source 준비
+
+`sudo -i`는 로그인 Shell로 전환되면서 작업 디렉터리가 바뀔 수 있으므로 **Root 전환을 먼저 수행**합니다.
 
 ```bash
+sudo -i
 git clone https://github.com/xdr-labs/OpenXDR-KVM-Installer.git
 cd OpenXDR-KVM-Installer
-sudo -i
 ```
 
-## 2. Installer 선택
+## 2. 설치 프로그램 선택
+
+먼저 **[설치 프로그램 선택](/ko/getting-started/choose-installer)**에서 배포 대상과 네트워크 제약을 확인합니다.
 
 ```bash
 ./DP-Installer.sh
