@@ -24,10 +24,7 @@
     "prompt": "문서 검색 / Search KVM Installer docs..."
   },
   "seo": {
-    "indexing": "navigable",
-    "metatags": {
-      "canonical": "https://kvm.xdr.ooo"
-    }
+    "indexing": "navigable"
   },
   "appearance": {
     "default": "system",
@@ -156,5 +153,8 @@
         ]
       }
     ]
+  },
+  "styling": {
+    "eyebrows": "breadcrumbs"
   }
 }
