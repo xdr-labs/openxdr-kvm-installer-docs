@@ -18,7 +18,7 @@ Stellar Appliance CLI는 Stellar Cyber OpenXDR 환경을 위해 설계된 명령
 특히 다음 항목에 중점을 둡니다.
 
 - 네트워크 구성 (ifupdown 기반)
-- 시간 동기화 (NTP)
+- 시간 동기화 (NTPsec)
 - 방화벽 접근 제어 (iptables 기반 ACL)
 - 가상 머신 운영 및 모니터링
 - 재배포 없이 수행하는 통제된 운영 변경
@@ -151,9 +151,15 @@ show route
 
 ```text
 set interface <iface> ip <IP/Mask> [gateway <IP>]
-set interface <iface> dns <dns1> [dns2 ...]
-unset interface <iface> <ip|gateway|dns>
+set interface <iface> gateway <IP>
+set interface mgt dns <dns1> [dns2 ...]
+set dns mgt <dns1> [dns2 ...]
+unset interface <iface> <ip|gateway|restart>
 ```
+
+<Note>
+DNS 설정은 현재 **`mgt` 인터페이스에서만 지원**됩니다. `unset interface`에는 DNS 제거 옵션이 없으며, 지원되는 제거/동작 옵션은 `ip`, `gateway`, `restart`입니다.
+</Note>
 
 ### 변경 사항 적용 (필수)
 
@@ -178,28 +184,24 @@ set interface <iface> restart
 
 ## 4. 시간 동기화(NTP) 관리
 
-CLI는 현재 활성화된 NTP 구현체를 자동으로 감지하고 관리합니다.
-
-### 지원되는 NTP 서비스
-
-- ntpsec (설치 스크립트 기본값)
-- chrony
-- systemd-timesyncd
-- legacy ntp
+현재 CLI의 지원 백엔드는 **NTPsec**입니다. CLI는 `/etc/ntpsec/ntp.conf`의 CLI 관리 영역을 변경하고 NTPsec 서비스를 사용합니다.
 
 ### 명령어
 
 ```text
 show ntp
 set ntp <server>
+set ntp add <server> [server ...]
+set ntp replace <server> [server ...]
 unset ntp <server>
 ```
 
 ### 동작 방식
 
-- 활성화된 NTP 서비스 자동 감지
-- 해당 서비스의 구성 파일 자동 업데이트
-- NTP 서비스 자동 재시작
+- NTPsec 설치 및 설정 파일 유효성 확인
+- CLI 관리 영역의 Server/Pool 항목 추가 또는 교체
+- 변경 후 NTPsec 설정 반영 및 Runtime Peer 상태 확인
+- `unset ntp`는 CLI가 관리하는 NTP Peer만 제거
 
 ## 5. 방화벽 접근 제어(ACL) 관리
 
@@ -352,6 +354,8 @@ set acl apply
 - 규칙이 iptables에 적용됨
 - Whitelist 모드는 자동으로 deny-all 적용
 - Blacklist 모드는 자동으로 allow-all 유지
+- 적용 성공 후 CLI는 `netfilter-persistent save`를 우선 사용하고, 사용할 수 없으면 `iptables-save`로 Runtime ACL의 재부팅 후 지속성을 저장하려고 시도함
+- 저장 도구가 없거나 저장에 실패하면 Warning을 출력하므로 운영자는 반드시 결과를 확인해야 함
 
 ### 5.8 ACL 규칙 제거 (`unset acl`)
 
@@ -456,7 +460,25 @@ set autostart <vm> # toggle
 monitor
 ```
 
-## 8. 로깅 및 감사 추적성
+## 8. 패치 관리
+
+CLI는 Data Platform에서 제공되는 패치를 적용하고 적용 이력을 확인하는 기능을 제공합니다.
+
+```text
+set patch apply <patch_name>
+show patch_history
+show patch_history <patch_name>
+```
+
+- `set patch apply <patch_name>` — 지정한 Stellar patch를 가져와 적용
+- `show patch_history` — 적용 이력 요약 확인
+- `show patch_history <patch_name>` — 해당 patch의 상세 결과 확인
+
+<Warning>
+Patch 적용은 운영 시스템을 변경합니다. 대상 OpenXDR 릴리스에 맞는 공식 patch인지 확인하고, 적용 전 백업/복구 절차와 유지보수 창을 확보하십시오.
+</Warning>
+
+## 9. 로깅 및 감사 추적성
 
 모든 CLI 작업은 자동으로 로그에 기록됩니다.
 
@@ -472,7 +494,7 @@ monitor
 - 실행된 명령
 - 실행 컨텍스트
 
-## 9. 운영 모범 사례
+## 10. 운영 모범 사례
 
 ### Appliance CLI 사용 권장 항목
 
@@ -487,7 +509,7 @@ monitor
 - VM 토폴로지 재설계
 - 설치 도구 대체
 
-## 10. 호환성 및 적용 범위
+## 11. 호환성 및 적용 범위
 
 CLI는 다음 OpenXDR 설치 스크립트와 호환됩니다.
 
@@ -501,7 +523,7 @@ AIO-Sensor-Installer.sh
 CLI는 자동으로 다음을 수행합니다.
 
 - 설치 스크립트가 관리하는 네트워크 구성 인식
-- 설치 스크립트가 관리하는 NTP 설정 감지
+- 설치 스크립트가 구성한 NTPsec 설정 관리
 - NAT 및 Bridge 모드 모두 지원
 - 설치 스크립트로 배포된 VM 관리
 
