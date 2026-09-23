@@ -5,7 +5,7 @@ description: "Dual VM, NUMA-aware placement, PCI Passthrough 중심의 고성능
 
 # High-performance Sensor Installer
 
-`6000-Sensor-Installer.sh`는 Dual VM과 NUMA를 중심으로 한 High-performance Sensor 배포 경로입니다.
+`6000-Sensor-Installer.sh`는 **Dual VM, NUMA-aware CPU placement, NAT 관리 네트워크, PCI Passthrough SPAN**을 사용하는 High-performance Sensor 배포 경로입니다.
 
 ## 현재 10-Step Workflow
 
@@ -26,9 +26,17 @@ description: "Dual VM, NUMA-aware placement, PCI Passthrough 중심의 고성능
 
 이 Installer는 고성능 Sensor 환경을 위해 NUMA Visibility, CPU Placement, Direct Device Assignment를 중요하게 다룹니다.
 
-## SPAN Attachment
+## Network / SPAN 제약
 
-현재 High-performance Script는 SPAN Interface를 PCI Passthrough 중심으로 구성합니다. 실행 전 IOMMU, IOMMU Group, Dedicated SPAN NIC, NUMA/CPU Placement를 확인하십시오.
+현재 `6000-Sensor-Installer.sh`는 다음 구성을 사용합니다.
+
+- Sensor 관리 네트워크: **NAT**
+- SPAN Attachment: **PCI Passthrough only**
+- 고성능 배치: NUMA-aware CPU Affinity
+
+Bridge SPAN이 필요한 가상화 환경에서는 이 Installer보다 **[Standard Sensor Installer](/ko/installers/sensor)**를 먼저 검토하십시오.
+
+실행 전 IOMMU, IOMMU Group, Dedicated SPAN NIC, NUMA/CPU Placement를 확인하십시오.
 
 ## State 위치
 
