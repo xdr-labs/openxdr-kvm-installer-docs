@@ -1,50 +1,512 @@
 ---
-title: "Data Processor Installer"
-description: "Deploy OpenXDR Data Processor DL/DA VMs and prepare the KVM host with the current 14-step DP workflow."
+title: "DP KVM Installer User Guide"
+description: "Install, configure, validate, and operate the Stellar Cyber OpenXDR Data Platform on an Ubuntu Server 24.04 LTS KVM host."
 ---
 
-# Data Processor Installer
+# DP KVM Installer User Guide
 
-`DP-Installer.sh` is the host-level installer and orchestrator for a standalone Data Processor deployment.
+![OpenXDR KVM Installer complete installation flow](/images/DP-Installer/1.png)
 
-## What it builds
+## Overview
 
-- KVM/libvirt host
-- Management and DP networking
-- DL and DA LVM storage
-- DL-master VM
-- DA-master VM
-- SR-IOV / CPU affinity / PCI passthrough where configured
-- DP Appliance CLI
-- NFS backup-server configuration for DP configuration backup
+This document is the comprehensive user guide for the **Stellar Cyber OpenXDR Platform KVM Installer**.
 
-## Current 14-step flow
+It explains how to **install, configure, validate, and operate the OpenXDR Platform** on a KVM host running Ubuntu Server 24.04 LTS.
 
-| Step | Operation |
+This guide is intended for **system engineers and operators who deploy and manage Data Platform (DP) environments**.
+
+It reflects real operational scenarios including initial installation, partial reconfiguration, recovery, and redeployment.
+
+The procedures follow the installer's validated behavior and operational best practices to support stable, repeatable, production-oriented deployment.
+
+![OpenXDR KVM Installer main menu](/images/DP-Installer/2.png)
+
+## 1. System Architecture
+
+### Example Dell R660 Configuration
+
+![Example Dell R660 Data Platform KVM architecture](/images/DP-Installer/3.png)
+
+| Component | Example value |
+| --- | --- |
+| KVM Host | Dell R660 / Ubuntu 24.04 |
+| DLm | `192.168.122.2`, 42 vCPU, 136 GB RAM, SSH 2222 |
+| DAm | `192.168.122.3`, 46 vCPU, 80 GB RAM, SSH 2223 |
+| libvirt NAT | `virbr0` / `192.168.122.1` |
+| Host Access | 1 GbE UTP, local-only `192.168.0.100` |
+| Management & Data Link | 1 GbE or 10 GbE |
+| Cluster Link | 1 GbE or 10 GbE, `cltr0`, SR-IOV |
+| OS / VM Disk | 1 × 1.92 TB — Ubuntu 24.04, DLm VM, DAm VM |
+| Data Lake | 6 × 3.84 TB — for DLm and AIO |
+
+### Architecture Overview
+
+Stellar Cyber OpenXDR Platform is deployed on a single physical server using KVM virtualization.
+
+The installer automatically creates and configures:
+
+- Ubuntu 24.04 KVM host
+- libvirt / qemu-kvm virtualization layer
+- DLm (Data Lake Master) virtual machine
+- DAm (Data Analyzer Master) virtual machine
+- Linux bridges and SR-IOV-based high-performance networking
+- dedicated storage volumes for system and data workloads
+
+The installer automates:
+
+- host OS preparation and tuning
+- network topology creation
+- storage layout
+- virtual-machine lifecycle management
+- performance-related configuration such as CPU affinity and SR-IOV attachment
+
+## 2. Pre-Installation Preparation
+
+### System Requirements
+
+Before running the installer:
+
+- **root privileges are required**
+
+The installer performs low-level system operations including:
+
+- network reconfiguration
+- kernel and system tuning
+- disk and filesystem configuration
+- virtual-machine creation and modification
+
+### Documented Operating System
+
+- This guide is based on **Ubuntu Server 24.04 LTS**.
+- The current `DP-Installer.sh` may retain compatibility paths for earlier DP/Ubuntu releases. For legacy deployment, verify the current source and target-release support separately.
+
+### Preparation Steps
+
+1. Switch to a root shell.
+
+```bash
+sudo -i
+```
+
+2. Download the installer into the current directory.
+
+```bash
+curl -O https://raw.githubusercontent.com/xdr-labs/OpenXDR-KVM-Installer/main/DP-Installer.sh
+```
+
+3. Make it executable.
+
+```bash
+chmod +x DP-Installer.sh
+```
+
+4. Run the installer.
+
+```bash
+./DP-Installer.sh
+```
+
+### Management NIC
+
+The Management NIC is used for:
+
+- remote access to the KVM host
+- access to DLm and DAm web interfaces
+- external management and data traffic
+
+For larger DP deployments, a **10GbE interface is recommended** to provide sufficient throughput.
+
+### Cluster NIC
+
+The Cluster NIC is dedicated to internal DP cluster communication.
+
+With SR-IOV, the NIC can be attached directly to the VM while bypassing the virtual-switch layer for maximum performance.
+
+Requirements:
+
+- SR-IOV-capable NIC
+- 10GbE or faster
+- commonly Intel X710 or E810 series
+
+### Host Access NIC
+
+The Host Access NIC is for local-only maintenance and troubleshooting.
+
+Characteristics:
+
+- default IP: `192.168.0.100`
+- not reachable from remote networks
+- used for on-site access, emergency recovery, and KVM troubleshooting
+
+This is especially useful when the Management NIC is 10GbE and cannot be connected directly to an engineer's laptop.
+
+### NIC Preparation and Design Guidance
+
+Before running the installer, physically connect the NICs that will be used.
+
+The installer identifies interfaces using **link state**, so connected cables help distinguish NIC roles during selection.
+
+![Management NIC selection screen](/images/DP-Installer/4.png)
+
+## 3. Installer Navigation
+
+The installer provides an interactive menu interface implemented with Whiptail.
+
+### Navigation
+
+- **Spacebar or Down Arrow (↓)**: move through menu items
+- **Enter**: select
+- **q or ESC**: exit a help screen or return to the previous menu
+
+### State-Aware Execution
+
+The installer is state-aware.
+
+Installation state is stored under:
+
+```text
+/root/xdr-installer
+```
+
+- completed steps are recorded
+- after a reboot or interruption, execution resumes from the next incomplete step
+
+To remove all installation state and start again:
+
+```bash
+rm -rf /root/xdr-installer
+```
+
+### Mandatory Reboot Steps
+
+The installer automatically reboots after:
+
+- **STEP 03 – Network conversion (netplan → ifupdown)**
+- **STEP 05 – Kernel and system-level tuning**
+
+These reboots are mandatory and must not be skipped.
+
+After reboot:
+
+1. log in to the server again
+2. relaunch the installer
+3. select **Menu 1**
+
+The installer resumes automatically.
+
+### Main Menu Overview
+
+#### 1. Auto Execute All Steps
+
+- runs all steps beginning with the next incomplete step
+- resumes after reboot from the last completed step
+- recommended for:
+  - initial installation
+  - continuing after reboot
+
+#### 2. Select and Run Specific Step Only
+
+- runs one selected step independently
+- recommended for:
+  - DP VM redeployment
+  - network changes
+  - image updates
+  - storage reconfiguration
+
+#### 3. Configuration
+
+Configures installer parameters:
+
+- `DRY_RUN` (default: `1`)
+- `DP_VERSION`
+- `MGT_NIC`
+- `CLTR0_NIC`
+- `DATA_SSD_LIST`
+- `CLUSTER_NIC_TYPE`
+- ACPS credentials
+  - username
+  - password
+  - URL
+
+#### 4. Full Configuration Validation
+
+Validates the complete system configuration.
+
+Checks include:
+
+- KVM
+- DP VMs
+- networking
+- SR-IOV
+- storage
+
+Errors and warnings are shown with detailed logs.
+
+#### 5. Script Usage Guide
+
+- shows the built-in usage guide
+
+#### 6. View Log
+
+- displays the installer log
+
+#### 7. Exit
+
+- exits the installer
+
+## 4. Installation Scenarios
+
+The installer supports:
+
+- new installations
+- partially configured systems
+
+Because it is state-aware, completed steps are recorded and execution can safely continue after reboot.
+
+### 4.1 New Installation
+
+This scenario applies when the installer is run immediately after Ubuntu installation.
+
+#### Initial Configuration
+
+From the main menu, select:
+
+```text
+3) Configuration
+```
+
+![DP Installer Configuration screen](/images/DP-Installer/5.png)
+
+Configure:
+
+- **DRY_RUN**
+  - default: `1` (simulation mode)
+  - change to `0` only when you are ready for real installation
+- **DP Version**
+  - specify the Data Platform version to deploy
+- **ACPS Account / Password**
+  - required to download the DP QCOW2 image and deployment files
+- **ACPS URL**
+  - keep the default in production
+  - change only in development or POC environments
+
+After configuration, return to the main menu.
+
+#### Auto Execute
+
+Select:
+
+```text
+1) Auto execute all steps
+```
+
+![DP Installer Auto Execute All Steps screen](/images/DP-Installer/6.png)
+
+The installer runs:
+
+```text
+STEP 01 → STEP 02 → STEP 03 → … → STEP 14
+```
+
+#### Mandatory Reboot Steps
+
+**STEP 03**
+
+- converts network configuration from netplan to ifupdown
+- requires reboot to apply the change
+
+**STEP 05**
+
+- applies kernel and system-level changes
+- requires reboot for system stability
+
+#### After Reboot
+
+1. log in again
+2. relaunch the installer
+3. select **Menu 1**
+
+The installer resumes from the next incomplete step.
+
+### 4.2 Run a Specific Step
+
+This mode runs only one installation step without executing the entire workflow.
+
+It is intended for cases where:
+
+- one configuration needs to change
+- a previously failed step needs to be retried
+- one component must be redeployed or reconfigured
+
+Only the selected step runs; other completed steps are not changed.
+
+#### Common Use Cases
+
+- redeploy DLm / DAm VMs
+- redownload DP images or deployment scripts
+- reconfigure or reattach SR-IOV interfaces
+- reapply CPU affinity and performance tuning
+
+#### How to Run a Specific Step
+
+From the main menu:
+
+```text
+2) Select and run specific step only
+```
+
+![DP Installer specific-step selection screen](/images/DP-Installer/7.png)
+
+| Step | Task |
 | ---: | --- |
-| 1 | Detect and select hardware / NIC / disks |
-| 2 | Install HWE kernel |
-| 3 | Rename NICs, switch to ifupdown and configure networking |
-| 4 | Install and configure KVM / libvirt |
-| 5 | Tune kernel parameters / KSM / swap |
-| 6 | Configure SR-IOV drivers and NTPsec |
-| 7 | Create LVM storage for DL/DA root and data |
-| 8 | Install libvirt hooks and OOM recovery scripts |
-| 9 | Download DP image and deployment scripts |
+| 01 | Detect and select hardware / NIC / disks |
+| 02 | Install HWE kernel |
+| 03 | Rename NICs / switch to ifupdown and configure networking |
+| 04 | Install and configure KVM / libvirt |
+| 05 | Tune kernel parameters / KSM / swap |
+| 06 | Configure SR-IOV drivers + NTPsec |
+| 07 | LVM storage (DL/DA root + data) |
+| 08 | libvirt hooks and OOM recovery scripts |
+| 09 | Download DP image and deployment scripts |
 | 10 | Deploy DL-master VM |
 | 11 | Deploy DA-master VM |
-| 12 | Configure SR-IOV / CPU affinity / PCI passthrough |
+| 12 | SR-IOV / CPU Affinity / PCI Passthrough |
 | 13 | Install DP Appliance CLI package |
-| 14 | Configure NFS backup server for DP configuration backup |
+| 14 | Configure NFS backup server (DP configuration backup only) |
 
-## Network model
+Execution flow:
 
-The installer keeps the KVM host management address separate from VM-internal addresses. Current defaults include the libvirt NAT network `192.168.122.0/24`, DL `192.168.122.2`, and DA `192.168.122.3`. The host management IP is derived from the selected management interface.
+1. select the step
+2. confirm execution
+3. the selected step runs and returns to the menu
 
-## Image handling
+This minimizes risk by avoiding unnecessary changes to unrelated components.
 
-The DP image is prepared before VM deployment. The download stage can use a suitable existing local qcow2 image when explicitly selected, while later DL/DA deployment stages consume the already prepared image.
+#### STEP 14 — NFS Backup Server
 
-## Reboot points
+The final DP Installer step configures an **NFS export for DP configuration backup**. It is not a Data Lake data backup mechanism.
 
-The current script is configured to auto-reboot after Step 3 and Step 5. After reboot, run `DP-Installer.sh` again and continue from saved state.
+The default configuration includes a `/stellarcyber` export path and allowed-client values based on the internal DL address. Review these values in Configuration before applying them to the target environment.
+
+#### Important Notes
+
+- some steps depend on previous steps
+  - for example, CPU affinity requires the VM to exist
+- if a step fails because a prerequisite is missing, rerun the required previous step first
+- during troubleshooting, start with the smallest relevant step
+
+## 5. Post-Installation Validation
+
+After installation, select:
+
+```text
+4) Full Configuration Validation
+```
+
+![DP Installer Full Configuration Validation results](/images/DP-Installer/8.png)
+
+### Validation Scope
+
+- KVM and libvirt service status
+- DLm / DAm VM status and autostart configuration
+- network configuration
+  - bridges
+  - SR-IOV interfaces
+  - routing tables
+- storage mount points and capacity
+
+If WARN messages appear, use Menu 2 to rerun the relevant step.
+
+## 6. Common Post-Installation Changes
+
+### Automatic Reboot Notice
+
+- **STEP 03 always triggers a system reboot.**
+
+### Change Scenarios
+
+#### Change Management or Host Access NIC / IP
+
+Rerun:
+
+```text
+STEP 01 → STEP 03
+```
+
+#### Change Cluster NIC
+
+Rerun:
+
+```text
+STEP 01 → STEP 03 → STEP 12
+```
+
+#### Redeploy DLm / DAm VM
+
+```text
+STEP 10 or STEP 11 → STEP 12
+```
+
+<Warning>
+The existing VM is deleted. Existing ES Data Store DL storage may not be reusable.
+</Warning>
+
+#### Deploy a Different DLm / DAm Version
+
+```text
+STEP 07 → STEP 09 → STEP 10 or STEP 11 → STEP 12
+```
+
+<Warning>
+The existing VM is deleted and the ES data store cannot be reused.
+</Warning>
+
+## 7. After DLm / DAm Deployment
+
+### Default Network Configuration
+
+- DLm IP: `192.168.122.2/24`
+- DAm IP: `192.168.122.3/24`
+- Gateway: `192.168.122.1` (KVM internal bridge)
+
+### Web UI Access
+
+Use the KVM host Management IP to access the Data Platform web UI.
+
+Example:
+
+```text
+https://10.10.10.10
+```
+
+After deployment, update the **Receiver IP** for the environment. The default is the internal DAm IP.
+
+### CLI Access
+
+Appliance CLI:
+
+```text
+console dl-master
+console da-master
+```
+
+### SSH Access
+
+- DLm: **port 2222**
+- DAm: **port 2223**
+
+## 8. Hardware and Software Requirements
+
+See the **[Ubuntu 24.04 Installation Guide](/getting-started/installing-ubuntu-24-04)**.
+
+## 9. BIOS and Platform Configuration
+
+Verify that these features are configured according to platform requirements:
+
+- Intel Virtualization Technology
+- VT-d / IOMMU
+- SR-IOV capability on the cluster NIC
+
+<Warning>
+If you use **SR-IOV** for the DP Cluster Interface, verify both server BIOS and NIC device settings. A common Dell/Intel X710/E810 configuration requires **Global/System SR-IOV enabled plus SR-IOV enabled at the NIC Device Level Virtualization Mode**. Exact menus and requirements vary by server/NIC firmware, so follow vendor documentation together with the [Ubuntu 24.04 Installation Guide](/getting-started/installing-ubuntu-24-04).
+</Warning>
