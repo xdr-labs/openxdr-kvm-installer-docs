@@ -1,53 +1,58 @@
 ---
 title: "Quickstart"
-description: "Clone the installer, start with DRY_RUN, validate configuration and execute the selected workflow."
+description: "Clone the source and begin the DRY_RUN, validation, execution, and resume workflow."
 ---
 
 # Quickstart
 
-## 1. Clone the source repository
+## 1. Prepare the Source from a Root Shell
+
+Because `sudo -i` changes to a login shell and may change the working directory, **switch to root first**.
 
 ```bash
+sudo -i
 git clone https://github.com/xdr-labs/OpenXDR-KVM-Installer.git
 cd OpenXDR-KVM-Installer
-sudo -i
 ```
 
-## 2. Choose the installer
+## 2. Choose an Installer
+
+Review **[Choose an Installer](/getting-started/choose-installer)** first to confirm the deployment target and network constraints.
 
 ```bash
-# Standalone Data Processor
 ./DP-Installer.sh
-
-# Standard modular Sensor
 ./Sensor-Installer.sh
-
-# High-performance Sensor
 ./6000-Sensor-Installer.sh
-
-# AIO + Sensor
 ./AIO-Sensor-Installer.sh
 ```
 
-## 3. Keep DRY_RUN enabled
+## 3. Keep DRY_RUN Enabled
 
-DRY_RUN is enabled by default. Use the configuration menu to review versions, credentials, NIC selections, storage selections and deployment-specific inputs.
-
-<Warning>
-Do not disable DRY_RUN until the displayed configuration matches the target host and the full validation results are acceptable.
-</Warning>
+DRY_RUN is enabled by default. In the Configuration menu, first review the version, credentials, NICs, storage, and deployment inputs.
 
 ## 4. Run Full Configuration Validation
 
-The common menu model provides a read-only validation workflow. Review **OK / WARN / FAIL** results. A FAIL is a blocking condition.
+Review **OK / WARN / FAIL** results and **resolve every FAIL**. Review each WARN and decide whether it is acceptable for the target deployment.
 
-## 5. Execute
+## 5. Disable DRY_RUN Before Real Execution
 
-Use either:
+After validation passes, re-check NICs, IP addresses, disks, versions, and credentials, then set **`DRY_RUN=0`** in the Configuration menu.
 
-- **Auto Execute All Steps** — continues from the first incomplete step
-- **Execute Specific Step** — useful for controlled execution or retry
+<Warning>
+With `DRY_RUN=0`, the installer can make real changes to networking, storage, kernel settings, and VM definitions. If you are working remotely, ensure console or out-of-band access is available.
+</Warning>
 
-## 6. Resume after reboot
+## 6. Choose the Execution Mode
 
-Network and kernel-tuning stages can intentionally reboot the host. After reboot, run the same installer again and select Auto Execute. The installer reads its persistent state and continues from the next incomplete step.
+- **Auto Execute All Steps** — continue automatically from the first incomplete step
+- **Execute Specific Step** — run or retry only the selected step
+
+For a first deployment, **Auto Execute All Steps** is normally appropriate. After correcting the cause of a failed step, use **Execute Specific Step** when only that step needs to be rerun.
+
+## 7. Resume After Reboot
+
+When a networking or kernel step triggers a reboot, relaunch the same installer and select Auto Execute. The installer resumes from the next incomplete step using the saved state.
+
+<Note>
+See **[State and Logs](/reference/state-logs)** for installer state and log locations. Do not manually move the state file backward or forward just because a deployment was interrupted.
+</Note>
