@@ -1,0 +1,534 @@
+---
+title: "Stellar Appliance CLI User Guide"
+description: "Operate post-deployment networking, NTP, ACLs, virtual machines, and system settings on OpenXDR KVM hosts with Stellar Appliance CLI."
+---
+
+# Stellar Appliance CLI User Guide
+
+## Overview
+
+This document is the comprehensive user guide for **Stellar Appliance CLI**.
+
+Stellar Appliance CLI is a command-line management tool designed for Stellar Cyber OpenXDR environments.
+
+It provides a unified operational interface for KVM hosts where OpenXDR components (Data Processor, Sensor, or AIO) have already been deployed using the official installer scripts.
+
+The CLI focuses exclusively on **post-deployment operations**, helping system engineers and operators configure, control, and maintain the environment in a safe, consistent, and auditable manner.
+
+It focuses on:
+
+- network configuration (ifupdown-based)
+- time synchronization (NTPsec)
+- firewall access control (iptables-based ACL)
+- virtual-machine operations and monitoring
+- controlled operational changes without redeployment
+
+<Warning>
+Appliance CLI does not deploy the platform. It is an **operations management layer**, not an installation tool.
+</Warning>
+
+![Stellar Appliance CLI startup screen and primary commands](/images/Appliance-CLI/1.png)
+
+## 1. Architectural Role of Appliance CLI
+
+Stellar Appliance CLI runs **on the KVM host**. It operates above the operating system and libvirt layers but below the OpenXDR application layer as an **operational control layer**.
+
+The CLI manages:
+
+- host network configuration (ifupdown-based)
+- time synchronization (NTP)
+- firewall access control (iptables)
+- virtual-machine operations (console, autostart, monitoring)
+- host system metadata and services
+
+### Designed for
+
+- post-deployment configuration changes
+- network / NTP / firewall administration during operations
+- safe VM access and monitoring
+- repeatable and auditable operational workflows
+
+### Not designed for
+
+- initial OpenXDR deployment
+- disk-layout or storage reconfiguration
+- VM topology redesign
+- replacing installer-script logic
+
+## 2. CLI Navigation and Command Model
+
+### Start the CLI
+
+```bash
+aella_cli
+```
+
+The prompt displays:
+
+```text
+Welcome to Starlight Appliance
+Appliance>
+```
+
+### Command structure
+
+Commands follow a consistent model:
+
+```text
+<command> <subcommand> [parameters]
+```
+
+Examples:
+
+```text
+show interface
+set interface mgt ip 192.168.1.100/24 gateway 192.168.1.1
+set acl 10.10.10.0/24 all
+console dl-master
+```
+
+### Primary commands
+
+| Command | Purpose |
+| --- | --- |
+| `clear` | Clear command history |
+| `console` | Access the dl-master, da-master (aka dr-master), mds, or aio console |
+| `monitor` | Monitor VM resources and system health |
+| `quit` | Exit the CLI |
+| `restart` | Restart a system or service |
+| `set` | Configure component parameters |
+| `show` | Display component information |
+| `shutdown` | Shut down a system or service |
+| `start` | Start a system or service |
+| `unset` | Remove configuration |
+
+### Help and shell commands
+
+Help for a command:
+
+```text
+help <command>
+```
+
+Help for nested commands such as `show` and `set`:
+
+```text
+<command> help
+```
+
+Run a system command directly:
+
+```text
+!<command>
+```
+
+Example:
+
+```text
+!ping
+```
+
+### Usability features
+
+- tab completion for commands, VM names, and interfaces
+- interactive help
+- consistent syntax across commands
+
+## 3. Network Configuration Management
+
+The CLI manages runtime network configuration using an **ifupdown-compatible model** aligned with the OpenXDR installer scripts.
+
+### Display network information
+
+```text
+show interface
+show dns
+show gateway
+show route
+```
+
+### Configure network interfaces
+
+```text
+set interface <iface> ip <IP/Mask> [gateway <IP>]
+set interface <iface> gateway <IP>
+set interface mgt dns <dns1> [dns2 ...]
+set dns mgt <dns1> [dns2 ...]
+unset interface <iface> <ip|gateway|restart>
+```
+
+<Note>
+DNS configuration is currently supported **only on the `mgt` interface**. `unset interface` does not provide a DNS-removal option; supported remove/action values are `ip`, `gateway`, and `restart`.
+</Note>
+
+### Apply changes (required)
+
+Network changes are not applied until the interface is restarted.
+
+```text
+set interface <iface> restart
+```
+
+### Operational notes
+
+Configuration files:
+
+```text
+/etc/network/interfaces
+/etc/network/interfaces.d/*.cfg
+```
+
+- Netplan should be disabled
+  - the installer scripts handle this transition
+- always restart the interface after a network change
+
+## 4. Time Synchronization (NTP)
+
+The currently supported backend is **NTPsec**. The CLI modifies the CLI-managed section of `/etc/ntpsec/ntp.conf` and uses the NTPsec service.
+
+### Commands
+
+```text
+show ntp
+set ntp <server>
+set ntp add <server> [server ...]
+set ntp replace <server> [server ...]
+unset ntp <server>
+```
+
+### Behavior
+
+- verifies that NTPsec and its configuration file are usable
+- adds or replaces Server/Pool entries in the CLI-managed section
+- applies the NTPsec configuration and checks runtime peer status
+- `unset ntp` removes only NTP peers managed by the CLI
+
+## 5. Firewall Access Control (ACL)
+
+### 5.1 ACL Overview and Design Model
+
+Stellar Appliance CLI manages firewall rules using a policy-based ACL abstraction built on the **iptables INPUT chain**.
+
+The ACL layer intentionally hides low-level iptables complexity and provides a safer, more predictable operational model.
+
+Key characteristics:
+
+- ACL rules apply only to inbound traffic
+- rules are evaluated from top to bottom
+- rules are added in append order
+- manual rule insertion or reordering is not supported
+- local interface IPs are always allowed
+- rule action is determined entirely by the selected ACL policy
+- ACL rules control access from a source IP or network to this KVM host
+
+### 5.2 Initialize ACL Policy (`set acl policy`)
+
+Before defining ACL rules, initialize the policy:
+
+```text
+set acl policy
+```
+
+During initialization, choose:
+
+- ACL mode: `whitelist` or `blacklist`
+- the target interface where the ACL will apply
+
+### 5.3 ACL Modes: Whitelist vs Blacklist
+
+#### Whitelist mode (recommended)
+
+Concept:
+
+- only explicitly specified sources are allowed
+- all other traffic is automatically denied
+
+Behavior:
+
+- every user-defined rule becomes an ALLOW rule
+- a deny-all rule is automatically placed at the end
+- the operator does not manually create deny-all
+
+Example:
+
+```text
+Allow: 10.10.10.0/24
+Allow: 192.168.1.50
+Deny: all others (automatic)
+```
+
+#### Blacklist mode
+
+Concept:
+
+- traffic is allowed by default
+- only explicitly specified sources are denied
+
+Behavior:
+
+- every user-defined rule becomes a DENY rule
+- default allow-all behavior is maintained automatically
+- the operator does not manually create allow-all
+
+Example:
+
+```text
+Deny: 203.0.113.10
+Allow: all others (automatic)
+```
+
+### 5.4 Policy Behavior Summary
+
+| Item | Whitelist mode | Blacklist mode |
+| --- | --- | --- |
+| Default behavior | Deny all | Allow all |
+| User-defined rules | Allowed sources | Denied sources |
+| Manual allow/deny keyword | No | No |
+| Manual deny-all / allow-all | No | No |
+| Manual rule-order management | No | No |
+
+The operator only needs to decide:
+
+- which policy mode to use
+- which interface to protect
+- which IP, network, or port to specify
+
+### 5.5 Select the Target Interface
+
+After selecting the ACL mode, choose the interface to protect.
+
+```text
+Select target interface:
+ 1) mgt
+ 2) hostmgmt
+```
+
+ACL rules apply only to traffic arriving on the selected interface.
+
+Other interfaces are not affected.
+
+### 5.6 Define ACL Rules (`set acl`)
+
+Use:
+
+```text
+set acl <source_ip_or_network> <port|icmp|all> [description]
+```
+
+Important:
+
+- there is no `allow` or `deny` keyword
+- rule action is derived automatically from the selected policy
+- multiple ports, ICMP (ping), and `all` are supported
+
+### 5.7 Rule Examples
+
+#### Example 1: Allow a management network in Whitelist mode
+
+```text
+set acl 10.10.10.0/24 all "Management network"
+```
+
+Meaning:
+
+- allow all traffic from `10.10.10.0/24`
+
+#### Example 2: Allow SSH and ping from an administrator workstation
+
+```text
+set acl 192.168.1.50 22 icmp "Admin PC"
+```
+
+Meaning:
+
+- allow SSH (22) and ICMP traffic from `192.168.1.50`
+
+### Apply rules
+
+```text
+set acl apply
+```
+
+At this point:
+
+- staged rules are applied to iptables
+- Whitelist mode automatically enforces deny-all
+- Blacklist mode automatically maintains allow-all
+- after a successful apply, the CLI first attempts `netfilter-persistent save`; if that is unavailable, it falls back to `iptables-save` to persist the runtime ACL across reboot
+- if persistence tools are unavailable or saving fails, the CLI emits a warning; operators must verify the result
+
+### 5.8 Remove ACL Rules (`unset acl`)
+
+Rules can be removed at any time:
+
+```text
+unset acl <source_ip_or_network> <port|icmp|all>
+```
+
+Example:
+
+```text
+unset acl 192.168.1.50 22
+```
+
+After changing rules, apply again:
+
+```text
+set acl apply
+```
+
+### 5.9 Apply with Reset
+
+```text
+set acl apply
+set acl apply --reset
+```
+
+- `set acl apply`
+  - applies currently staged rules
+- `set acl apply --reset`
+  - removes existing AELLA-managed ACL rules
+  - rebuilds from the staged rules
+  - useful for larger policy changes
+
+### 5.10 Built-In Safety Protections
+
+The following addresses are always allowed and cannot be blocked:
+
+```text
+127.0.0.1
+Local interface IPs (e.g. 192.168.0.100, 192.168.122.1)
+```
+
+Characteristics:
+
+- not displayed in `show acl`
+- cannot be removed with `unset acl`
+- intended to reduce the risk of locking out administrators
+
+## 6. System Information and Configuration
+
+### Display information
+
+```text
+show version
+show hostname
+show service
+show route
+show timezone
+show time
+```
+
+### Change system settings
+
+```text
+set timezone <Region/City>
+set time YYYY-MM-DD HH:MM:SS
+set hostname <hostname>
+set password
+```
+
+## 7. Virtual-Machine Operations
+
+### VM console
+
+```text
+console dl-master
+console da-master
+console aio
+console sensor
+```
+
+Exit the console with:
+
+```text
+Ctrl+] or exit
+```
+
+### VM autostart
+
+```text
+show autostart
+set autostart <vm> enable
+set autostart <vm> disable
+set autostart <vm> # toggle
+```
+
+### Monitoring
+
+```text
+monitor
+```
+
+## 8. Patch Management
+
+The CLI can apply Data Platform patches and review patch history.
+
+```text
+set patch apply <patch_name>
+show patch_history
+show patch_history <patch_name>
+```
+
+- `set patch apply <patch_name>` — retrieve and apply the specified Stellar patch
+- `show patch_history` — show the patch-history summary
+- `show patch_history <patch_name>` — show detailed results for the selected patch
+
+<Warning>
+Applying a patch changes a production system. Verify that the patch is an official patch for the target OpenXDR release, and ensure backup/recovery procedures and an appropriate maintenance window are available before applying it.
+</Warning>
+
+## 9. Logging and Auditability
+
+CLI operations are logged automatically.
+
+### Log location
+
+```text
+/var/log/aella/
+```
+
+### Logged information
+
+- timestamp
+- executed command
+- execution context
+
+## 10. Operational Best Practices
+
+### Recommended uses
+
+- post-deployment operational changes
+- network / NTP / firewall management
+- safe VM access and monitoring
+
+### Not recommended
+
+- initial deployment
+- storage-layout changes
+- VM topology redesign
+- replacing the installer
+
+## 11. Compatibility and Scope
+
+The CLI is compatible with these OpenXDR installer scripts:
+
+```text
+DP-Installer.sh
+Sensor-Installer.sh
+AIO-Sensor-Installer.sh
+6000-Sensor-Installer.sh
+```
+
+The CLI:
+
+- recognizes network configuration managed by the installer scripts
+- manages NTPsec configuration created by the installer scripts
+- supports NAT and Bridge modes
+- manages VMs deployed by the installer scripts
+
+## Final Notes
+
+Stellar Appliance CLI intentionally follows a conservative design.
+
+Its purpose is not maximum flexibility. Its purpose is to manage operational OpenXDR systems in a **safe, predictable, and auditable** way.
