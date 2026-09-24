@@ -1,0 +1,247 @@
+---
+title: "DP Cluster 초기 구성"
+description: "KVM 배포 후 고정 NAT 주소와 전용 Cluster Interface를 사용하여 DL Master, DL Worker, DA 노드를 초기 구성합니다."
+---
+
+# DP Cluster 초기 구성
+
+## 개요
+
+이 문서는 **DP KVM Installer**가 DL 및 DA 가상 머신 배포를 완료한 다음 수행하는 초기 Cluster 구성 절차입니다.
+
+KVM 배포는 **Cluster 구성을 기본**으로 사용합니다. 각 KVM Host는 독립된 libvirt NAT Management Network를 사용하므로 DL/DA Management IP는 다음과 같이 고정됩니다.
+
+| 구성 요소 | Management IP | Gateway | DNS |
+| --- | --- | --- | --- |
+| DL VM | `192.168.122.2/24` | `192.168.122.1` | `8.8.8.8` |
+| DA VM | `192.168.122.3/24` | `192.168.122.1` | `8.8.8.8` |
+
+<Note>
+서로 다른 물리 KVM Host에서는 각각 독립된 NAT Network를 사용하므로 여러 Host의 DL이 동일한 `192.168.122.2`, DA가 동일한 `192.168.122.3` 주소를 사용해도 외부 네트워크에서 IP 충돌이 발생하지 않습니다. Cluster 통신은 별도의 Cluster Interface와 Cluster IP를 사용합니다.
+</Note>
+
+## 사용자가 확인하거나 변경해야 하는 값
+
+아래 명령 대부분은 그대로 복사하여 사용할 수 있습니다. 일반적으로 다음 값만 환경에 맞게 확인하거나 변경합니다.
+
+| 값 | 설정 방법 |
+| --- | --- |
+| Hostname | 역할에 따라 `dl-master`, `dl-worker1`, `dl-worker2`, `da-master`, `da-worker1` 등의 이름을 사용합니다. |
+| Cluster Interface | `show interface all` 결과에서 실제 Cluster NIC를 확인합니다. `enp5s0`, `ens9` 등의 이름은 예시일 뿐입니다. |
+| Cluster IP | 각 노드마다 고유한 Cluster IP를 사용합니다. 이 문서의 예시는 DL을 `192.168.12.25`부터, DA를 `192.168.12.50`부터 사용합니다. |
+| OTP | 실제 배포에 발급된 License/OTP를 입력합니다. 실제 OTP는 문서나 Git 저장소에 저장하지 않습니다. |
+
+<Warning>
+예제의 Interface 이름을 그대로 복사하지 마십시오. 반드시 `show interface all`로 실제 Cluster Interface를 확인한 후 설정해야 합니다.
+</Warning>
+
+## 1. DL Master 구성
+
+### Management Network 및 Hostname 설정
+
+DL VM Console에 접속한 뒤 KVM의 고정 Management Network를 설정합니다.
+
+```text
+set interface management ip 192.168.122.2/24
+set interface management gateway 192.168.122.1
+set interface management dns 8.8.8.8
+
+set hostname dl-master
+reboot
+```
+
+재부팅이 완료되면 DL Console에 다시 접속합니다.
+
+### DL Master 역할 및 Cluster Interface 설정
+
+```text
+set role DL-master
+set cluster_name dl-master
+set cluster_size 1
+
+show interface all
+```
+
+출력 결과에서 전용 Cluster Interface를 확인합니다. 아래의 `<cluster-interface>`를 실제 Interface 이름으로 변경합니다.
+
+```text
+set cluster_interface <cluster-interface>
+set interface cluster ip 192.168.12.25/24
+
+set cm 192.168.12.25
+
+set mode MDS disable
+set mode replica security
+set mode shard_balance enable
+
+set otp <YOUR-OTP>
+
+reset
+```
+
+<Warning>
+`<YOUR-OTP>`에는 실제 설치에 발급된 OTP를 입력합니다. 실제 OTP를 문서나 GitHub에 기록하거나 커밋하지 마십시오.
+</Warning>
+
+### Data Lake Storage 추가
+
+Reset 및 초기화가 완료된 뒤 Storage를 확인하고 Data Lake Block Device를 추가합니다.
+
+```text
+show storage
+add storage blk vdb
+```
+
+Disk를 Format 또는 초기화하는 확인 단계에서는 반드시 예상한 장치가 `vdb`인지 다시 확인하십시오.
+
+## 2. DL Worker 구성
+
+각 DL Worker도 자신의 KVM Host 내부에서는 동일한 고정 NAT Management IP를 사용합니다. 각 Worker마다 **Hostname**, **Cluster Interface**, **Cluster IP**를 변경합니다.
+
+### Management Network 및 Hostname 설정
+
+첫 번째 DL Worker 예시:
+
+```text
+set interface management ip 192.168.122.2/24
+set interface management gateway 192.168.122.1
+set interface management dns 8.8.8.8
+
+set hostname dl-worker1
+reboot
+```
+
+재부팅 후 다시 접속합니다.
+
+### Worker 역할 및 Cluster Interface 설정
+
+```text
+set role resource
+
+show interface all
+```
+
+실제 Cluster Interface를 확인한 뒤 Worker에 고유한 Cluster IP를 설정합니다.
+
+```text
+set cluster_interface <cluster-interface>
+set interface cluster ip 192.168.12.26/24
+
+set cm 192.168.12.25
+
+reset
+```
+
+### Data Lake Storage 추가
+
+```text
+show storage
+add storage blk vdb
+```
+
+Worker가 추가될 경우 Hostname과 Cluster IP를 순차적으로 변경합니다.
+
+| 노드 | Hostname | Cluster IP 예시 |
+| --- | --- | --- |
+| DL Master | `dl-master` | `192.168.12.25/24` |
+| DL Worker 1 | `dl-worker1` | `192.168.12.26/24` |
+| DL Worker 2 | `dl-worker2` | `192.168.12.27/24` |
+
+<Warning>
+Cluster IP는 노드마다 반드시 고유해야 합니다. 이미 다른 DL 또는 DA 노드가 사용 중인 Cluster IP를 중복으로 설정하지 마십시오.
+</Warning>
+
+## 3. DA Master / Worker 구성
+
+DA 노드는 각 KVM Host의 로컬 NAT Management Network에서 `192.168.122.3/24`를 사용합니다. DA Master와 DA Worker 모두 CLI 초기 구성 단계에서는 `resource` 역할을 설정합니다.
+
+### Management Network 및 Hostname 설정
+
+DA Master의 경우:
+
+```text
+set interface management ip 192.168.122.3/24
+set interface management gateway 192.168.122.1
+set interface management dns 8.8.8.8
+
+set hostname da-master
+reboot
+```
+
+첫 번째 DA Worker의 경우 Hostname을 다음과 같이 변경합니다.
+
+```text
+set hostname da-worker1
+```
+
+재부팅 후 다시 접속합니다.
+
+### Resource 역할 및 Cluster Interface 설정
+
+```text
+set role resource
+
+show interface all
+```
+
+실제 Cluster Interface를 확인한 뒤 DA 노드에 고유한 Cluster IP를 설정합니다.
+
+DA Master 예시:
+
+```text
+set cluster_interface <cluster-interface>
+set interface cluster ip 192.168.12.50/24
+
+set cm 192.168.12.25
+
+reset
+```
+
+추가 DA 노드의 예시 주소 계획:
+
+| 노드 | Hostname | Cluster IP 예시 |
+| --- | --- | --- |
+| DA Master | `da-master` | `192.168.12.50/24` |
+| DA Worker 1 | `da-worker1` | `192.168.12.51/24` |
+| DA Worker 2 | `da-worker2` | `192.168.12.52/24` |
+
+## 4. DA Resource를 DA-Master로 전환
+
+DL Master가 **System Ready** 상태이고 DA Master의 역할이 `resource`로 표시되면 다음을 수행합니다.
+
+1. DL Master의 Web UI에 접속합니다.
+2. **System → DATA MANAGEMENT → Resources**로 이동하여 DA Resource가 Ready 상태인지 확인합니다.
+3. Resources 페이지에서 Resource를 직접 수정하지 않습니다.
+4. **System → DATA MANAGEMENT → Data Analyzer**로 이동합니다.
+5. 새 Data Analyzer Cluster를 생성합니다.
+6. Cluster Node로 DA Resource를 선택하고 **Role in Cluster**를 **DA-Master**로 설정합니다.
+7. 설정을 Submit합니다.
+8. Data Analyzer 페이지를 새로 고친 뒤 Node가 정상 상태로 표시되는지 확인합니다.
+
+## 5. Receiver 및 Sensor Profile 확인
+
+Sensor를 추가하거나 운영 데이터를 보내기 전에 다음 항목을 확인합니다.
+
+1. **System → DATA SOURCE MANAGEMENT → Receivers**로 이동합니다.
+2. **Receiver Hostname**이 DL-Master가 아니라 **DA-Master**를 가리키는지 확인합니다.
+3. 최소 하나의 Sensor Profile이 해당 Receiver를 사용하도록 설정되어 있는지 확인합니다.
+4. `show logforwarder` 명령에 출력이 없다면 먼저 Receiver Hostname 설정을 다시 확인합니다.
+
+## 6. 최종 확인 체크리스트
+
+초기 Cluster 구성을 완료하기 전에 다음 항목을 모두 확인하십시오.
+
+- DL Master Management IP가 `192.168.122.2/24`이며 고유한 Cluster IP가 설정되어 있음
+- 모든 DL Worker가 고유한 Hostname과 Cluster IP를 사용함
+- DA 노드의 Management IP가 `192.168.122.3/24`이며 각 노드가 고유한 Cluster IP를 사용함
+- 모든 노드에서 `show interface all`로 확인한 실제 Cluster Interface를 사용함
+- 모든 노드의 `set cm`이 DL Master Cluster IP를 가리킴. 이 문서에서는 `192.168.12.25`
+- 실제 OTP가 문서나 로그에 노출되지 않은 상태로 DL Master에 적용됨
+- DL Storage에서 예상한 `vdb`가 확인되고 필요한 노드에 Storage가 추가됨
+- DA Master가 Data Analyzer 구성에서 정상 상태로 표시됨
+- Receiver Hostname이 DA-Master를 가리킴
+- Sensor Profile이 올바른 Receiver를 사용함
+
+## 다음 단계
+
+Cluster 초기 구성이 완료되면 **[배포 후 운영](/ko/reference/post-deployment)** 문서에서 운영 전 최종 검증 및 관리 절차를 확인하십시오.

@@ -1,0 +1,247 @@
+---
+title: "DP Cluster Initial Configuration"
+description: "Configure DL Master, DL Workers, and DA nodes after KVM deployment using the fixed KVM NAT addressing model and dedicated cluster interfaces."
+---
+
+# DP Cluster Initial Configuration
+
+## Overview
+
+Use this guide after the **DP KVM Installer** has deployed the DL and DA virtual machines.
+
+The KVM deployment uses a **cluster deployment model by default**. Each KVM host provides an independent libvirt NAT management network, so the DL and DA management addresses are fixed inside each host:
+
+| Component | Management IP | Gateway | DNS |
+| --- | --- | --- | --- |
+| DL VM | `192.168.122.2/24` | `192.168.122.1` | `8.8.8.8` |
+| DA VM | `192.168.122.3/24` | `192.168.122.1` | `8.8.8.8` |
+
+<Note>
+The same DL and DA management addresses can be reused on different physical KVM hosts because each host has its own local NAT network. Cluster communication uses a separate cluster interface and cluster IP address.
+</Note>
+
+## Values You Must Check or Change
+
+Most commands below can be copied exactly. Only the following values normally require operator input.
+
+| Value | What to do |
+| --- | --- |
+| Hostname | Use `dl-master`, `dl-worker1`, `dl-worker2`, `da-master`, `da-worker1`, and so on, according to the node role. |
+| Cluster interface | Run `show interface all` and select the actual cluster NIC. Interface names such as `enp5s0` or `ens9` are examples only. |
+| Cluster IP | Assign a unique cluster IP to every node. The examples in this guide start DL at `192.168.12.25` and DA at `192.168.12.50`. |
+| OTP | Enter the license/OTP supplied for the deployment. Never store a real OTP in documentation or source control. |
+
+<Warning>
+Do not copy an example interface name without checking `show interface all`. The interface name depends on the VM and KVM/SR-IOV configuration.
+</Warning>
+
+## 1. Configure the DL Master
+
+### Configure management networking and hostname
+
+Open the DL VM console and configure the fixed KVM management network.
+
+```text
+set interface management ip 192.168.122.2/24
+set interface management gateway 192.168.122.1
+set interface management dns 8.8.8.8
+
+set hostname dl-master
+reboot
+```
+
+Reconnect to the DL console after the reboot.
+
+### Configure the DL Master role and cluster interface
+
+```text
+set role DL-master
+set cluster_name dl-master
+set cluster_size 1
+
+show interface all
+```
+
+Identify the dedicated cluster interface from the command output. Then replace `<cluster-interface>` below with that interface name.
+
+```text
+set cluster_interface <cluster-interface>
+set interface cluster ip 192.168.12.25/24
+
+set cm 192.168.12.25
+
+set mode MDS disable
+set mode replica security
+set mode shard_balance enable
+
+set otp <YOUR-OTP>
+
+reset
+```
+
+<Warning>
+Replace `<YOUR-OTP>` with the actual OTP for the installation. Do not commit or publish the real OTP.
+</Warning>
+
+### Add Data Lake storage
+
+After the reset finishes and the DL is ready, verify storage and add the Data Lake block device.
+
+```text
+show storage
+add storage blk vdb
+```
+
+Verify the expected disk before confirming any operation that formats or initializes storage.
+
+## 2. Configure a DL Worker
+
+Every DL worker uses the same fixed NAT management address inside its own KVM host. Change the **hostname**, **cluster interface**, and **cluster IP** for each worker.
+
+### Configure management networking and hostname
+
+Example for the first DL worker:
+
+```text
+set interface management ip 192.168.122.2/24
+set interface management gateway 192.168.122.1
+set interface management dns 8.8.8.8
+
+set hostname dl-worker1
+reboot
+```
+
+Reconnect after the reboot.
+
+### Configure the worker role and cluster interface
+
+```text
+set role resource
+
+show interface all
+```
+
+Identify the dedicated cluster interface and configure the worker with a unique cluster IP.
+
+```text
+set cluster_interface <cluster-interface>
+set interface cluster ip 192.168.12.26/24
+
+set cm 192.168.12.25
+
+reset
+```
+
+### Add Data Lake storage
+
+```text
+show storage
+add storage blk vdb
+```
+
+For additional workers, increment the hostname and use a unique cluster IP. For example:
+
+| Node | Hostname | Example cluster IP |
+| --- | --- | --- |
+| DL Master | `dl-master` | `192.168.12.25/24` |
+| DL Worker 1 | `dl-worker1` | `192.168.12.26/24` |
+| DL Worker 2 | `dl-worker2` | `192.168.12.27/24` |
+
+<Warning>
+The cluster IP must be unique. Do not reuse a cluster IP already assigned to another DL or DA node.
+</Warning>
+
+## 3. Configure DA Master and DA Workers
+
+DA nodes use `192.168.122.3/24` on the local KVM NAT management network. Both DA Master and DA Worker VMs are initially configured with the `resource` role.
+
+### Configure management networking and hostname
+
+For a DA Master:
+
+```text
+set interface management ip 192.168.122.3/24
+set interface management gateway 192.168.122.1
+set interface management dns 8.8.8.8
+
+set hostname da-master
+reboot
+```
+
+For the first DA Worker, use:
+
+```text
+set hostname da-worker1
+```
+
+Reconnect after the reboot.
+
+### Configure the resource role and cluster interface
+
+```text
+set role resource
+
+show interface all
+```
+
+Identify the actual cluster interface and configure the DA node with a unique cluster IP.
+
+Example for the DA Master:
+
+```text
+set cluster_interface <cluster-interface>
+set interface cluster ip 192.168.12.50/24
+
+set cm 192.168.12.25
+
+reset
+```
+
+Example allocation for additional DA nodes:
+
+| Node | Hostname | Example cluster IP |
+| --- | --- | --- |
+| DA Master | `da-master` | `192.168.12.50/24` |
+| DA Worker 1 | `da-worker1` | `192.168.12.51/24` |
+| DA Worker 2 | `da-worker2` | `192.168.12.52/24` |
+
+## 4. Convert the DA Resource to DA-Master
+
+After the DL Master reports **System Ready** and the DA Master reports the `resource` role:
+
+1. Open the DL Master graphical user interface.
+2. Navigate to **System → DATA MANAGEMENT → Resources** and verify that the DA resource is ready and available.
+3. Do not convert the resource directly from the Resources page.
+4. Navigate to **System → DATA MANAGEMENT → Data Analyzer**.
+5. Create a new Data Analyzer cluster.
+6. Use the DA resource for the cluster node and set **Role in Cluster** to **DA-Master**.
+7. Submit the configuration.
+8. Refresh the Data Analyzer page and verify that the node appears with a healthy status.
+
+## 5. Verify Receiver and Sensor Profile Configuration
+
+Before adding sensors or sending production data:
+
+1. Open **System → DATA SOURCE MANAGEMENT → Receivers**.
+2. Verify that **Receiver Hostname** points to the **DA-Master**, not the DL-Master.
+3. Verify that at least one Sensor Profile points to the receiver.
+4. If `show logforwarder` returns no output, re-check the Receiver Hostname first.
+
+## 6. Final Validation Checklist
+
+Confirm all of the following before considering the initial cluster configuration complete:
+
+- DL Master uses `192.168.122.2/24` for management and its assigned unique cluster IP.
+- Every DL Worker uses a unique hostname and unique cluster IP.
+- DA nodes use `192.168.122.3/24` for management and unique cluster IPs.
+- Every node uses the correct cluster interface discovered with `show interface all`.
+- All nodes point `set cm` to the DL Master cluster IP, `192.168.12.25` in this guide.
+- The DL Master OTP has been applied without exposing it in logs or documentation.
+- DL storage is visible and the expected `vdb` device has been added where applicable.
+- The DA Master is visible and healthy in the Data Analyzer configuration.
+- Receiver Hostname points to the DA-Master.
+- Sensor Profiles point to the intended receiver.
+
+## Next Step
+
+After the cluster is configured, continue with **[Post-Deployment Operations](/reference/post-deployment)** for ongoing validation and operations.
