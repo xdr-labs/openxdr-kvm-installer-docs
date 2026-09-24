@@ -523,7 +523,129 @@ https://10.10.10.10
 
 Stellar Cyber GUI의 초기 계정은 `admin`, 기본 비밀번호는 `changeme`입니다. 운영 환경 사용 전에 기본 비밀번호를 변경하십시오.
 
-### 9.7 Receiver 확인
+### 9.7 Sensor를 AIO에 연결
+
+AIO가 정상 Ready 상태가 된 뒤 KVM Sensor VM을 AIO에 연결합니다.
+
+AIO & Sensor KVM Installer는 Sensor VM을 다음과 같은 고정 NAT 설정으로 배포합니다.
+
+| 설정 | KVM Sensor 값 | 사용자 변경 필요 |
+| --- | --- | --- |
+| VM 이름 | `mds` | 아니오 |
+| Management IP | `192.168.122.3/24` | 아니오 |
+| Gateway | `192.168.122.1` | 아니오 |
+| DNS | `8.8.8.8` | 아니오 |
+| Hostname | 고유한 Sensor Hostname | **예 / 권장** |
+| CM Controller | `192.168.122.2` | 아니오 |
+| Proxy | 환경별 설정 | 선택 |
+| Tenant ID | 환경별 설정 | 선택 |
+
+#### 로그인 및 기본 비밀번호 변경
+
+Sensor Console에 접속하여 초기 계정으로 로그인합니다.
+
+```text
+aella / changeme
+```
+
+최초 로그인 시 비밀번호 변경을 요구합니다. 비밀번호를 변경하면 Session이 자동으로 종료됩니다. 새 비밀번호로 다시 로그인하면 CLI Prompt가 `DataSensor>`로 변경됩니다.
+
+#### KVM 고정 Management Network 설정
+
+이 KVM Installer는 Sensor에 고정 주소를 사용합니다. 다음과 같이 설정합니다.
+
+```text
+set interface management ip 192.168.122.3/24
+set interface management gateway 192.168.122.1
+set interface management dns 8.8.8.8
+```
+
+Interface 설정을 확인합니다.
+
+```text
+show interfaces
+```
+
+<Note>
+Stellar Cyber 공식 Modular Sensor 가이드는 DHCP도 지원하지만, 이 AIO & Sensor KVM Installer는 Sensor를 고정 `192.168.122.3/24` NAT 주소로 배포합니다. 이 토폴로지에서는 위의 Static 설정을 사용하십시오.
+</Note>
+
+#### 고유한 Sensor Hostname 설정
+
+Installer가 생성하는 Sensor VM 이름은 `mds`이지만, Stellar Cyber에 표시되는 Sensor Hostname은 여러 Sensor를 운영하는 환경에서 고유하게 설정하는 것을 권장합니다.
+
+예:
+
+```text
+set hostname mds-site1
+```
+
+Site, 고객 또는 설치 위치를 식별할 수 있는 Naming Rule을 사용하십시오.
+
+#### 선택 사항: HTTP Proxy 설정
+
+Sensor에서 Proxy가 필요한 환경에서만 설정합니다.
+
+```text
+set proxy http://<proxy-ip>:<port>
+```
+
+#### 선택 사항: Tenant 지정
+
+특정 Tenant에 속하는 Sensor인 경우 다음과 같이 설정합니다.
+
+```text
+set tenant_id <TENANT-ID>
+```
+
+#### Sensor를 AIO에 연결
+
+이 KVM AIO 토폴로지에서 Stellar Cyber Platform Management Endpoint는 `192.168.122.2`의 AIO VM입니다.
+
+```text
+set cm 192.168.122.2
+```
+
+연결 상태를 확인합니다.
+
+```text
+show cm
+```
+
+다음을 확인하십시오.
+
+- **CM Controller**: `192.168.122.2`
+- **Status**: **Established**
+
+Status가 Established이면 Sensor CLI를 종료합니다.
+
+```text
+quit
+```
+
+Sensor는 Stellar Cyber Platform에 자동으로 접속하여 자신을 등록합니다.
+
+### 9.8 NTP 및 Timezone 구성
+
+Stellar Cyber는 Sensor에서 NTP와 올바른 Timezone을 구성할 것을 강력히 권장합니다.
+
+정확한 시간 동기화는 Event Timestamp, Correlation 및 문제 해결에 중요합니다.
+
+지원되는 설정 절차는 [Stellar Cyber NTP 및 Timezone Best Practices](https://docs.stellarcyber.ai/6.5.x/Using/Guides/BestPractices-NTP.htm)를 참고하십시오.
+
+### 9.9 Sensor 승인
+
+Sensor가 CM 연결을 Establish하고 AIO에 등록되면 Stellar Cyber에 새 Sensor가 표시됩니다.
+
+운영 데이터 수집에 사용하기 전에 새 Sensor를 승인해야 합니다. 자세한 절차는 [Stellar Cyber Sensor 승인 문서](https://docs.stellarcyber.ai/6.5.x/Configure/Sensors/Sensor-List-Main.htm#Sensor)를 참고하십시오.
+
+<Warning>
+등록은 되었지만 승인되지 않은 Sensor는 정상 운영 준비가 완료된 상태가 아닙니다.
+</Warning>
+
+
+
+### 9.10 Receiver 및 Sensor Profile 확인
 
 AIO 배포에서는 Receiver가 **DA-Master가 아니라 AIO/DP**를 가리켜야 합니다.
 
@@ -531,7 +653,7 @@ AIO 배포에서는 Receiver가 **DA-Master가 아니라 AIO/DP**를 가리켜�
 
 `show logforwarder` 명령에 출력이 없다면 먼저 Receiver 설정을 확인하십시오.
 
-### 9.8 CLI 및 SSH 접속
+### 9.11 CLI 및 SSH 접속
 
 Appliance CLI:
 
@@ -545,7 +667,7 @@ SSH 접속:
 - AIO: **port 2222**
 - MDS: **port 2223**
 
-### 9.9 구성 요약
+### 9.12 구성 요약
 
 | 설정 | KVM AIO 값 | 사용자 변경 필요 |
 | --- | --- | --- |
@@ -557,7 +679,7 @@ SSH 접속:
 | Cluster size | `1` | 아니오 |
 | CM | `192.168.122.2` | 아니오 |
 | OTP | `<YOUR-OTP>` | **예** |
-| AIO Data Disk | `vdb` | Format 전 확인 |
+| AIO Data Disk | `vdb` | Format 전 확인 |\n| Sensor Management IP | `192.168.122.3/24` | 아니오 |\n| Sensor CM | `192.168.122.2` | 아니오 |\n| Sensor Hostname | 고유한 이름 | **예 / 권장** |
 
 
 ## 10. 하드웨어 및 소프트웨어 요구사항

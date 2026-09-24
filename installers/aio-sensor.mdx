@@ -517,7 +517,129 @@ https://10.10.10.10
 
 The initial Stellar Cyber GUI account is `admin` with password `changeme`. Change the default password before production use.
 
-### 9.7 Verify the Receiver
+### 9.7 Connect the Sensor to the AIO
+
+After the AIO is ready, connect the KVM Sensor VM to the AIO.
+
+The AIO & Sensor KVM Installer deploys the Sensor VM with these fixed NAT settings:
+
+| Setting | KVM Sensor value | Operator change required |
+| --- | --- | --- |
+| VM name | `mds` | No |
+| Management IP | `192.168.122.3/24` | No |
+| Gateway | `192.168.122.1` | No |
+| DNS | `8.8.8.8` | No |
+| Hostname | Unique sensor hostname | **Yes / recommended** |
+| CM Controller | `192.168.122.2` | No |
+| Proxy | Environment-specific | Optional |
+| Tenant ID | Environment-specific | Optional |
+
+#### Log in and change the default password
+
+Open the Sensor console and log in with the initial credentials:
+
+```text
+aella / changeme
+```
+
+You are prompted to change the password. After the password change, the session closes automatically. Log in again with the new credentials; the CLI prompt changes to `DataSensor>`.
+
+#### Configure the fixed KVM management network
+
+The KVM Installer uses a static address for the Sensor. Configure:
+
+```text
+set interface management ip 192.168.122.3/24
+set interface management gateway 192.168.122.1
+set interface management dns 8.8.8.8
+```
+
+Verify the interface configuration:
+
+```text
+show interfaces
+```
+
+<Note>
+The upstream Stellar Cyber Modular Sensor guide supports DHCP, but this AIO & Sensor KVM Installer deploys the Sensor on the fixed `192.168.122.3/24` NAT address. Use the static configuration above for this topology.
+</Note>
+
+#### Set a unique Sensor hostname
+
+The Installer creates the Sensor VM as `mds`, but the Sensor hostname shown in Stellar Cyber should be unique in environments with multiple Sensors.
+
+For example:
+
+```text
+set hostname mds-site1
+```
+
+Choose a naming convention appropriate for the site, customer, or location.
+
+#### Optional: configure an HTTP proxy
+
+Only when the Sensor must use a proxy:
+
+```text
+set proxy http://<proxy-ip>:<port>
+```
+
+#### Optional: assign a Tenant
+
+If this Sensor belongs to a specific Tenant:
+
+```text
+set tenant_id <TENANT-ID>
+```
+
+#### Connect the Sensor to the AIO
+
+For this KVM AIO topology, the Stellar Cyber Platform management endpoint is the AIO VM at `192.168.122.2`.
+
+```text
+set cm 192.168.122.2
+```
+
+Verify the connection:
+
+```text
+show cm
+```
+
+Confirm that:
+
+- **CM Controller** is `192.168.122.2`
+- **Status** is **Established**
+
+When the status is Established, exit the Sensor CLI:
+
+```text
+quit
+```
+
+The Sensor automatically contacts the Stellar Cyber Platform and registers itself.
+
+### 9.8 Configure NTP and Timezone
+
+Stellar Cyber strongly recommends configuring NTP and the correct timezone on the Sensor.
+
+Accurate time synchronization is important for event timestamps, correlation, and troubleshooting.
+
+Refer to the [Stellar Cyber NTP and Timezone Best Practices](https://docs.stellarcyber.ai/6.5.x/Using/Guides/BestPractices-NTP.htm) for the supported configuration procedure.
+
+### 9.9 Authorize the Sensor
+
+After the Sensor establishes the CM connection and registers with the AIO, it appears in Stellar Cyber.
+
+Authorize the new Sensor before using it for production data collection. Refer to the [Stellar Cyber Sensor authorization documentation](https://docs.stellarcyber.ai/6.5.x/Configure/Sensors/Sensor-List-Main.htm#Sensor).
+
+<Warning>
+A Sensor that has registered but has not been authorized is not ready for normal production operation.
+</Warning>
+
+
+
+### 9.10 Verify the Receiver
 
 For an AIO deployment, the receiver must point to the **AIO/DP**, not to a DA-Master.
 
@@ -525,7 +647,7 @@ Verify the receiver and Sensor Profile before sending production data. In this K
 
 If `show logforwarder` returns no output, verify the receiver configuration first.
 
-### 9.8 CLI and SSH Access
+### 9.11 CLI and SSH Access
 
 Appliance CLI:
 
@@ -539,7 +661,7 @@ SSH access:
 - AIO: **port 2222**
 - MDS: **port 2223**
 
-### 9.9 Configuration Summary
+### 9.12 Configuration Summary
 
 | Setting | KVM AIO value | Operator change required |
 | --- | --- | --- |
@@ -551,7 +673,7 @@ SSH access:
 | Cluster size | `1` | No |
 | CM | `192.168.122.2` | No |
 | OTP | `<YOUR-OTP>` | **Yes** |
-| AIO Data Disk | `vdb` | Verify before formatting |
+| AIO Data Disk | `vdb` | Verify before formatting |\n| Sensor Management IP | `192.168.122.3/24` | No |\n| Sensor CM | `192.168.122.2` | No |\n| Sensor Hostname | Unique name | **Yes / recommended** |
 
 
 ## 10. Hardware and Software Requirements
