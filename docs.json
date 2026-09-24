@@ -52,7 +52,6 @@
                   "installers/dp",
                   "installers/dp-cluster-initial-configuration",
                   "installers/sensor",
-                  "installers/high-performance-sensor",
                   "installers/aio-sensor",
                   "installers/aio-sensor-initial-configuration"
                 ]
@@ -114,7 +113,6 @@
                   "ko/installers/dp",
                   "ko/installers/dp-cluster-initial-configuration",
                   "ko/installers/sensor",
-                  "ko/installers/high-performance-sensor",
                   "ko/installers/aio-sensor",
                   "ko/installers/aio-sensor-initial-configuration"
                 ]

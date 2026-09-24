@@ -424,12 +424,158 @@ STEP 07 → STEP 08 → STEP 09
 
 ## 9. After Sensor Deployment
 
-### Default Network Configuration (NAT Mode)
+### 9.1 Management Network
 
-- IP: `192.168.122.2/24`
-- Gateway: `192.168.122.1` (KVM internal bridge)
+The standalone Sensor KVM Installer supports both NAT and Bridge management modes.
 
-### CLI Access
+#### NAT Mode
+
+The Sensor VM uses the fixed KVM NAT address:
+
+- Sensor IP: `192.168.122.2/24`
+- Gateway: `192.168.122.1`
+- DNS: `8.8.8.8`
+
+Configure or verify these values from the Sensor CLI:
+
+```text
+set interface management ip 192.168.122.2/24
+set interface management gateway 192.168.122.1
+set interface management dns 8.8.8.8
+```
+
+#### Bridge Mode
+
+Bridge mode uses the Sensor management IP, netmask, gateway, and DNS values selected during Installer configuration.
+
+Do **not** replace a Bridge-mode address with the NAT values above. If manual correction is required, use the values assigned to your environment:
+
+```text
+set interface management ip <SENSOR-IP>/<NETMASK>
+set interface management gateway <GATEWAY>
+set interface management dns <DNS>
+```
+
+Verify the active management configuration:
+
+```text
+show interfaces
+```
+
+<Warning>
+The standalone Sensor Installer uses `192.168.122.2` for a NAT-mode Sensor. The **AIO & Sensor combined Installer** uses `192.168.122.3` for its Sensor because `192.168.122.2` is reserved for the AIO. For the combined deployment, follow **[AIO & Sensor Initial Configuration](/installers/aio-sensor-initial-configuration)** instead.
+</Warning>
+
+### 9.2 Log In and Change the Default Password
+
+Open the Sensor console and log in with the initial credentials:
+
+```text
+aella / changeme
+```
+
+You are prompted to change the password immediately. After the password change, the session closes automatically.
+
+Log in again with the new password. The prompt changes to:
+
+```text
+DataSensor>
+```
+
+### 9.3 Set a Unique Sensor Hostname
+
+The hostname is displayed in Stellar Cyber and should be unique for each Sensor.
+
+```text
+set hostname <SENSOR-HOSTNAME>
+```
+
+For example:
+
+```text
+set hostname sensor-site1
+```
+
+### 9.4 Optional Proxy Configuration
+
+If the Sensor requires an HTTP proxy to reach external services:
+
+```text
+set proxy http://<PROXY-IP>:<PORT>
+```
+
+Skip this step when no proxy is required.
+
+### 9.5 Optional Tenant Assignment
+
+If the Sensor is associated with a specific Tenant:
+
+```text
+set tenant_id <TENANT-ID>
+```
+
+Skip this step when Tenant assignment is not required.
+
+### 9.6 Connect the Sensor to the Data Platform
+
+Use `set cm` to configure the Stellar Cyber Platform management endpoint that this Sensor can reach.
+
+For a clustered Data Platform, use the **DL-master management interface address**. For a single DP/AIO deployment, use the **platform management IP address or hostname**.
+
+Examples:
+
+```text
+set cm <DP-MANAGEMENT-IP>
+```
+
+or:
+
+```text
+set cm <DP-HOSTNAME>
+```
+
+<Note>
+For the standalone Sensor Installer, `set cm` is **not** the Sensor's local NAT address `192.168.122.2`. It must be the reachable management address or hostname of the Stellar Cyber Platform.
+</Note>
+
+Verify the connection:
+
+```text
+show cm
+```
+
+Confirm that:
+
+- **CM Controller** shows the intended Data Platform address or hostname.
+- **Status** is **Established**.
+
+When the connection is established:
+
+```text
+quit
+```
+
+The Sensor automatically contacts the Stellar Cyber Platform and registers itself.
+
+### 9.7 Configure NTP and Timezone
+
+Stellar Cyber strongly recommends configuring NTP and the correct timezone on the Sensor.
+
+Accurate time synchronization is important for event timestamps, correlation, and troubleshooting.
+
+Refer to the [Stellar Cyber NTP and Timezone Best Practices](https://docs.stellarcyber.ai/6.5.x/Using/Guides/BestPractices-NTP.htm) for the supported procedure.
+
+### 9.8 Authorize the Sensor
+
+After the Sensor registers with the Stellar Cyber Platform, authorize it before using it for production data collection.
+
+Refer to the [Stellar Cyber Sensor authorization documentation](https://docs.stellarcyber.ai/6.5.x/Configure/Sensors/Sensor-List-Main.htm#Sensor).
+
+<Warning>
+A Sensor that has registered but has not been authorized is not ready for normal production operation.
+</Warning>
+
+### 9.9 CLI and SSH Access
 
 Appliance CLI:
 
@@ -437,9 +583,10 @@ Appliance CLI:
 console mds
 ```
 
-### SSH Access
+SSH access:
 
 - Sensor VM: **port 2222**
+
 
 ## 10. Hardware and Software Requirements
 
