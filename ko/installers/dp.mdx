@@ -15,15 +15,15 @@ description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber OpenXDR 
 
 ## 1. 시스템 아키텍처
 
-### Dell R660 기반 예시 구성
+### Dell PowerEdge R650 / R660 / R670 검증 구성
 
-![Dell R660 기반 Data Platform KVM 아키텍처 예시](/images/DP-Installer/3.png)
+![Dell PowerEdge R650, R660, R670에서 검증된 Data Platform KVM 아키텍처](/images/DP-Installer/3.png)
 
 예시 아키텍처 구성은 다음과 같습니다.
 
 | 구성 요소 | 예시 값 |
 | --- | --- |
-| KVM Host | Dell R660 / Ubuntu 24.04 |
+| 검증된 KVM Host | Dell PowerEdge R650 / R660 / R670 — Ubuntu 24.04 |
 | DLm | `192.168.122.2`, 42 vCPU, 136 GB RAM, SSH 2222 |
 | DAm | `192.168.122.3`, 46 vCPU, 80 GB RAM, SSH 2223 |
 | libvirt NAT | `virbr0` / `192.168.122.1` |
@@ -35,7 +35,7 @@ description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber OpenXDR 
 
 ### 하드웨어 한눈에 보기
 
-현재 `DP-Installer.sh` 기본값과 검증된 Dell R660 예시는 다음 DP 전용 사양을 사용합니다.
+`DP-Installer.sh` 설치 흐름은 Dell PowerEdge R650, R660, R670에서 검증되었습니다. 아래 값은 현재 DP 기본값과 문서화된 배포 Sizing 예시입니다.
 
 | 항목 | 현재 DP 값 / 가이드 |
 | --- | --- |
@@ -574,7 +574,7 @@ show interface all
 set cluster_interface <cluster-interface>
 set interface cluster ip 192.168.12.25/24
 set cm 192.168.12.25
-set mode MDS disable
+set mode MDS enable
 set mode replica security
 set mode shard_balance enable
 set otp <YOUR-OTP>

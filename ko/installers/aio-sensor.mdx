@@ -15,15 +15,15 @@ description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber OpenXDR 
 
 ## 1. 시스템 아키텍처
 
-### Dell R660 기반 예시 구성
+### Dell PowerEdge R650 / R660 / R670 검증 구성
 
-![Dell R660 기반 AIO 및 Sensor KVM 아키텍처 예시](/images/AIO-Sensor/2.png)
+![Dell PowerEdge R650, R660, R670에서 검증된 AIO 및 Sensor KVM 아키텍처](/images/AIO-Sensor/2.png)
 
 예시 아키텍처 구성은 다음과 같습니다.
 
 | 구성 요소 | 예시 값 |
 | --- | --- |
-| KVM Host | Dell R660 / Ubuntu 24.04 |
+| 검증된 KVM Host | Dell PowerEdge R650 / R660 / R670 — Ubuntu 24.04 |
 | AIO VM | 48 vCPU, 136 GB RAM |
 | MDS VM | 44 vCPU, 80 GB RAM |
 | Host Access | 1 GbE UTP, 로컬 전용 `192.168.0.100` |
@@ -34,7 +34,7 @@ description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber OpenXDR 
 
 ### 하드웨어 한눈에 보기
 
-Repository에는 일반 Installer 시작 기준으로 **12 vCPU, 16 GB Memory, 100 GB Free Storage**가 기재되어 있지만, 이는 **Production AIO + Sensor Sizing 권장값이 아닙니다**. 이 페이지의 검증된 Dell R660 예시는 다음을 사용합니다.
+`AIO-Sensor-Installer.sh` 설치 흐름은 Dell PowerEdge R650, R660, R670에서 검증되었습니다. Repository에는 일반 Installer 시작 기준으로 **12 vCPU, 16 GB Memory, 100 GB Free Storage**가 기재되어 있지만, 이는 **Production AIO + Sensor Sizing 권장값이 아닙니다**. 아래는 문서화된 Sizing 예시입니다.
 
 | 항목 | 검증 예시 / 요구사항 |
 | --- | --- |

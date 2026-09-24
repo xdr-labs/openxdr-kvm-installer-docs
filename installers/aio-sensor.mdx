@@ -15,13 +15,13 @@ The documented baseline is Ubuntu Server 24.04 LTS. For a compact post-deploymen
 
 ## 1. System Architecture
 
-### Example Dell R660 Configuration
+### Validated Dell PowerEdge R650 / R660 / R670 Configuration
 
-![Example Dell R660 AIO and Sensor KVM architecture](/images/AIO-Sensor/2.png)
+![Validated Dell PowerEdge R650, R660, and R670 AIO and Sensor KVM architecture](/images/AIO-Sensor/2.png)
 
 | Component | Example value |
 | --- | --- |
-| KVM Host | Dell R660 / Ubuntu 24.04 |
+| Validated KVM Hosts | Dell PowerEdge R650 / R660 / R670 — Ubuntu 24.04 |
 | AIO VM | 48 vCPU, 136 GB RAM |
 | MDS VM | 44 vCPU, 80 GB RAM |
 | Host Access | 1 GbE UTP, local-only `192.168.0.100` |
@@ -32,7 +32,7 @@ The documented baseline is Ubuntu Server 24.04 LTS. For a compact post-deploymen
 
 ### Hardware at a Glance
 
-The repository documents a generic installer starting baseline of **12 vCPU, 16 GB memory, and 100 GB free storage**, but that is **not a production AIO + Sensor sizing recommendation**. The validated Dell R660 example on this page uses:
+The `AIO-Sensor-Installer.sh` workflow has been validated on Dell PowerEdge R650, R660, and R670 servers. The repository also documents a generic installer starting baseline of **12 vCPU, 16 GB memory, and 100 GB free storage**, but that is **not a production AIO + Sensor sizing recommendation**. The sizing example below uses:
 
 | Item | Validated example / requirement |
 | --- | --- |

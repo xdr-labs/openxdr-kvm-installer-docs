@@ -15,13 +15,13 @@ The documented baseline is Ubuntu Server 24.04 LTS. For a compact post-deploymen
 
 ## 1. System Architecture
 
-### Example Dell R660 Configuration
+### Validated Dell PowerEdge R650 / R660 / R670 Configuration
 
-![Example Dell R660 Data Platform KVM architecture](/images/DP-Installer/3.png)
+![Validated Dell PowerEdge R650, R660, and R670 Data Platform KVM architecture](/images/DP-Installer/3.png)
 
 | Component | Example value |
 | --- | --- |
-| KVM Host | Dell R660 / Ubuntu 24.04 |
+| Validated KVM Hosts | Dell PowerEdge R650 / R660 / R670 — Ubuntu 24.04 |
 | DLm | `192.168.122.2`, 42 vCPU, 136 GB RAM, SSH 2222 |
 | DAm | `192.168.122.3`, 46 vCPU, 80 GB RAM, SSH 2223 |
 | libvirt NAT | `virbr0` / `192.168.122.1` |
@@ -33,7 +33,7 @@ The documented baseline is Ubuntu Server 24.04 LTS. For a compact post-deploymen
 
 ### Hardware at a Glance
 
-The current `DP-Installer.sh` defaults and validated Dell R660 example use the following DP-specific sizing.
+The `DP-Installer.sh` workflow has been validated on Dell PowerEdge R650, R660, and R670 servers. The following values are the current DP defaults and documented deployment sizing example.
 
 | Item | Current DP value / guidance |
 | --- | --- |
@@ -566,7 +566,7 @@ Identify the actual cluster NIC from `show interface all` and continue:
 set cluster_interface <cluster-interface>
 set interface cluster ip 192.168.12.25/24
 set cm 192.168.12.25
-set mode MDS disable
+set mode MDS enable
 set mode replica security
 set mode shard_balance enable
 set otp <YOUR-OTP>

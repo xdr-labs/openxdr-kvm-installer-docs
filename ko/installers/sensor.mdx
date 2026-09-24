@@ -26,7 +26,7 @@ description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber OpenXDR 
 | SPAN NIC | Traffic 설계에 필요한 수량 |
 | SPAN 연결 | PCI Passthrough, 제한 환경에서는 Bridge |
 | BIOS | CPU Virtualization 활성화, PCI Passthrough 사용 시 VT-d/IOMMU 필요 |
-| OS | 문서 기준 Ubuntu Server 24.04 LTS |
+| 검증된 Hardware | Dell PowerEdge R650 / R660 / R670 |\n| OS | 문서 기준 Ubuntu Server 24.04 LTS |
 
 <Note>
 위 값은 프로젝트 시작 기준이며 모든 Production 환경의 보편적인 Sizing 기준은 아닙니다. Traffic Volume과 Workload에 따라 Resource를 늘리십시오.
@@ -513,27 +513,7 @@ set hostname <SENSOR-HOSTNAME>
 set hostname sensor-site1
 ```
 
-### 9.4 선택 사항: Proxy 설정
-
-Sensor가 외부 서비스에 접속할 때 HTTP Proxy가 필요한 경우에만 설정합니다.
-
-```text
-set proxy http://<PROXY-IP>:<PORT>
-```
-
-Proxy가 필요하지 않으면 이 단계는 생략합니다.
-
-### 9.5 선택 사항: Tenant 지정
-
-Sensor가 특정 Tenant에 속하는 경우 다음과 같이 설정합니다.
-
-```text
-set tenant_id <TENANT-ID>
-```
-
-Tenant 지정이 필요하지 않으면 이 단계는 생략합니다.
-
-### 9.6 Sensor를 Data Platform에 연결
+### 9.4 Sensor를 Data Platform에 연결
 
 `set cm`에는 Sensor가 접근할 수 있는 Stellar Cyber Platform Management Endpoint를 지정합니다.
 
@@ -574,7 +554,7 @@ quit
 
 Sensor는 Stellar Cyber Platform에 자동으로 접속하여 자신을 등록합니다.
 
-### 9.7 NTP 및 Timezone 구성
+### 9.5 NTP 및 Timezone 구성
 
 Stellar Cyber는 Sensor에서 NTP와 올바른 Timezone을 구성할 것을 강력히 권장합니다.
 
@@ -582,7 +562,7 @@ Stellar Cyber는 Sensor에서 NTP와 올바른 Timezone을 구성할 것을 강�
 
 지원되는 설정 절차는 [Stellar Cyber NTP 및 Timezone Best Practices](https://docs.stellarcyber.ai/6.5.x/Using/Guides/BestPractices-NTP.htm)를 참고하십시오.
 
-### 9.8 Sensor 승인
+### 9.6 Sensor 승인
 
 Sensor가 Stellar Cyber Platform에 등록된 후 운영 데이터 수집에 사용하기 전에 Sensor를 승인해야 합니다.
 
@@ -592,7 +572,7 @@ Sensor가 Stellar Cyber Platform에 등록된 후 운영 데이터 수집에 사
 등록은 되었지만 승인되지 않은 Sensor는 정상 운영 준비가 완료된 상태가 아닙니다.
 </Warning>
 
-### 9.9 CLI 및 SSH 접속
+### 9.7 CLI 및 SSH 접속
 
 Appliance CLI:
 

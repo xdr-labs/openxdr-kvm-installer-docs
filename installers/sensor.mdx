@@ -26,7 +26,7 @@ The documented baseline is Ubuntu Server 24.04 LTS.
 | SPAN NIC | One or more interfaces required by the traffic design |
 | SPAN attachment | PCI Passthrough, or Bridge where passthrough is restricted |
 | BIOS | CPU virtualization enabled; VT-d/IOMMU required for PCI Passthrough |
-| OS | Ubuntu Server 24.04 LTS for this guide |
+| Validated hardware | Dell PowerEdge R650 / R660 / R670 |\n| OS | Ubuntu Server 24.04 LTS for this guide |
 
 <Note>
 These values are the project starting baseline, not a universal production sizing rule. Increase resources according to traffic volume and workload.
@@ -509,27 +509,7 @@ For example:
 set hostname sensor-site1
 ```
 
-### 9.4 Optional Proxy Configuration
-
-If the Sensor requires an HTTP proxy to reach external services:
-
-```text
-set proxy http://<PROXY-IP>:<PORT>
-```
-
-Skip this step when no proxy is required.
-
-### 9.5 Optional Tenant Assignment
-
-If the Sensor is associated with a specific Tenant:
-
-```text
-set tenant_id <TENANT-ID>
-```
-
-Skip this step when Tenant assignment is not required.
-
-### 9.6 Connect the Sensor to the Data Platform
+### 9.4 Connect the Sensor to the Data Platform
 
 Use `set cm` to configure the Stellar Cyber Platform management endpoint that this Sensor can reach.
 
@@ -570,7 +550,7 @@ quit
 
 The Sensor automatically contacts the Stellar Cyber Platform and registers itself.
 
-### 9.7 Configure NTP and Timezone
+### 9.5 Configure NTP and Timezone
 
 Stellar Cyber strongly recommends configuring NTP and the correct timezone on the Sensor.
 
@@ -578,7 +558,7 @@ Accurate time synchronization is important for event timestamps, correlation, an
 
 Refer to the [Stellar Cyber NTP and Timezone Best Practices](https://docs.stellarcyber.ai/6.5.x/Using/Guides/BestPractices-NTP.htm) for the supported procedure.
 
-### 9.8 Authorize the Sensor
+### 9.6 Authorize the Sensor
 
 After the Sensor registers with the Stellar Cyber Platform, authorize it before using it for production data collection.
 
@@ -588,7 +568,7 @@ Refer to the [Stellar Cyber Sensor authorization documentation](https://docs.ste
 A Sensor that has registered but has not been authorized is not ready for normal production operation.
 </Warning>
 
-### 9.9 CLI and SSH Access
+### 9.7 CLI and SSH Access
 
 Appliance CLI:
 
