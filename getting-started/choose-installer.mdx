@@ -5,13 +5,12 @@ description: "Select the OpenXDR KVM Installer that matches the component, topol
 
 # Choose an Installer
 
-Choose one installer based on the deployment target, topology, and performance requirements.
+Choose one installer based on the deployment target, topology, and network requirements.
 
 | Installer | Use it for | Primary network characteristics | Current step count |
 | --- | --- | --- | ---: |
 | `DP-Installer.sh` | DL-master / DA-master Data Processor | NAT + Cluster Bridge/SR-IOV | 14 |
 | `Sensor-Installer.sh` | Standard Modular Sensor | NAT/Bridge + SPAN PCI/Bridge | 10 |
-| `6000-Sensor-Installer.sh` | Dual-VM / NUMA High-performance Sensor | NAT + SPAN PCI Passthrough | 10 |
 | `AIO-Sensor-Installer.sh` | Integrated AIO Data Processor + Sensor | NAT + Sensor SPAN PCI Passthrough | 13 |
 
 <Columns cols={2}>
@@ -20,9 +19,6 @@ Choose one installer based on the deployment target, topology, and performance r
   </Card>
   <Card title="Standard Sensor" icon="radar" href="/installers/sensor">
     Use for standard Sensor deployments requiring NAT/Bridge management and PCI/Bridge SPAN options.
-  </Card>
-  <Card title="High-performance Sensor" icon="gauge-high" href="/installers/high-performance-sensor">
-    Use for dual-VM, NUMA, PCI Passthrough-focused high-performance Sensor deployments.
   </Card>
   <Card title="AIO + Sensor" icon="layer-group" href="/installers/aio-sensor">
     Deploy AIO and Sensor together on one KVM host.
@@ -37,9 +33,6 @@ Choose one installer based on the deployment target, topology, and performance r
   </Step>
   <Step title="Need only a Standard Modular Sensor?">
     Use **Sensor-Installer.sh**. It handles Sensor storage, VM deployment, and network/SPAN configuration.
-  </Step>
-  <Step title="Need a high-performance Sensor topology?">
-    Use **6000-Sensor-Installer.sh**. This path centers on dual VMs, NUMA-aware placement, and PCI Passthrough.
   </Step>
   <Step title="Need AIO and Sensor on one host?">
     Use **AIO-Sensor-Installer.sh**. It deploys AIO first, then continues with the Sensor path on the same host.

@@ -15,13 +15,13 @@ Operator-focused documentation for deploying and operating Stellar Cyber OpenXDR
 | Install Ubuntu Server 24.04 | [Ubuntu Server 24.04 LTS 설치 가이드](https://kvm.xdr.ooo/ko/getting-started/installing-ubuntu-24-04) |
 | Choose a topology / network model | [배포 방식 선택 가이드](https://kvm.xdr.ooo/ko/getting-started/deployment-guide) |
 | Run a first deployment | [빠른 시작](https://kvm.xdr.ooo/ko/getting-started/quickstart) |
+| Watch installation demos | [설치 데모 비디오](https://kvm.xdr.ooo/ko/getting-started/installation-demo-videos) |
 | Troubleshoot a failed step | [Troubleshooting](https://kvm.xdr.ooo/ko/operations/troubleshooting) |
 
 ## Installer guides
 
 - [DP KVM Installer](https://kvm.xdr.ooo/ko/installers/dp) — DL-master / DA-master Data Processor deployment
 - [Standard Sensor](https://kvm.xdr.ooo/ko/installers/sensor) — NAT/Bridge and PCI/Bridge SPAN deployment
-- [High-performance Sensor](https://kvm.xdr.ooo/ko/installers/high-performance-sensor) — dual-VM / NUMA / PCI passthrough deployment
 - [AIO + Sensor](https://kvm.xdr.ooo/ko/installers/aio-sensor) — integrated AIO and Sensor deployment
 - [Stellar Appliance CLI](https://kvm.xdr.ooo/ko/operations/appliance-cli) — post-deployment host operations
 
@@ -30,7 +30,7 @@ Operator-focused documentation for deploying and operating Stellar Cyber OpenXDR
 This repository documents:
 
 - KVM/libvirt host preparation
-- DP, Sensor, High-performance Sensor, and AIO + Sensor deployment
+- DP, Sensor, and AIO + Sensor deployment
 - networking, storage, SR-IOV, PCI passthrough, NUMA and CPU placement
 - DRY_RUN and full configuration validation
 - persistent state, logging, reboot and resume

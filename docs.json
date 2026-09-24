@@ -43,7 +43,8 @@
                   "getting-started/deployment-guide",
                   "getting-started/requirements",
                   "getting-started/installing-ubuntu-24-04",
-                  "getting-started/quickstart"
+                  "getting-started/quickstart",
+                  "getting-started/installation-demo-videos"
                 ]
               },
               {
@@ -104,7 +105,8 @@
                   "ko/getting-started/deployment-guide",
                   "ko/getting-started/requirements",
                   "ko/getting-started/installing-ubuntu-24-04",
-                  "ko/getting-started/quickstart"
+                  "ko/getting-started/quickstart",
+                  "ko/getting-started/installation-demo-videos"
                 ]
               },
               {
