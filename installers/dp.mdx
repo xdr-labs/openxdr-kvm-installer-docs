@@ -9,17 +9,9 @@ description: "Install, configure, validate, and operate the Stellar Cyber OpenXD
 
 ## Overview
 
-This document is the comprehensive user guide for the **Stellar Cyber OpenXDR Platform KVM Installer**.
+Use this page as the **complete DP deployment runbook**. It contains the DP-specific hardware baseline, KVM installation workflow, reboot/resume behavior, VM deployment, and the required DL/DA appliance configuration after the VMs are created.
 
-It explains how to **install, configure, validate, and operate the OpenXDR Platform** on a KVM host running Ubuntu Server 24.04 LTS.
-
-This guide is intended for **system engineers and operators who deploy and manage Data Platform (DP) environments**.
-
-It reflects real operational scenarios including initial installation, partial reconfiguration, recovery, and redeployment.
-
-The procedures follow the installer's validated behavior and operational best practices to support stable, repeatable, production-oriented deployment.
-
-![OpenXDR KVM Installer main menu](/images/DP-Installer/2.png)
+The documented baseline is Ubuntu Server 24.04 LTS. For a compact post-deployment-only view, see **[DP Cluster Initial Configuration](/installers/dp-cluster-initial-configuration)**.
 
 ## 1. System Architecture
 
@@ -37,7 +29,26 @@ The procedures follow the installer's validated behavior and operational best pr
 | Management & Data Link | 1 GbE or 10 GbE |
 | Cluster Link | 1 GbE or 10 GbE, `cltr0`, SR-IOV |
 | OS / VM Disk | 1 × 1.92 TB — Ubuntu 24.04, DLm VM, DAm VM |
-| Data Lake | 6 × 3.84 TB — for DLm and AIO |
+| Data Lake | 6 × 3.84 TB — for DLm |
+
+### Hardware at a Glance
+
+The current `DP-Installer.sh` defaults and validated Dell R660 example use the following DP-specific sizing.
+
+| Item | Current DP value / guidance |
+| --- | --- |
+| DL VM | 42 vCPU, 136 GB RAM, 500 GB system disk |
+| DA VM | 46 vCPU, 80 GB RAM, 500 GB system disk |
+| OS / VM disk example | 1 × 1.92 TB |
+| Data Lake example | 6 × 3.84 TB |
+| Management | 1 GbE or faster; 10 GbE recommended for larger deployments |
+| Cluster link | 10 GbE or faster recommended; SR-IOV-capable NIC for SR-IOV mode |
+| Host access | Separate local-access NIC recommended for recovery |
+| BIOS | CPU virtualization enabled; VT-d/IOMMU required for SR-IOV/direct device assignment |
+
+<Note>
+These are installer defaults and a validated deployment example, not a universal Stellar Cyber sizing rule. Confirm production sizing for the expected ingestion rate, retention, and workload.
+</Note>
 
 ### Architecture Overview
 
@@ -497,7 +508,18 @@ console da-master
 
 ## 8. Hardware and Software Requirements
 
-See the **[Ubuntu 24.04 Installation Guide](/getting-started/installing-ubuntu-24-04)**.
+Before real execution, confirm all DP-specific prerequisites on this page:
+
+- Ubuntu Server 24.04 LTS for the documented procedure
+- root access
+- CPU hardware virtualization enabled
+- VT-d / IOMMU enabled when using SR-IOV/direct device assignment
+- sufficient CPU and memory for the current DL/DA VM defaults shown above
+- sufficient OS/VM storage and dedicated Data Lake disks for the selected design
+- Management NIC, Cluster NIC, and recovery/Host Access connectivity
+- network access for package, image, and deployment artifact downloads
+
+The **[Ubuntu 24.04 Installation Guide](/getting-started/installing-ubuntu-24-04)** is optional background; all DP-specific requirements needed to choose hardware are summarized here.
 
 ## 9. BIOS and Platform Configuration
 
@@ -511,7 +533,138 @@ Verify that these features are configured according to platform requirements:
 If you use **SR-IOV** for the DP Cluster Interface, verify both server BIOS and NIC device settings. A common Dell/Intel X710/E810 configuration requires **Global/System SR-IOV enabled plus SR-IOV enabled at the NIC Device Level Virtualization Mode**. Exact menus and requirements vary by server/NIC firmware, so follow vendor documentation together with the [Ubuntu 24.04 Installation Guide](/getting-started/installing-ubuntu-24-04).
 </Warning>
 
-## 10. Next Step: DP Cluster Initial Configuration
+## 10. Required DP Initial Configuration
 
-After the KVM Installer has deployed and validated the DLm and DAm VMs, continue with **[DP Cluster Initial Configuration](/installers/dp-cluster-initial-configuration)** to configure the fixed KVM NAT management addresses, cluster interfaces, DL/DA roles, storage, and receiver settings.
+The DP installation is not complete when the VMs are merely running. Complete the following DL/DA configuration before production use.
+
+<Note>
+The KVM NAT management network is fixed per host: DL uses `192.168.122.2/24`, DA uses `192.168.122.3/24`, gateway is `192.168.122.1`, and DNS is `8.8.8.8`. Different physical KVM hosts can reuse these NAT addresses because each host has its own local libvirt NAT network.
+</Note>
+
+### 10.1 DL Master
+
+```text
+set interface management ip 192.168.122.2/24
+set interface management gateway 192.168.122.1
+set interface management dns 8.8.8.8
+set hostname dl-master
+reboot
+```
+
+After reconnecting:
+
+```text
+set role DL-master
+set cluster_name dl-master
+set cluster_size 1
+show interface all
+```
+
+Identify the actual cluster NIC from `show interface all` and continue:
+
+```text
+set cluster_interface <cluster-interface>
+set interface cluster ip 192.168.12.25/24
+set cm 192.168.12.25
+set mode MDS disable
+set mode replica security
+set mode shard_balance enable
+set otp <YOUR-OTP>
+reset
+```
+
+Add Data Lake storage:
+
+```text
+show storage
+add storage blk vdb
+```
+
+<Warning>
+`add storage blk` formats the selected device. Confirm `vdb` before approving. Never store a real OTP in documentation or source control.
+</Warning>
+
+### 10.2 DL Worker
+
+Worker 1 example:
+
+```text
+set interface management ip 192.168.122.2/24
+set interface management gateway 192.168.122.1
+set interface management dns 8.8.8.8
+set hostname dl-worker1
+reboot
+```
+
+After reconnecting:
+
+```text
+set role resource
+show interface all
+set cluster_interface <cluster-interface>
+set interface cluster ip 192.168.12.26/24
+set cm 192.168.12.25
+reset
+show storage
+add storage blk vdb
+```
+
+Use a unique hostname and cluster IP for every additional worker, for example `dl-worker2 / 192.168.12.27/24`.
+
+### 10.3 DA Master / Worker
+
+DA Master example:
+
+```text
+set interface management ip 192.168.122.3/24
+set interface management gateway 192.168.122.1
+set interface management dns 8.8.8.8
+set hostname da-master
+reboot
+```
+
+After reconnecting:
+
+```text
+set role resource
+show interface all
+set cluster_interface <cluster-interface>
+set interface cluster ip 192.168.12.50/24
+set cm 192.168.12.25
+reset
+```
+
+Use unique values for DA workers, such as `da-worker1 / 192.168.12.51/24`.
+
+### 10.4 Convert DA Resource to DA-Master
+
+When DL Master is **System Ready** and the intended DA Master reports `resource`:
+
+1. Open the Data Platform GUI.
+2. Go to **System → DATA MANAGEMENT → Resources** and verify the DA resource is ready.
+3. Go to **System → DATA MANAGEMENT → Data Analyzer**.
+4. Create a Data Analyzer cluster.
+5. Select the DA resource and set **Role in Cluster** to **DA-Master**.
+6. Submit and verify the node becomes healthy.
+
+### 10.5 Receiver and Sensor Profile
+
+1. Open **System → DATA SOURCE MANAGEMENT → Receivers**.
+2. Confirm **Receiver Hostname** points to **DA-Master**, not DL-Master.
+3. Confirm at least one Sensor Profile points to the receiver.
+4. If `show logforwarder` has no output, check Receiver Hostname first.
+
+### 10.6 DP Final Checklist
+
+- DL/DA VMs are running and autostart is enabled.
+- DL management IP is `192.168.122.2/24`; DA management IP is `192.168.122.3/24`.
+- Every cluster node has a unique hostname and cluster IP.
+- The actual cluster interface was selected from `show interface all`.
+- All nodes use the DL Master cluster IP as CM; this guide uses `192.168.12.25`.
+- The intended `vdb` storage is added where required.
+- DA-Master is healthy in Data Analyzer.
+- Receiver Hostname points to DA-Master and the Sensor Profile points to that receiver.
+- Full Configuration Validation has no unresolved FAIL.
+
+For the same post-deployment commands without the installer walkthrough, use **[DP Cluster Initial Configuration](/installers/dp-cluster-initial-configuration)**.
 

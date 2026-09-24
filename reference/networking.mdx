@@ -1,36 +1,49 @@
 ---
 title: "Networking"
-description: "Reference the management, VM, SPAN, SR-IOV and passthrough networking concepts used by the installers."
+description: "Reference management, VM, SPAN, SR-IOV and passthrough networking across the active installer families."
 ---
 
 # Networking
 
-Networking is one of the highest-impact parts of the installer workflow.
+Use each product installer page as the deployment runbook. This page is a cross-product reference.
 
-## Management vs VM addressing
+## Fixed KVM NAT Addressing
 
-For the DP installer, the host management address and VM-internal addresses are intentionally separate.
+| Deployment | VM / purpose | Address |
+| --- | --- | --- |
+| KVM NAT gateway | `virbr0` | `192.168.122.1` |
+| DP | DL | `192.168.122.2/24` |
+| DP | DA | `192.168.122.3/24` |
+| Standalone Sensor, NAT mode | Sensor | `192.168.122.2/24` |
+| AIO + Sensor | AIO | `192.168.122.2/24` |
+| AIO + Sensor | Sensor/MDS | `192.168.122.3/24` |
 
-| Purpose | Current default |
-| --- | --- |
-| libvirt NAT network | `192.168.122.0/24` |
-| DL VM | `192.168.122.2` |
-| DA VM | `192.168.122.3` |
+These guest NAT addresses are different from the KVM host Management IP. In multi-host DP deployments, each physical KVM host has its own local NAT network, so the same DL/DA NAT addresses can exist on different hosts.
 
-The host management IP is derived from the selected management interface and must not be replaced by a VM NAT address.
+## DP Cluster Network
 
-## Sensor data path
+The DP cluster interface is separate from the NAT management interface. The examples use:
 
-Sensor deployments separate management connectivity from packet-observation interfaces. Depending on installer and configuration, SPAN interfaces can be attached through bridge handling or PCI passthrough.
+- DL Master: `192.168.12.25/24`
+- DL Worker 1: `192.168.12.26/24`
+- DA Master: `192.168.12.50/24`
 
-## High-performance path
+Cluster addresses must be unique. Identify the actual cluster NIC with `show interface all`.
 
-The current `6000-Sensor-Installer.sh` path is PCI-passthrough-oriented for SPAN attachment and pairs that with CPU-affinity/NUMA considerations.
+## Sensor Data Path
 
-## Network conversion
+Standalone Sensor supports NAT or Bridge management and PCI Passthrough or Bridge SPAN attachment. The documented AIO + Sensor path uses NAT management and PCI Passthrough for Sensor SPAN.
 
-Step 3 in the current installer families performs NIC naming / ifupdown conversion and network configuration, then can reboot the host.
+## SR-IOV and PCI Passthrough
+
+- DP can use SR-IOV for cluster networking.
+- Sensor SPAN can use PCI Passthrough where supported.
+- IOMMU/VT-d or AMD-Vi must be enabled for direct device assignment.
+
+## Network Conversion
+
+Step 3 in the active installer families performs NIC naming / ifupdown conversion and network configuration, then may reboot the host.
 
 <Warning>
-Always confirm console or out-of-band access before executing network conversion. A wrong NIC selection or address can remove remote connectivity.
+Confirm console or out-of-band access before network conversion. A wrong NIC or address selection can remove remote connectivity.
 </Warning>

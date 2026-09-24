@@ -1,36 +1,49 @@
 ---
 title: "네트워크"
-description: "Management, VM, SPAN, SR-IOV, PCI Passthrough Network 개념을 정리합니다."
+description: "현재 Installer에서 사용하는 Management, VM, SPAN, SR-IOV, PCI Passthrough Network를 제품 간 비교합니다."
 ---
 
 # 네트워크
 
-Network는 Installer에서 가장 영향도가 큰 영역 중 하나입니다.
+실제 배포 절차는 각 제품 Installer 페이지를 기준으로 사용하십시오. 이 페이지는 제품 간 비교용 Reference입니다.
 
-## Management와 VM Address 분리
+## KVM 고정 NAT Address
 
-DP Installer에서 Host Management Address와 VM 내부 Address는 의도적으로 분리됩니다.
+| 배포 | VM / 용도 | Address |
+| --- | --- | --- |
+| KVM NAT Gateway | `virbr0` | `192.168.122.1` |
+| DP | DL | `192.168.122.2/24` |
+| DP | DA | `192.168.122.3/24` |
+| Standalone Sensor, NAT Mode | Sensor | `192.168.122.2/24` |
+| AIO + Sensor | AIO | `192.168.122.2/24` |
+| AIO + Sensor | Sensor/MDS | `192.168.122.3/24` |
 
-| 용도 | 현재 기본값 |
-| --- | --- |
-| libvirt NAT Network | `192.168.122.0/24` |
-| DL VM | `192.168.122.2` |
-| DA VM | `192.168.122.3` |
+Guest NAT Address는 KVM Host Management IP와 다릅니다. Multi-host DP에서는 각 물리 KVM Host가 독립적인 NAT Network를 가지므로 서로 다른 Host에서 동일한 DL/DA NAT Address를 사용할 수 있습니다.
 
-Host Management IP는 선택한 Management Interface에서 가져오며 VM NAT Address로 대체하지 않습니다.
+## DP Cluster Network
+
+DP Cluster Interface는 NAT Management Interface와 별도입니다. 현재 문서 예시는 다음 주소를 사용합니다.
+
+- DL Master: `192.168.12.25/24`
+- DL Worker 1: `192.168.12.26/24`
+- DA Master: `192.168.12.50/24`
+
+Cluster Address는 반드시 고유해야 하며 실제 Cluster NIC 이름은 `show interface all`로 확인합니다.
 
 ## Sensor Data Path
 
-Sensor 배포는 Management Connectivity와 Packet Observation용 SPAN Interface를 분리합니다. Installer와 설정에 따라 Bridge 또는 PCI Passthrough로 SPAN Interface를 연결합니다.
+Standalone Sensor는 NAT/Bridge Management와 PCI Passthrough/Bridge SPAN을 지원합니다. AIO + Sensor 문서 경로는 NAT Management와 Sensor SPAN PCI Passthrough를 사용합니다.
 
-## High-performance Path
+## SR-IOV 및 PCI Passthrough
 
-현재 `6000-Sensor-Installer.sh`는 SPAN 연결을 PCI Passthrough 중심으로 구성하고 CPU Affinity/NUMA를 함께 고려합니다.
+- DP Cluster Network는 SR-IOV를 사용할 수 있습니다.
+- Sensor SPAN은 지원 환경에서 PCI Passthrough를 사용할 수 있습니다.
+- Direct Device Assignment에는 IOMMU/VT-d 또는 AMD-Vi가 필요합니다.
 
 ## Network 전환
 
 현재 Installer Family의 Step 3은 NIC Naming, ifupdown 전환, Network 구성을 수행하며 이후 Reboot가 발생할 수 있습니다.
 
 <Warning>
-Network 변경 전 Console 또는 Out-of-Band Access를 확보하십시오. 잘못된 NIC나 Address 선택은 Remote Connectivity를 끊을 수 있습니다.
+Network 전환 전에 Console 또는 Out-of-Band Access를 확보하십시오. 잘못된 NIC/Address 선택은 Remote Connectivity를 끊을 수 있습니다.
 </Warning>

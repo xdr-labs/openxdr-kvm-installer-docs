@@ -9,15 +9,28 @@ description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber OpenXDR 
 
 ## 개요
 
-본 문서는 **Stellar Cyber OpenXDR Sensor KVM Installer**에 대한 종합 사용자 가이드입니다.
+이 페이지는 **Standalone Sensor 설치를 처음부터 Data Platform 연결 및 승인까지 끝낼 수 있는 독립형 Runbook**입니다. Sensor 전용 하드웨어 기준, NAT/Bridge, SPAN 연결, Installer 실행, CM 연결과 Authorization을 모두 포함합니다.
 
-Ubuntu Server 24.04 LTS가 설치된 KVM 호스트에서 **Stellar Cyber XDR Sensor 가상 머신을 설치, 구성, 검증 및 운영하는 방법**을 설명합니다.
-
-본 가이드는 운영 환경에서 Sensor 노드를 배포하고 관리하는 시스템 엔지니어 및 플랫폼 운영자를 대상으로 합니다.
-
-여기에 설명된 모든 절차는 설치 스크립트의 실제 동작 방식과 설계에 기반하고 있으며, 안정적이고 반복 가능하며 운영적으로 안전한 배포를 보장합니다.
+문서 기준 OS는 Ubuntu Server 24.04 LTS입니다.
 
 ## 1. 시스템 아키텍처
+
+### 하드웨어 한눈에 보기
+
+| 항목 | Sensor 요구사항 / 가이드 |
+| --- | --- |
+| CPU | 12 vCPU 이상, VM Sizing은 자동 계산 |
+| Memory | 16 GB 이상, VM Sizing은 자동 계산 |
+| Storage | Sensor Storage 생성 전 `ubuntu-vg`에 최소 100 GB Free Space |
+| Management NIC | 1 GbE 이상 |
+| SPAN NIC | Traffic 설계에 필요한 수량 |
+| SPAN 연결 | PCI Passthrough, 제한 환경에서는 Bridge |
+| BIOS | CPU Virtualization 활성화, PCI Passthrough 사용 시 VT-d/IOMMU 필요 |
+| OS | 문서 기준 Ubuntu Server 24.04 LTS |
+
+<Note>
+위 값은 프로젝트 시작 기준이며 모든 Production 환경의 보편적인 Sizing 기준은 아닙니다. Traffic Volume과 Workload에 따라 Resource를 늘리십시오.
+</Note>
 
 ### 아키텍처 개요
 
@@ -594,20 +607,19 @@ SSH 접속:
 
 ## 10. 하드웨어 및 소프트웨어 요구사항
 
-Ubuntu 24.04 설치 문서를 참고하십시오.
+실제 실행 전에 다음을 확인하십시오.
 
-### 실무 기준 요약 (운영 가이드)
+- Ubuntu Server 24.04 LTS
+- root 권한
+- 프로젝트 시작 기준 CPU 12 vCPU 이상, Memory 16 GB 이상
+- `ubuntu-vg`에 최소 100 GB Free Space
+- Management NIC 및 필요한 SPAN/Data NIC
+- CPU Virtualization 활성화
+- PCI Passthrough 사용 시 VT-d/IOMMU 활성화
+- Package 및 Sensor Image 다운로드용 Network Access
+- Network 전환 전 Console 또는 Out-of-Band Access
 
-- **OS: Ubuntu Server 24.04 LTS**
-  - OS 설치 시 SSH만 사용하는 것을 권장
-- **CPU: 12 vCPU 이상 권장**
-  - Sensor VM 사이징은 자동 계산됨
-- **메모리: 16GB 이상 권장**
-  - Sensor VM 사이징은 자동 계산됨
-- **디스크**
-  - `ubuntu-vg` 사용
-  - STEP 07 이전에 충분한 여유 공간 확보
-  - 모니터링:
+Storage 확인:
 
 ```bash
 df -h
@@ -615,11 +627,7 @@ vgs
 lvs
 ```
 
-- **NIC**
-  - 관리용 (Host/MGT): SSH/관리용 1GbE 이상
-  - SPAN (데이터): 트래픽 미러링용
-    - 성능을 위해 PCI 패스스루 권장
-    - 패스스루 제한 환경에서는 브리지 모드 지원
+**[Ubuntu 24.04 설치 가이드](/ko/getting-started/installing-ubuntu-24-04)**는 추가 참고용이며, Sensor 전용 Hardware Baseline은 이 페이지에 모두 요약되어 있습니다.
 
 ## 11. BIOS 및 플랫폼 설정
 
@@ -627,3 +635,17 @@ lvs
 
 - Intel Virtualization Technology
 - VT-d / IOMMU
+
+
+## 12. Sensor 최종 체크리스트
+
+- Full Configuration Validation에 미해결 FAIL이 없음
+- Sensor VM이 실행 중이고 Autostart가 활성화되어 있음
+- NAT 모드는 `192.168.122.2/24`, Bridge 모드는 환경별 Management Address를 사용함
+- `show interfaces`에 의도한 Management 설정이 표시됨
+- Sensor Hostname이 고유함
+- `set cm`이 Sensor 자신의 NAT IP가 아니라 접근 가능한 Data Platform Management 주소를 가리킴
+- `show cm`의 **Status가 Established**
+- NTP/Timezone이 구성됨
+- Stellar Cyber에서 Sensor Authorization이 완료됨
+- SPAN Interface가 의도한 PCI Passthrough 또는 Bridge 방식으로 연결됨

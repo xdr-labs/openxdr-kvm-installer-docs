@@ -9,15 +9,28 @@ description: "Complete procedure for installing, configuring, validating, and op
 
 ## Overview
 
-This document is the comprehensive user guide for the **Stellar Cyber OpenXDR Sensor KVM Installer**.
+Use this page as the **complete standalone Sensor deployment runbook**. It includes Sensor-specific hardware sizing, NAT/Bridge choices, SPAN attachment, installer execution, and the required Sensor registration and authorization steps.
 
-It explains how to **install, configure, validate, and operate a Stellar Cyber XDR Sensor virtual machine** on a KVM host running Ubuntu Server 24.04 LTS.
-
-This guide is intended for system engineers and platform operators who deploy and manage Sensor nodes in operational environments.
-
-The procedures are based on the installer's actual behavior and design to support stable, repeatable, and operationally safe deployments.
+The documented baseline is Ubuntu Server 24.04 LTS.
 
 ## 1. System Architecture
+
+### Hardware at a Glance
+
+| Item | Sensor requirement / guidance |
+| --- | --- |
+| CPU | 12 vCPU or more; VM sizing is calculated automatically |
+| Memory | 16 GB or more; VM sizing is calculated automatically |
+| Storage | At least 100 GB free in `ubuntu-vg` before Sensor storage creation |
+| Management NIC | 1 GbE or faster |
+| SPAN NIC | One or more interfaces required by the traffic design |
+| SPAN attachment | PCI Passthrough, or Bridge where passthrough is restricted |
+| BIOS | CPU virtualization enabled; VT-d/IOMMU required for PCI Passthrough |
+| OS | Ubuntu Server 24.04 LTS for this guide |
+
+<Note>
+These values are the project starting baseline, not a universal production sizing rule. Increase resources according to traffic volume and workload.
+</Note>
 
 ### Architecture Overview
 
@@ -590,20 +603,19 @@ SSH access:
 
 ## 10. Hardware and Software Requirements
 
-See the Ubuntu 24.04 installation guide.
+Before real execution, confirm:
 
-### Practical Operational Summary
+- Ubuntu Server 24.04 LTS
+- root access
+- 12 vCPU or more and 16 GB memory or more as the project starting baseline
+- at least 100 GB free in `ubuntu-vg`
+- a Management NIC and the required SPAN/data NICs
+- CPU virtualization enabled
+- VT-d/IOMMU enabled when using PCI Passthrough
+- network access for packages and Sensor image downloads
+- console or out-of-band access before network conversion
 
-- **OS: Ubuntu Server 24.04 LTS**
-  - installing only SSH with the OS is recommended
-- **CPU: 12 vCPU or more recommended**
-  - Sensor VM sizing is calculated automatically
-- **Memory: 16 GB or more recommended**
-  - Sensor VM sizing is calculated automatically
-- **Disk**
-  - uses `ubuntu-vg`
-  - ensure sufficient free space before STEP 07
-  - monitor with:
+Storage checks:
 
 ```bash
 df -h
@@ -611,11 +623,7 @@ vgs
 lvs
 ```
 
-- **NIC**
-  - management (Host/MGT): 1GbE or faster for SSH/management
-  - SPAN (data): traffic mirroring
-    - PCI passthrough recommended for performance
-    - Bridge mode supported where passthrough is restricted
+The **[Ubuntu 24.04 Installation Guide](/getting-started/installing-ubuntu-24-04)** is optional background; the Sensor-specific hardware baseline is fully summarized here.
 
 ## 11. BIOS and Platform Settings
 
@@ -623,3 +631,17 @@ Verify that these BIOS options are enabled:
 
 - Intel Virtualization Technology
 - VT-d / IOMMU
+
+
+## 12. Sensor Final Checklist
+
+- Full Configuration Validation has no unresolved FAIL.
+- Sensor VM is running and configured to autostart.
+- NAT mode uses `192.168.122.2/24`; Bridge mode uses the environment-specific management address.
+- `show interfaces` reports the expected management configuration.
+- Sensor hostname is unique.
+- `set cm` points to the reachable Data Platform management address, not the Sensor's own NAT IP.
+- `show cm` reports **Status: Established**.
+- NTP/timezone are configured.
+- Sensor authorization is complete in Stellar Cyber.
+- SPAN interfaces use the intended PCI Passthrough or Bridge design.

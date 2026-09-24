@@ -30,9 +30,15 @@ The operational procedures in this documentation use **Ubuntu Server 24.04 LTS**
 
 The current source may contain compatibility code for older Ubuntu or historical DP releases, but do not assume that the 24.04 procedure applies unchanged. For legacy deployments, compare the current installer source, target OpenXDR version, and Stellar support criteria.
 
-## Common Sensor/AIO Starting Baseline
+## Product-Specific Sizing
 
-The current project README identifies **12 vCPU**, **16 GB memory**, and approximately **100 GB free storage** as a common starting point for Standard Sensor/AIO paths. Production sizing may be higher, and the installers calculate some resources automatically.
+Do not use this common page as the sizing source for a deployment. Each installer guide is self-contained and carries its own hardware baseline:
+
+- **[DP KVM Installer](/installers/dp)** — DL/DA VM defaults, Data Lake, Management/Cluster NIC requirements
+- **[Sensor KVM Installer](/installers/sensor)** — Sensor CPU, memory, storage, Management/SPAN requirements
+- **[AIO & Sensor KVM Installer](/installers/aio-sensor)** — integrated AIO/Sensor sizing and Data Lake/SPAN requirements
+
+The repository's generic 12 vCPU / 16 GB / 100 GB baseline is only a starting point for some Sensor/AIO installer checks and must not be treated as production sizing.
 
 <Warning>
 NIC renaming, the ifupdown transition, and disk provisioning can disrupt remote access or existing data. Secure console or out-of-band access first.

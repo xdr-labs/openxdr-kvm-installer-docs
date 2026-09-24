@@ -9,20 +9,9 @@ description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber OpenXDR 
 
 ## 개요
 
-본 문서는 **Stellar Cyber OpenXDR AIO & Sensor KVM Installer**에 대한 종합 사용자 가이드입니다.
+이 페이지는 **AIO + Sensor 설치를 처음부터 Appliance 초기 설정 완료까지 끝낼 수 있는 독립형 Runbook**입니다. 제품별 하드웨어 기준, KVM 배포, AIO 초기화, Data Lake Storage, Sensor 등록·승인, Receiver 검증까지 모두 포함합니다.
 
-Ubuntu Server 24.04 LTS KVM 호스트에서 **All-in-One(AIO) OpenXDR와 XDR Sensor를 위한 KVM 인프라 및 가상 머신을 설치, 배포, 검증 및 유지관리하는 방법**을 설명합니다.
-
-본 가이드는 가상화 인프라 환경에서 OpenXDR 환경을 배포하고 관리하는 시스템 엔지니어 및 운영자를 대상으로 합니다.
-
-이 문서는 다음과 같은 실제 운영 시나리오를 반영합니다.
-
-- 초기 설치
-- 부분 재구성
-- 단계 재실행
-- 재부팅 또는 중단 이후 복구
-
-본 문서에 설명된 모든 절차는 설치 프로그램의 검증된 동작 방식을 따르며, 안정적이고 반복 가능하며 운영 환경에 적합한 배포를 보장하도록 설계되었습니다.
+문서 기준 OS는 Ubuntu Server 24.04 LTS입니다. 설치 후 설정만 빠르게 다시 확인하려면 **[AIO & Sensor 초기 구성](/ko/installers/aio-sensor-initial-configuration)**을 사용할 수 있습니다.
 
 ## 1. 시스템 아키텍처
 
@@ -42,6 +31,25 @@ Ubuntu Server 24.04 LTS KVM 호스트에서 **All-in-One(AIO) OpenXDR와 XDR Sen
 | Sensor SPAN | PCI Passthrough |
 | OS / VM Disk | 1 × 1.92 TB — Ubuntu 24.04, AIO VM, MDS VM |
 | Data Lake | 6 × 3.84 TB — DLm 및 AIO용 |
+
+### 하드웨어 한눈에 보기
+
+Repository에는 일반 Installer 시작 기준으로 **12 vCPU, 16 GB Memory, 100 GB Free Storage**가 기재되어 있지만, 이는 **Production AIO + Sensor Sizing 권장값이 아닙니다**. 이 페이지의 검증된 Dell R660 예시는 다음을 사용합니다.
+
+| 항목 | 검증 예시 / 요구사항 |
+| --- | --- |
+| AIO VM | 48 vCPU, 136 GB RAM |
+| Sensor VM | 44 vCPU, 80 GB RAM |
+| OS / VM Disk | 1 × 1.92 TB |
+| Data Lake | 6 × 3.84 TB |
+| Management | NAT Mode |
+| Sensor SPAN | PCI Passthrough |
+| BIOS | CPU Virtualization 및 VT-d/IOMMU 활성화 |
+| OS | Ubuntu Server 24.04 LTS |
+
+<Warning>
+일반적인 12 vCPU / 16 GB / 100 GB Repository Baseline을 통합 AIO + Sensor의 Production Sizing으로 해석하지 마십시오.
+</Warning>
 
 ### 아키텍처 개요
 
@@ -417,29 +425,127 @@ STEP 11 → STEP 12
 기존 Sensor VM은 삭제됩니다.
 </Warning>
 
-## 9. 다음 단계: AIO & Sensor 초기 구성
+## 9. 필수 AIO & Sensor 초기 구성
 
-**Full Configuration Validation**에서 AIO 및 Sensor VM이 정상적으로 배포된 것을 확인하면 KVM 설치 단계는 완료됩니다.
+Full Configuration Validation에서 VM 배포를 확인한 뒤 다음 Appliance 설정을 완료하십시오.
 
-이후 **[AIO & Sensor 초기 구성](/ko/installers/aio-sensor-initial-configuration)** 문서에서 다음 설정을 진행하십시오.
+### 9.1 KVM 고정 Network
 
-- AIO 고정 NAT Management Network 및 AIO Role 설정
-- OTP 및 AIO 초기화
-- AIO Data Lake Storage 추가 및 Migration
-- Sensor Management Network 및 CM 연결
-- NTP/Timezone 및 Sensor 승인
-- Receiver 및 Sensor Profile 검증
+- AIO: `192.168.122.2/24`
+- Sensor/MDS: `192.168.122.3/24`
+- Gateway: `192.168.122.1`
+- DNS: `8.8.8.8`
 
+### 9.2 AIO 구성
+
+`aella / changeme`로 로그인하고 비밀번호를 변경한 뒤:
+
+```text
+set interface management ip 192.168.122.2/24
+set interface management gateway 192.168.122.1
+set interface management dns 8.8.8.8
+set role AIO
+set cluster_name AIO
+set cluster_size 1
+set cm 192.168.122.2
+set otp <YOUR-OTP>
+reset
+```
+
+초기화 후:
+
+```text
+show status
+```
+
+Platform이 Ready/Healthy 상태인지 확인합니다.
+
+### 9.3 AIO Data Storage 추가
+
+```text
+show storage
+add storage blk vdb
+show storage
+```
+
+<Warning>
+`add storage blk`는 선택한 Device를 Format합니다. 승인 전에 `vdb`와 예상 용량을 확인하십시오.
+</Warning>
+
+GUI의 **System → DATA MANAGEMENT → Data Management → Advanced**에서 `/es-data-lvm`으로 Migration하고 **System → DATA MANAGEMENT → Data Lake**에서 **Data Storage Space**를 확인합니다.
+
+### 9.4 Sensor 연결
+
+Sensor에서 `aella / changeme`로 로그인하고 비밀번호를 변경한 뒤:
+
+```text
+set interface management ip 192.168.122.3/24
+set interface management gateway 192.168.122.1
+set interface management dns 8.8.8.8
+show interfaces
+set hostname <UNIQUE-SENSOR-HOSTNAME>
+set cm 192.168.122.2
+show cm
+```
+
+필요한 경우:
+
+```text
+set proxy http://<PROXY-IP>:<PORT>
+set tenant_id <TENANT-ID>
+```
+
+**CM Controller = 192.168.122.2**, **Status = Established**를 확인하고 `quit`로 종료합니다.
+
+### 9.5 NTP, Sensor 승인, Receiver
+
+- Sensor NTP/Timezone 구성
+- Stellar Cyber에서 Sensor Authorization 수행
+- Receiver는 DA-Master가 아니라 **AIO/DP**를 가리켜야 함
+- Sensor Profile이 해당 Receiver를 사용하는지 확인
+- `show logforwarder` 출력이 없으면 Receiver 설정부터 확인
+
+### 9.6 접속
+
+```text
+console aio
+console mds
+```
+
+- AIO SSH: **2222**
+- MDS SSH: **2223**
+
+### 9.7 최종 체크리스트
+
+- Full Configuration Validation에 미해결 FAIL이 없음
+- AIO = `192.168.122.2/24`, Sensor = `192.168.122.3/24`
+- AIO `show status`가 Ready/Healthy
+- `vdb` 추가 및 `/es-data-lvm` Migration 완료
+- Sensor Hostname이 고유함
+- Sensor `show cm`이 `192.168.122.2`에 **Established**
+- NTP/Timezone 및 Sensor Authorization 완료
+- Receiver와 Sensor Profile 정상
+- 기본 비밀번호 변경 완료
+
+설치 후 설정만 빠르게 다시 보려면 **[AIO & Sensor 초기 구성](/ko/installers/aio-sensor-initial-configuration)**을 사용하십시오.
 
 ## 10. 하드웨어 및 소프트웨어 요구사항
 
-[Ubuntu 24.04 설치 가이드](/ko/getting-started/installing-ubuntu-24-04) 및 Stellar Cyber 플랫폼 요구사항을 참고하십시오.
+실제 실행 전에 다음을 확인하십시오.
+
+- Ubuntu Server 24.04 LTS
+- root 권한
+- CPU Hardware Virtualization 활성화
+- Sensor PCI Passthrough용 VT-d/IOMMU 활성화
+- 의도한 AIO/Sensor Sizing을 수용할 CPU와 Memory
+- 충분한 OS/VM Storage 및 전용 Data Lake Disk
+- Management Connectivity와 필요한 Sensor SPAN NIC
+- Package 및 Image 다운로드용 Network Access
+- Network 전환 전 Console 또는 Out-of-Band Access
+
+**[Ubuntu 24.04 설치 가이드](/ko/getting-started/installing-ubuntu-24-04)**는 추가 참고용이며 제품별 Hardware 가이드는 이 페이지에 요약되어 있습니다.
 
 ## 11. BIOS 및 플랫폼 설정
 
-다음 BIOS 옵션이 활성화되어 있는지 확인하십시오.
+Intel VT-x / AMD-V와 Intel VT-d / AMD-Vi (IOMMU)를 확인하십시오. 문서의 Sensor PCI Passthrough 구성에 필요합니다.
 
-- Intel Virtualization Technology
-- VT-d / IOMMU
-
-이 설정들은 Sensor SPAN 연결에 필수인 PCI Passthrough를 사용하기 위해 반드시 필요합니다.

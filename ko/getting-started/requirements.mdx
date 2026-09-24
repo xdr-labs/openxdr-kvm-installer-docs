@@ -30,9 +30,15 @@ description: "배포 전 Host, BIOS, OS, Storage, Network 및 Access 요구사�
 
 현재 Source에는 이전 Ubuntu 또는 과거 DP 릴리스용 호환 코드가 존재할 수 있지만, 이 문서의 24.04 절차가 그대로 적용된다고 가정해서는 안 됩니다. Legacy 배포는 반드시 현재 Installer Source, 대상 OpenXDR 버전, Stellar 지원 기준을 함께 대조하십시오.
 
-## Sensor/AIO 공통 시작 기준
+## 제품별 Sizing
 
-현재 프로젝트 README는 Standard Sensor/AIO 경로의 일반적인 시작 기준으로 **12 vCPU**, **16 GB Memory**, 약 **100 GB Free Storage**를 제시합니다. Production sizing은 더 클 수 있으며 Installer가 일부 Resource를 자동 계산합니다.
+이 공통 페이지를 실제 배포의 Sizing 기준으로 사용하지 마십시오. 각 Installer 가이드가 제품별 Hardware Baseline을 자체적으로 포함합니다.
+
+- **[DP KVM Installer](/ko/installers/dp)** — DL/DA VM 기본값, Data Lake, Management/Cluster NIC 요구사항
+- **[Sensor KVM Installer](/ko/installers/sensor)** — Sensor CPU, Memory, Storage, Management/SPAN 요구사항
+- **[AIO & Sensor KVM Installer](/ko/installers/aio-sensor)** — 통합 AIO/Sensor Sizing, Data Lake, SPAN 요구사항
+
+Repository의 일반적인 12 vCPU / 16 GB / 100 GB 값은 일부 Sensor/AIO Installer Check의 시작 기준일 뿐이며 Production Sizing으로 사용해서는 안 됩니다.
 
 <Warning>
 NIC 이름 변경, ifupdown 전환, Disk Provisioning은 원격 접속과 기존 데이터를 손상시킬 수 있습니다. Console 또는 Out-of-Band Access를 먼저 확보하십시오.

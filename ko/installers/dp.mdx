@@ -9,17 +9,9 @@ description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber OpenXDR 
 
 ## 개요
 
-본 문서는 **Stellar Cyber OpenXDR Platform KVM Installer**에 대한 종합 사용자 가이드입니다.
+이 페이지는 **DP 설치를 처음부터 필수 초기 설정 완료까지 끝낼 수 있는 독립형 Runbook**입니다. DP 전용 하드웨어 기준, KVM 설치, Reboot/Resume, VM 배포, DL/DA 초기 설정까지 모두 포함합니다.
 
-Ubuntu Server 24.04 LTS가 실행 중인 KVM 호스트에서 **OpenXDR Platform을 설치, 구성, 검증 및 운영하는 방법**을 설명합니다.
-
-본 가이드는 **Data Platform(DP) 환경을 배포하고 관리하는 시스템 엔지니어 및 운영자**를 대상으로 합니다.
-
-초기 설치, 부분 재구성, 복구, 재배포를 포함한 실제 운영 시나리오를 반영하고 있습니다.
-
-본 문서에 설명된 모든 절차는 검증된 설치 프로그램의 동작 방식과 모범 사례(best practices)를 따르며, 안정적이고 반복 가능하며 운영 환경에 적합한 배포를 보장합니다.
-
-![OpenXDR KVM Installer 메인 메뉴](/images/DP-Installer/2.png)
+문서 기준 OS는 Ubuntu Server 24.04 LTS입니다. 설치 후 Appliance 설정만 빠르게 다시 확인하려면 **[DP Cluster 초기 구성](/ko/installers/dp-cluster-initial-configuration)**을 사용할 수 있습니다.
 
 ## 1. 시스템 아키텍처
 
@@ -39,7 +31,26 @@ Ubuntu Server 24.04 LTS가 실행 중인 KVM 호스트에서 **OpenXDR Platform�
 | Management & Data Link | 1 GbE 또는 10 GbE |
 | Cluster Link | 1 GbE 또는 10 GbE, `cltr0`, SR-IOV |
 | OS / VM Disk | 1 × 1.92 TB — Ubuntu 24.04, DLm VM, DAm VM |
-| Data Lake | 6 × 3.84 TB — DLm 및 AIO용 |
+| Data Lake | 6 × 3.84 TB — DLm용 |
+
+### 하드웨어 한눈에 보기
+
+현재 `DP-Installer.sh` 기본값과 검증된 Dell R660 예시는 다음 DP 전용 사양을 사용합니다.
+
+| 항목 | 현재 DP 값 / 가이드 |
+| --- | --- |
+| DL VM | 42 vCPU, 136 GB RAM, 500 GB System Disk |
+| DA VM | 46 vCPU, 80 GB RAM, 500 GB System Disk |
+| OS / VM Disk 예시 | 1 × 1.92 TB |
+| Data Lake 예시 | 6 × 3.84 TB |
+| Management | 1 GbE 이상, 대규모 배포는 10 GbE 권장 |
+| Cluster Link | 10 GbE 이상 권장, SR-IOV 모드는 SR-IOV 지원 NIC 필요 |
+| Host Access | 장애 복구용 별도 Local Access NIC 권장 |
+| BIOS | CPU Virtualization 활성화, SR-IOV/Direct Device 사용 시 VT-d/IOMMU 필요 |
+
+<Note>
+위 값은 Installer 기본값과 검증된 배포 예시이며 모든 Stellar Cyber 환경의 보편적인 Sizing 기준은 아닙니다. Production에서는 예상 Ingestion, Retention, Workload에 맞는 Sizing을 별도로 확인하십시오.
+</Note>
 
 ### 아키텍처 개요
 
@@ -505,7 +516,18 @@ console da-master
 
 ## 8. 하드웨어 및 소프트웨어 요구사항
 
-[Ubuntu 24.04 설치 문서](/ko/getting-started/installing-ubuntu-24-04)를 참고하십시오.
+실제 실행 전에 이 페이지에서 다음 DP 전용 요구사항을 모두 확인하십시오.
+
+- 문서 기준 Ubuntu Server 24.04 LTS
+- root 권한
+- CPU Hardware Virtualization 활성화
+- SR-IOV/Direct Device 사용 시 VT-d / IOMMU 활성화
+- 위 표의 현재 DL/DA VM 기본값을 수용할 CPU와 Memory
+- 선택한 설계에 필요한 OS/VM Storage와 전용 Data Lake Disk
+- Management NIC, Cluster NIC, 장애 복구용 Host Access 연결
+- Package, Image, Deployment Artifact 다운로드용 Network Access
+
+**[Ubuntu 24.04 설치 가이드](/ko/getting-started/installing-ubuntu-24-04)**는 추가 참고용이며, DP 하드웨어 선택에 필요한 제품별 요구사항은 이 페이지에 모두 요약되어 있습니다.
 
 ## 9. BIOS 및 플랫폼 설정
 
@@ -519,7 +541,139 @@ console da-master
 DP Cluster Interface에 **SR-IOV**를 사용하는 경우 서버 BIOS와 NIC 장치 설정을 모두 확인하십시오. Dell/Intel X710·E810 계열의 일반적인 가이드는 **Global/System SR-IOV 활성화 + NIC Device Level Virtualization Mode의 SR-IOV 활성화**를 요구합니다. 정확한 메뉴와 요구사항은 서버/NIC 펌웨어 버전에 따라 달라질 수 있으므로 제조사 문서와 [Ubuntu 24.04 설치 가이드](/ko/getting-started/installing-ubuntu-24-04)를 함께 확인하십시오.
 </Warning>
 
-## 10. 다음 단계: DP Cluster 초기 구성
+## 10. 필수 DP 초기 구성
 
-KVM Installer가 DLm/DAm VM 배포 및 검증을 완료하면 **[DP Cluster 초기 구성](/ko/installers/dp-cluster-initial-configuration)** 문서로 이동하여 KVM 고정 NAT Management 주소, Cluster Interface, DL/DA 역할, Storage 및 Receiver 설정을 진행하십시오.
+VM이 실행 중인 것만으로 DP 설치가 완료된 것은 아닙니다. 운영 전 다음 DL/DA 설정을 완료하십시오.
+
+<Note>
+KVM Host별 NAT Management Network는 고정입니다. DL은 `192.168.122.2/24`, DA는 `192.168.122.3/24`, Gateway는 `192.168.122.1`, DNS는 `8.8.8.8`을 사용합니다. 각 물리 KVM Host는 독립적인 libvirt NAT Network를 사용하므로 서로 다른 Host에서 같은 NAT 주소를 재사용할 수 있습니다.
+</Note>
+
+### 10.1 DL Master
+
+```text
+set interface management ip 192.168.122.2/24
+set interface management gateway 192.168.122.1
+set interface management dns 8.8.8.8
+set hostname dl-master
+reboot
+```
+
+재접속 후:
+
+```text
+set role DL-master
+set cluster_name dl-master
+set cluster_size 1
+show interface all
+```
+
+`show interface all` 결과에서 실제 Cluster NIC를 확인한 뒤:
+
+```text
+set cluster_interface <cluster-interface>
+set interface cluster ip 192.168.12.25/24
+set cm 192.168.12.25
+set mode MDS disable
+set mode replica security
+set mode shard_balance enable
+set otp <YOUR-OTP>
+reset
+```
+
+Storage 추가:
+
+```text
+show storage
+add storage blk vdb
+```
+
+<Warning>
+`add storage blk`는 선택한 Device를 Format합니다. 반드시 `vdb`를 확인하십시오. 실제 OTP는 문서나 Git 저장소에 저장하지 마십시오.
+</Warning>
+
+### 10.2 DL Worker
+
+Worker 1 예시:
+
+```text
+set interface management ip 192.168.122.2/24
+set interface management gateway 192.168.122.1
+set interface management dns 8.8.8.8
+set hostname dl-worker1
+reboot
+```
+
+재접속 후:
+
+```text
+set role resource
+show interface all
+set cluster_interface <cluster-interface>
+set interface cluster ip 192.168.12.26/24
+set cm 192.168.12.25
+reset
+show storage
+add storage blk vdb
+```
+
+추가 Worker는 `dl-worker2 / 192.168.12.27/24`처럼 고유 값을 사용합니다.
+
+### 10.3 DA Master / Worker
+
+DA Master 예시:
+
+```text
+set interface management ip 192.168.122.3/24
+set interface management gateway 192.168.122.1
+set interface management dns 8.8.8.8
+set hostname da-master
+reboot
+```
+
+재접속 후:
+
+```text
+set role resource
+show interface all
+set cluster_interface <cluster-interface>
+set interface cluster ip 192.168.12.50/24
+set cm 192.168.12.25
+reset
+```
+
+DA Worker는 `da-worker1 / 192.168.12.51/24`처럼 고유 값을 사용합니다.
+
+### 10.4 DA Resource를 DA-Master로 전환
+
+DL Master가 **System Ready**이고 대상 DA Master가 `resource`이면:
+
+1. Data Platform GUI에 접속합니다.
+2. **System → DATA MANAGEMENT → Resources**에서 DA Resource가 Ready인지 확인합니다.
+3. **System → DATA MANAGEMENT → Data Analyzer**로 이동합니다.
+4. Data Analyzer Cluster를 생성합니다.
+5. DA Resource를 선택하고 **Role in Cluster = DA-Master**로 설정합니다.
+6. Submit 후 Node가 Healthy 상태인지 확인합니다.
+
+### 10.5 Receiver 및 Sensor Profile
+
+1. **System → DATA SOURCE MANAGEMENT → Receivers**로 이동합니다.
+2. **Receiver Hostname**이 DL-Master가 아니라 **DA-Master**를 가리키는지 확인합니다.
+3. 최소 하나의 Sensor Profile이 해당 Receiver를 사용하도록 설정되어 있는지 확인합니다.
+4. `show logforwarder`에 출력이 없으면 Receiver Hostname부터 확인합니다.
+
+### 10.6 DP 최종 체크리스트
+
+- DL/DA VM이 실행 중이고 Autostart가 활성화되어 있음
+- DL Management IP = `192.168.122.2/24`
+- DA Management IP = `192.168.122.3/24`
+- 모든 Cluster Node가 고유한 Hostname과 Cluster IP를 사용함
+- `show interface all`에서 실제 Cluster Interface를 선택함
+- 모든 Node의 CM이 DL Master Cluster IP를 가리킴. 이 문서 예시는 `192.168.12.25`
+- 필요한 Node에 의도한 `vdb` Storage가 추가됨
+- DA-Master가 Data Analyzer에서 Healthy 상태임
+- Receiver Hostname이 DA-Master를 가리키고 Sensor Profile이 해당 Receiver를 사용함
+- Full Configuration Validation에 미해결 FAIL이 없음
+
+Installer 설명 없이 초기 설정 명령만 다시 보려면 **[DP Cluster 초기 구성](/ko/installers/dp-cluster-initial-configuration)**을 사용하십시오.
 

@@ -1,29 +1,27 @@
 ---
 title: "Installer Step Matrix"
-description: "Compare the current ordered workflow of all four installer scripts."
+description: "Compare the current ordered workflow of the three installer families documented on this site."
 ---
 
 # Installer Step Matrix
 
-This table reflects the current step arrays in the installer source.
-
-| Step | DP | Sensor | High-performance Sensor | AIO + Sensor |
-| ---: | --- | --- | --- | --- |
-| 1 | HW/NIC/disks | HW/NIC/CPU/memory/SPAN | HW/NIC/CPU/memory/SPAN | HW/NIC/SPAN |
-| 2 | HWE kernel | HWE kernel | HWE kernel | HWE kernel |
-| 3 | NIC/ifupdown/network | NIC/ifupdown/network | NIC/ifupdown/network | NIC/ifupdown/network |
-| 4 | KVM/libvirt | KVM/libvirt | KVM/libvirt | KVM/libvirt |
-| 5 | Kernel/KSM/swap | Kernel/KSM/swap | Kernel/KSM/swap | Kernel/KSM/swap |
-| 6 | SR-IOV drivers + NTPsec | libvirt hooks + NTPsec | libvirt hooks | libvirt hooks + NTPsec |
-| 7 | DL/DA LVM | Sensor LV + download | Sensor LV + download | AIO LVM |
-| 8 | Hooks + OOM recovery | Sensor deploy | Sensor deploy | AIO download |
-| 9 | DP image/scripts | Sensor network/SPAN | PCI passthrough/CPU affinity | AIO deploy |
-| 10 | DL-master deploy | Appliance CLI | Appliance CLI | Sensor LV + download |
-| 11 | DA-master deploy | — | — | Sensor deploy |
-| 12 | SR-IOV/CPU/passthrough | — | — | PCI passthrough/CPU affinity |
-| 13 | Appliance CLI | — | — | Appliance CLI |
-| 14 | NFS backup config | — | — | — |
+| Step | DP | Sensor | AIO + Sensor |
+| ---: | --- | --- | --- |
+| 1 | HW/NIC/disks | HW/NIC/CPU/memory/SPAN | HW/NIC/SPAN |
+| 2 | HWE kernel | HWE kernel | HWE kernel |
+| 3 | NIC/ifupdown/network | NIC/ifupdown/network | NIC/ifupdown/network |
+| 4 | KVM/libvirt | KVM/libvirt | KVM/libvirt |
+| 5 | Kernel/KSM/swap | Kernel/KSM/swap | Kernel/KSM/swap |
+| 6 | SR-IOV drivers + NTPsec | libvirt hooks + NTPsec | libvirt hooks + NTPsec |
+| 7 | DL/DA LVM | Sensor LV + download | AIO LVM |
+| 8 | Hooks + OOM recovery | Sensor deploy | AIO download |
+| 9 | DP image/scripts | Sensor network/SPAN | AIO deploy |
+| 10 | DL-master deploy | Appliance CLI | Sensor LV + download |
+| 11 | DA-master deploy | — | Sensor deploy |
+| 12 | SR-IOV/CPU/passthrough | — | PCI passthrough/CPU affinity |
+| 13 | Appliance CLI | — | Appliance CLI |
+| 14 | NFS backup config | — | — |
 
 <Note>
-Step IDs are persistent-state identifiers. Reordering or skipping state manually can break resume semantics.
+Step IDs are persistent-state identifiers. Do not manually advance state to skip a failed prerequisite.
 </Note>

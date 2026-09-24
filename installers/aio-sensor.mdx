@@ -9,20 +9,9 @@ description: "Install, deploy, validate, and maintain Stellar Cyber OpenXDR AIO 
 
 ## Overview
 
-This document is the comprehensive user guide for the **Stellar Cyber OpenXDR AIO & Sensor KVM Installer**.
+Use this page as the **complete AIO + Sensor deployment runbook**. It includes product-specific hardware guidance, KVM deployment, AIO initialization, Data Lake storage, Sensor registration, authorization, and Receiver validation.
 
-It explains how to **install, deploy, validate, and maintain the KVM infrastructure and virtual machines** for an All-in-One (AIO) OpenXDR appliance and XDR Sensor on Ubuntu Server 24.04 LTS.
-
-This guide is intended for system engineers and operators who deploy and manage OpenXDR environments on virtualized infrastructure.
-
-It reflects real operational scenarios including:
-
-- initial installation
-- partial reconfiguration
-- step reruns
-- recovery after reboot or interruption
-
-The procedures follow validated installer behavior and are designed to support stable, repeatable, production-oriented deployments.
+The documented baseline is Ubuntu Server 24.04 LTS. For a compact post-deployment-only view, see **[AIO & Sensor Initial Configuration](/installers/aio-sensor-initial-configuration)**.
 
 ## 1. System Architecture
 
@@ -40,6 +29,25 @@ The procedures follow validated installer behavior and are designed to support s
 | Sensor SPAN | PCI Passthrough |
 | OS / VM Disk | 1 × 1.92 TB — Ubuntu 24.04, AIO VM, MDS VM |
 | Data Lake | 6 × 3.84 TB — for DLm and AIO |
+
+### Hardware at a Glance
+
+The repository documents a generic installer starting baseline of **12 vCPU, 16 GB memory, and 100 GB free storage**, but that is **not a production AIO + Sensor sizing recommendation**. The validated Dell R660 example on this page uses:
+
+| Item | Validated example / requirement |
+| --- | --- |
+| AIO VM | 48 vCPU, 136 GB RAM |
+| Sensor VM | 44 vCPU, 80 GB RAM |
+| OS / VM disk | 1 × 1.92 TB |
+| Data Lake | 6 × 3.84 TB |
+| Management | NAT mode |
+| Sensor SPAN | PCI Passthrough |
+| BIOS | CPU virtualization and VT-d/IOMMU enabled |
+| OS | Ubuntu Server 24.04 LTS |
+
+<Warning>
+Do not interpret the generic 12 vCPU / 16 GB / 100 GB repository baseline as production sizing for an integrated AIO + Sensor deployment.
+</Warning>
 
 ### Architecture Overview
 
@@ -411,29 +419,127 @@ STEP 11 → STEP 12
 The existing Sensor VM is deleted.
 </Warning>
 
-## 9. Next Step: AIO & Sensor Initial Configuration
+## 9. Required AIO & Sensor Initial Configuration
 
-After **Full Configuration Validation** confirms that the AIO and Sensor VMs are deployed correctly, the KVM installation phase is complete.
+After Full Configuration Validation confirms VM deployment, complete the following appliance configuration.
 
-Continue with **[AIO & Sensor Initial Configuration](/installers/aio-sensor-initial-configuration)** to configure:
+### 9.1 Fixed KVM Network
 
-- AIO fixed NAT management networking and AIO role
-- OTP and AIO initialization
-- AIO Data Lake storage and migration
-- Sensor management networking and CM connection
-- NTP/timezone and Sensor authorization
-- Receiver and Sensor Profile validation
+- AIO: `192.168.122.2/24`
+- Sensor/MDS: `192.168.122.3/24`
+- Gateway: `192.168.122.1`
+- DNS: `8.8.8.8`
 
+### 9.2 Configure the AIO
+
+Log in with `aella / changeme`, change the password when prompted, then configure:
+
+```text
+set interface management ip 192.168.122.2/24
+set interface management gateway 192.168.122.1
+set interface management dns 8.8.8.8
+set role AIO
+set cluster_name AIO
+set cluster_size 1
+set cm 192.168.122.2
+set otp <YOUR-OTP>
+reset
+```
+
+After initialization:
+
+```text
+show status
+```
+
+Verify the platform reaches a ready/healthy state.
+
+### 9.3 Add AIO Data Storage
+
+```text
+show storage
+add storage blk vdb
+show storage
+```
+
+<Warning>
+`add storage blk` formats the selected device. Confirm `vdb` and its expected capacity before approving.
+</Warning>
+
+In the GUI, go to **System → DATA MANAGEMENT → Data Management → Advanced**, migrate to `/es-data-lvm`, then verify **Data Storage Space** under **System → DATA MANAGEMENT → Data Lake**.
+
+### 9.4 Connect the Sensor
+
+Log in to the Sensor with `aella / changeme`, change the password, reconnect, then configure:
+
+```text
+set interface management ip 192.168.122.3/24
+set interface management gateway 192.168.122.1
+set interface management dns 8.8.8.8
+show interfaces
+set hostname <UNIQUE-SENSOR-HOSTNAME>
+set cm 192.168.122.2
+show cm
+```
+
+Optional:
+
+```text
+set proxy http://<PROXY-IP>:<PORT>
+set tenant_id <TENANT-ID>
+```
+
+Confirm **CM Controller = 192.168.122.2** and **Status = Established**, then `quit`.
+
+### 9.5 NTP, Authorization, Receiver
+
+- Configure NTP and timezone.
+- Authorize the registered Sensor in Stellar Cyber.
+- Receiver must point to **AIO/DP**, not DA-Master.
+- Verify the intended Sensor Profile uses that Receiver.
+- If `show logforwarder` has no output, check Receiver configuration first.
+
+### 9.6 Access
+
+```text
+console aio
+console mds
+```
+
+- AIO SSH: **2222**
+- MDS SSH: **2223**
+
+### 9.7 Final Checklist
+
+- Full Configuration Validation has no unresolved FAIL.
+- AIO = `192.168.122.2/24`; Sensor = `192.168.122.3/24`.
+- AIO `show status` is ready/healthy.
+- `vdb` is added and Data Lake migration to `/es-data-lvm` is complete.
+- Sensor hostname is unique.
+- Sensor `show cm` is **Established** to `192.168.122.2`.
+- NTP/timezone and Sensor authorization are complete.
+- Receiver and Sensor Profile are correct.
+- Default passwords have been changed.
+
+For a post-deployment-only view, use **[AIO & Sensor Initial Configuration](/installers/aio-sensor-initial-configuration)**.
 
 ## 10. Hardware and Software Requirements
 
-See the **[Ubuntu 24.04 Installation Guide](/getting-started/installing-ubuntu-24-04)** and the Stellar Cyber platform requirements.
+Before real execution, confirm:
+
+- Ubuntu Server 24.04 LTS
+- root access
+- CPU hardware virtualization enabled
+- VT-d/IOMMU enabled for Sensor PCI Passthrough
+- sufficient CPU/memory for intended AIO and Sensor sizing
+- sufficient OS/VM storage and dedicated Data Lake disks
+- management connectivity and required Sensor SPAN NICs
+- network access for package and image downloads
+- console or out-of-band access before network conversion
+
+The **[Ubuntu 24.04 Installation Guide](/getting-started/installing-ubuntu-24-04)** is optional background; product-specific guidance is summarized here.
 
 ## 11. BIOS and Platform Settings
 
-Verify that these BIOS options are enabled:
+Verify Intel VT-x / AMD-V and Intel VT-d / AMD-Vi (IOMMU). These are required for the documented Sensor PCI Passthrough design.
 
-- Intel Virtualization Technology
-- VT-d / IOMMU
-
-These settings are required for PCI Passthrough used by Sensor SPAN attachment.
