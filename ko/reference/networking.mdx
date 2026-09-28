@@ -1,15 +1,15 @@
 ---
 title: "네트워크"
-description: "현재 Installer에서 사용하는 Management, VM, SPAN, SR-IOV, PCI Passthrough Network를 제품 간 비교합니다."
+description: "설치 프로그램에서 사용하는 관리, VM, SPAN, SR-IOV, PCI Passthrough 네트워크 구성을 제품별로 비교합니다."
 ---
 
 # 네트워크
 
-실제 배포 절차는 각 제품 Installer 페이지를 기준으로 사용하십시오. 이 페이지는 제품 간 비교용 Reference입니다.
+실제 배포 절차는 각 제품의 설치 페이지를 따르십시오. 이 페이지는 제품 간 네트워크 구성을 비교하기 위한 참고 자료입니다.
 
 ## KVM 고정 NAT Address
 
-| 배포 | VM / 용도 | Address |
+| 배포 | VM / 용도 | 주소 |
 | --- | --- | --- |
 | KVM NAT Gateway | `virbr0` | `192.168.122.1` |
 | DP | DL | `192.168.122.2/24` |
@@ -18,21 +18,21 @@ description: "현재 Installer에서 사용하는 Management, VM, SPAN, SR-IOV, 
 | AIO + Sensor | AIO | `192.168.122.2/24` |
 | AIO + Sensor | Sensor/MDS | `192.168.122.3/24` |
 
-Guest NAT Address는 KVM Host Management IP와 다릅니다. Multi-host DP에서는 각 물리 KVM Host가 독립적인 NAT Network를 가지므로 서로 다른 Host에서 동일한 DL/DA NAT Address를 사용할 수 있습니다.
+Guest NAT 주소는 KVM 호스트 관리 IP와 다릅니다. 여러 호스트로 구성한 DP에서는 각 물리 KVM 호스트가 독립적인 NAT 네트워크를 사용하므로 서로 다른 호스트에서 같은 DL/DA NAT 주소를 사용할 수 있습니다.
 
 ## DP Cluster Network
 
-DP Cluster Interface는 NAT Management Interface와 별도입니다. 현재 문서 예시는 다음 주소를 사용합니다.
+DP 클러스터 인터페이스는 NAT 관리 인터페이스와 별도입니다. 현재 문서 예시는 다음 주소를 사용합니다.
 
 - DL Master: `192.168.12.25/24`
 - DL Worker 1: `192.168.12.26/24`
 - DA Master: `192.168.12.50/24`
 
-Cluster Address는 반드시 고유해야 하며 실제 Cluster NIC 이름은 `show interface all`로 확인합니다.
+클러스터 주소는 반드시 고유해야 하며 실제 클러스터 NIC 이름은 `show interface all`로 확인합니다.
 
 ## Sensor Data Path
 
-Standalone Sensor는 NAT/Bridge Management와 PCI Passthrough/Bridge SPAN을 지원합니다. AIO + Sensor 문서 경로는 NAT Management와 Sensor SPAN PCI Passthrough를 사용합니다.
+Standalone Sensor는 NAT/Bridge 관리 네트워크와 PCI Passthrough/Bridge SPAN을 지원합니다. AIO + Sensor 문서 경로는 NAT 관리 네트워크와 Sensor SPAN PCI Passthrough를 사용합니다.
 
 ## SR-IOV 및 PCI Passthrough
 
@@ -42,7 +42,7 @@ Standalone Sensor는 NAT/Bridge Management와 PCI Passthrough/Bridge SPAN을 지
 
 ## Network 전환
 
-현재 Installer Family의 Step 3은 NIC Naming, ifupdown 전환, Network 구성을 수행하며 이후 Reboot가 발생할 수 있습니다.
+현재 설치 프로그램의 Step 3은 NIC 이름 변경, ifupdown 전환, 네트워크 구성을 수행하며 이후 재부팅될 수 있습니다.
 
 <Warning>
 Network 전환 전에 Console 또는 Out-of-Band Access를 확보하십시오. 잘못된 NIC/Address 선택은 Remote Connectivity를 끊을 수 있습니다.
