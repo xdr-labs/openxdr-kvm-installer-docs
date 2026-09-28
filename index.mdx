@@ -1,17 +1,17 @@
 ---
 title: "OpenXDR KVM Installer"
-description: "A script-based automation framework for deploying and operating Stellar Cyber OpenXDR components in KVM-based Linux environments."
+description: "Deploy and operate Stellar Cyber OpenXDR components on KVM-based Linux hosts with repeatable installer workflows."
 ---
 
 # OpenXDR KVM Installer
 
 ## Documentation Overview
 
-This site provides operator-focused documentation for **OpenXDR KVM Installer**, a **script-based automation framework for deploying and operating Stellar Cyber OpenXDR components in KVM-based Linux environments**.
+This site documents **OpenXDR KVM Installer**, which prepares KVM hosts and deploys Stellar Cyber OpenXDR components on Linux.
 
-OpenXDR KVM Installer automates host-side work required to deploy Stellar Cyber OpenXDR components on KVM. Instead of manually configuring libvirt, storage, networking, VM images, passthrough, CPU placement, and reboot state, it provides `whiptail`-based workflows, persistent state, and validation.
+OpenXDR KVM Installer automates the host work required for a KVM deployment. It configures libvirt, storage, networking, VM images, passthrough, CPU placement, and reboot/resume state through a menu-driven installer with saved progress and validation.
 
-The installer is designed to **standardize and automate** common deployment tasks and reduce operational complexity:
+The installer automates common deployment tasks so the same procedure can be repeated across hosts:
 
 - prepare KVM / libvirt host environments
 - deploy Data Processor (DP) and Sensor virtual machines
@@ -74,11 +74,11 @@ All installation workflows use an **interactive menu-driven interface**, allowin
 
 ### ① Repeatability
 
-- installation steps are deterministic
+- installation steps follow a defined order
 - steps can be re-executed safely
-- PoC, staging, and production environments can follow the same workflow
+- PoC, staging, and production environments can use the same installation sequence
 
-### ② Operational Transparency
+### ② Visible changes and validation
 
 - actions are visible through logs and validation
 - operators can see what the automation is doing
@@ -90,11 +90,11 @@ All installation workflows use an **interactive menu-driven interface**, allowin
 
 ### ④ Field-Driven Design
 
-- workflows are based on real deployment and operational requirements rather than only lab assumptions
+- procedures are based on field deployment requirements rather than lab-only assumptions
 
 ## Scope and Coverage
 
-This documentation covers the lifecycle of deploying Stellar Cyber OpenXDR components on KVM hosts.
+This documentation covers preparation, deployment, reboot/resume, validation, and post-deployment operation on KVM hosts.
 
 Included:
 
@@ -141,7 +141,7 @@ Primary target environments:
 Basic familiarity with **Linux, KVM, and networking** is still required.
 </Warning>
 
-## Common Operational Flow
+## Common deployment flow
 
 ```text
 Check hardware
@@ -157,7 +157,7 @@ Check hardware
 ```
 
 <Warning>
-The installer can modify networking, storage, kernel settings, virtualization configuration, and VM definitions. Always complete DRY_RUN and Full Configuration Validation before real execution.
+The installer can modify networking, storage, kernel settings, virtualization configuration, and VM definitions. Always complete DRY_RUN and full configuration validation before making changes.
 </Warning>
 
 ## Source Code and Contributions
