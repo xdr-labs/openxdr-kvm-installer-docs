@@ -17,7 +17,7 @@ KVM 배포는 **클러스터 구성을 기본**으로 사용합니다. 각 KVM �
 | DA VM | `192.168.122.3/24` | `192.168.122.1` | `8.8.8.8` |
 
 <Note>
-서로 다른 물리 KVM 호스트에서는 각각 독립된 NAT Network를 사용하므로 여러 Host의 DL이 동일한 `192.168.122.2`, DA가 동일한 `192.168.122.3` 주소를 사용해도 외부 네트워크에서 IP 충돌이 발생하지 않습니다. 클러스터 통신은 별도의 클러스터 인터페이스와 클러스터 IP를 사용합니다.
+서로 다른 물리 KVM 호스트는 각각 독립된 NAT 네트워크를 사용합니다. 따라서 여러 호스트의 DL이 같은 `192.168.122.2`, DA가 같은 `192.168.122.3` 주소를 사용해도 외부 네트워크에서 충돌하지 않습니다. 클러스터 통신은 별도의 클러스터 인터페이스와 클러스터 IP를 사용합니다.
 </Note>
 
 ## 사용자가 확인하거나 변경해야 하는 값
@@ -27,7 +27,7 @@ KVM 배포는 **클러스터 구성을 기본**으로 사용합니다. 각 KVM �
 | 값 | 설정 방법 |
 | --- | --- |
 | Hostname | 역할에 따라 `dl-master`, `dl-worker1`, `dl-worker2`, `da-master`, `da-worker1` 등의 이름을 사용합니다. |
-| Cluster Interface | `show interface all` 결과에서 실제 Cluster NIC를 확인합니다. `enp5s0`, `ens9` 등의 이름은 예시일 뿐입니다. |
+| 클러스터 인터페이스 | `show interface all` 결과에서 실제 클러스터 NIC를 확인합니다. `enp5s0`, `ens9` 등의 이름은 예시일 뿐입니다. |
 | Cluster IP | 각 노드마다 고유한 클러스터 IP를 사용합니다. 이 문서의 예시는 DL을 `192.168.12.25`부터, DA를 `192.168.12.50`부터 사용합니다. |
 | OTP | 실제 배포에 발급된 License/OTP를 입력합니다. 실제 OTP는 문서나 Git 저장소에 저장하지 않습니다. |
 
@@ -37,7 +37,7 @@ KVM 배포는 **클러스터 구성을 기본**으로 사용합니다. 각 KVM �
 
 ## 1. DL Master 구성
 
-### Management Network 및 Hostname 설정
+### 관리 네트워크 및 호스트명 설정
 
 DL VM Console에 접속한 뒤 KVM의 고정 관리 네트워크를 설정합니다.
 
@@ -98,7 +98,7 @@ Disk를 Format 또는 초기화하는 확인 단계에서는 반드시 예상한
 
 각 DL Worker도 자신의 KVM 호스트 내부에서는 동일한 고정 NAT 관리 IP를 사용합니다. 각 Worker마다 **호스트명**, **클러스터 인터페이스**, **클러스터 IP**를 변경합니다.
 
-### Management Network 및 Hostname 설정
+### 관리 네트워크 및 호스트명 설정
 
 첫 번째 DL Worker 예시:
 
@@ -139,9 +139,9 @@ show storage
 add storage blk vdb
 ```
 
-Worker가 추가될 경우 Hostname과 Cluster IP를 순차적으로 변경합니다.
+Worker를 추가할 때마다 호스트명과 클러스터 IP를 고유하게 설정합니다.
 
-| 노드 | Hostname | Cluster IP 예시 |
+| 노드 | 호스트명 | 클러스터 IP 예시 |
 | --- | --- | --- |
 | DL Master | `dl-master` | `192.168.12.25/24` |
 | DL Worker 1 | `dl-worker1` | `192.168.12.26/24` |
@@ -155,7 +155,7 @@ Cluster IP는 노드마다 반드시 고유해야 합니다. 이미 다른 DL �
 
 DA 노드는 각 KVM 호스트의 로컬 NAT Management Network에서 `192.168.122.3/24`를 사용합니다. DA Master와 DA Worker 모두 CLI 초기 구성 단계에서는 `resource` 역할을 설정합니다.
 
-### Management Network 및 Hostname 설정
+### 관리 네트워크 및 호스트명 설정
 
 DA Master의 경우:
 
@@ -199,7 +199,7 @@ reset
 
 추가 DA 노드의 예시 주소 계획:
 
-| 노드 | Hostname | Cluster IP 예시 |
+| 노드 | 호스트명 | 클러스터 IP 예시 |
 | --- | --- | --- |
 | DA Master | `da-master` | `192.168.12.50/24` |
 | DA Worker 1 | `da-worker1` | `192.168.12.51/24` |
@@ -225,14 +225,14 @@ Sensor를 추가하거나 운영 데이터를 보내기 전에 다음 항목을 
 1. **System → DATA SOURCE MANAGEMENT → Receivers**로 이동합니다.
 2. **Receiver Hostname**이 DL-Master가 아니라 **DA-Master**를 가리키는지 확인합니다.
 3. 최소 하나의 Sensor Profile이 해당 Receiver를 사용하도록 설정되어 있는지 확인합니다.
-4. `show logforwarder` 명령에 출력이 없다면 먼저 Receiver Hostname 설정을 다시 확인합니다.
+4. `show logforwarder` 명령에 출력이 없다면 먼저 Receiver 호스트명 설정을 다시 확인합니다.
 
 ## 6. 최종 확인 체크리스트
 
-초기 Cluster 구성을 완료하기 전에 다음 항목을 모두 확인하십시오.
+초기 클러스터 구성을 완료하기 전에 다음 항목을 모두 확인하십시오.
 
 - DL Master 관리 IP가 `192.168.122.2/24`이며 고유한 클러스터 IP가 설정되어 있음
-- 모든 DL Worker가 고유한 Hostname과 Cluster IP를 사용함
+- 모든 DL Worker가 고유한 호스트명과 클러스터 IP를 사용함
 - DA 노드의 관리 IP가 `192.168.122.3/24`이며 각 노드가 고유한 클러스터 IP를 사용함
 - 모든 노드에서 `show interface all`로 확인한 실제 클러스터 인터페이스를 사용함
 - 모든 노드의 `set cm`이 DL Master Cluster IP를 가리킴. 이 문서에서는 `192.168.12.25`
