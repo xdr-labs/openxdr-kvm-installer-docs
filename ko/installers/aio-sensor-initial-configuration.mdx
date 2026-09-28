@@ -1,22 +1,22 @@
 ---
 title: "AIO & Sensor 초기 구성"
-description: "KVM 배포 후 고정 NAT 네트워크, AIO 초기화, Storage, Sensor 등록·승인 및 Receiver 검증을 수행하는 가이드입니다."
+description: "KVM 배포 후 고정 NAT 네트워크, AIO 초기화, 스토리지, Sensor 등록·승인, Receiver 확인을 진행하는 가이드입니다."
 ---
 
 # AIO & Sensor 초기 구성
 
 ## 개요
 
-이 문서는 **AIO & Sensor KVM Installer가 VM 배포와 검증을 완료한 이후** 수행하는 Stellar Cyber 초기 설정 절차입니다.
+이 문서는 **AIO & Sensor KVM Installer로 VM 배포와 검증을 완료한 뒤** 수행하는 Stellar Cyber 초기 설정 절차입니다.
 
-Installer는 KVM 인프라와 VM을 생성하며, 이 페이지에서는 이후 다음 작업을 수행합니다.
+설치 프로그램이 KVM 인프라와 VM을 생성한 뒤, 이 페이지에서는 이후 다음 작업을 수행합니다.
 
 1. AIO 구성 및 초기화
 2. AIO Data Lake Storage 추가 및 Migration
 3. Sensor를 AIO에 연결
 4. 시간 동기화 구성
 5. Sensor 승인
-6. Receiver 및 Sensor Profile 검증
+6. Receiver 및 Sensor 프로필 확인
 
 <Note>
 KVM VM 배포가 아직 완료되지 않았다면 먼저 **[AIO & Sensor KVM Installer 사용자 가이드](/ko/installers/aio-sensor)**를 진행하십시오.
@@ -24,7 +24,7 @@ KVM VM 배포가 아직 완료되지 않았다면 먼저 **[AIO & Sensor KVM Ins
 
 ## 1. KVM 기본 네트워크 구성
 
-KVM AIO 배포는 로컬 libvirt NAT Network를 사용하며 Guest 주소는 다음과 같이 고정됩니다.
+KVM AIO 배포는 로컬 libvirt NAT 네트워크를 사용하며 게스트 주소는 다음과 같이 고정됩니다.
 
 - AIO IP: `192.168.122.2/24`
 - MDS IP: `192.168.122.3/24`
@@ -32,14 +32,14 @@ KVM AIO 배포는 로컬 libvirt NAT Network를 사용하며 Guest 주소는 다
 - DNS: `8.8.8.8`
 
 <Note>
-AIO 구성에서는 AIO Management IP와 `set cm`에 동일한 IP를 사용합니다. 이 KVM 배포에서는 두 값 모두 `192.168.122.2`입니다.
+AIO 구성에서는 AIO 관리 IP와 `set cm`에 동일한 IP를 사용합니다. 이 KVM 배포에서는 두 값 모두 `192.168.122.2`입니다.
 </Note>
 
 ## 2. DP를 AIO로 초기 구성
 
 AIO VM Console에 접속하여 로그인합니다. 새로 초기화된 Stellar Cyber Appliance의 기본 계정은 `aella` / `changeme`이며, 최초 로그인 시 비밀번호 변경을 요구합니다.
 
-KVM의 고정 Management 주소를 설정하고 AIO 역할을 초기화합니다.
+KVM의 고정 관리 주소를 설정하고 AIO 역할을 초기화합니다.
 
 ```text
 set interface management ip 192.168.122.2/24
@@ -59,7 +59,7 @@ reset
 `<YOUR-OTP>`에는 실제 배포에 발급된 OTP/License Key를 입력합니다. 실제 OTP를 문서, 스크린샷 또는 Git 저장소에 저장하지 마십시오.
 </Warning>
 
-확인 메시지가 표시되면 Reset을 승인합니다. Appliance가 필요한 Platform Image를 다운로드하고 설치합니다.
+확인 메시지가 표시되면 초기화를 승인합니다. 어플라이언스가 필요한 플랫폼 이미지를 다운로드하고 설치합니다.
 
 ## 3. AIO 초기화 상태 확인
 
@@ -77,19 +77,19 @@ AIO가 정상/Ready 상태가 되기 전에는 운영 데이터 처리를 시작
 
 KVM Installer는 AIO Data Lake용 LV를 AIO VM의 **`vdb`** 장치로 연결합니다.
 
-먼저 Storage 장치를 확인합니다.
+먼저 스토리지 장치를 확인합니다.
 
 ```text
 show storage
 ```
 
-예상한 Data Disk가 `vdb`인지 확인한 뒤 Data Lake/Elasticsearch용 Storage로 추가합니다.
+예상한 데이터 디스크가 `vdb`인지 확인한 뒤 Data Lake/Elasticsearch용 스토리지로 추가합니다.
 
 ```text
 add storage blk vdb
 ```
 
-`vdb`가 실제 Data Lake용 장치인지 확인한 경우에만 Format 경고에서 `Y`를 입력합니다.
+`vdb`가 실제 Data Lake용 장치인지 확인한 경우에만 포맷 경고에서 `Y`를 입력합니다.
 
 완료 후 다시 확인합니다.
 
@@ -101,7 +101,7 @@ show storage
 `add storage blk` 명령은 선택한 장치를 Format합니다. 확인 전에 장치 이름과 예상 용량을 반드시 검증하십시오.
 </Warning>
 
-## 5. 추가한 Storage로 데이터 마이그레이션
+## 5. 추가한 스토리지로 데이터 마이그레이션
 
 Storage 장치를 추가한 뒤 다음을 수행합니다.
 
@@ -116,7 +116,7 @@ Storage 장치를 추가한 뒤 다음을 수행합니다.
 
 ## 6. AIO GUI 접속
 
-AIO VM 자체는 KVM NAT Network에서 `192.168.122.2/24`를 사용합니다. 외부 PC에서는 이 Installer가 구성한 **KVM Host Management IP**를 사용하여 Data Platform Web UI에 접속합니다.
+AIO VM 자체는 KVM NAT 네트워크에서 `192.168.122.2/24`를 사용합니다. 외부 PC에서는 이 Installer가 구성한 **KVM 호스트 관리 IP**를 사용하여 Data Platform Web UI에 접속합니다.
 
 예시:
 
@@ -138,7 +138,7 @@ AIO & Sensor KVM Installer는 Sensor VM을 다음과 같은 고정 NAT 설정으
 | Management IP | `192.168.122.3/24` | 아니오 |
 | Gateway | `192.168.122.1` | 아니오 |
 | DNS | `8.8.8.8` | 아니오 |
-| Hostname | 고유한 Sensor Hostname | **예 / 권장** |
+| 호스트명 | 고유한 Sensor 호스트명 | **예 / 권장** |
 | CM Controller | `192.168.122.2` | 아니오 |
 | Proxy | 환경별 설정 | 선택 |
 | Tenant ID | 환경별 설정 | 선택 |
@@ -153,7 +153,7 @@ aella / changeme
 
 최초 로그인 시 비밀번호 변경을 요구합니다. 비밀번호를 변경하면 Session이 자동으로 종료됩니다. 새 비밀번호로 다시 로그인하면 CLI Prompt가 `DataSensor>`로 변경됩니다.
 
-#### KVM 고정 Management Network 설정
+#### KVM 고정 관리 네트워크 설정
 
 이 KVM Installer는 Sensor에 고정 주소를 사용합니다. 다음과 같이 설정합니다.
 
@@ -173,9 +173,9 @@ show interfaces
 Stellar Cyber 공식 Modular Sensor 가이드는 DHCP도 지원하지만, 이 AIO & Sensor KVM Installer는 Sensor를 고정 `192.168.122.3/24` NAT 주소로 배포합니다. 이 토폴로지에서는 위의 Static 설정을 사용하십시오.
 </Note>
 
-#### 고유한 Sensor Hostname 설정
+#### 고유한 Sensor 호스트명 설정
 
-Installer가 생성하는 Sensor VM 이름은 `mds`이지만, Stellar Cyber에 표시되는 Sensor Hostname은 여러 Sensor를 운영하는 환경에서 고유하게 설정하는 것을 권장합니다.
+Installer가 생성하는 Sensor VM 이름은 `mds`이지만, Stellar Cyber에 표시되는 Sensor 호스트명은 여러 Sensor를 운영하는 환경에서 서로 겹치지 않도록 설정하는 것을 권장합니다.
 
 예:
 
@@ -203,7 +203,7 @@ set tenant_id <TENANT-ID>
 
 #### Sensor를 AIO에 연결
 
-이 KVM AIO 토폴로지에서 Stellar Cyber Platform Management Endpoint는 `192.168.122.2`의 AIO VM입니다.
+이 KVM AIO 토폴로지에서 Stellar Cyber 플랫폼 관리 주소는 `192.168.122.2`의 AIO VM입니다.
 
 ```text
 set cm 192.168.122.2
@@ -248,11 +248,11 @@ Sensor가 CM 연결을 Establish하고 AIO에 등록되면 Stellar Cyber에 새 
 
 
 
-## 10. Receiver 및 Sensor Profile 확인
+## 10. Receiver 및 Sensor 프로필 확인
 
 AIO 배포에서는 Receiver가 **DA-Master가 아니라 AIO/DP**를 가리켜야 합니다.
 
-운영 데이터를 보내기 전에 Receiver와 Sensor Profile 설정을 확인하십시오. 이 KVM 토폴로지에서 AIO Guest 주소는 `192.168.122.2`입니다.
+운영 데이터를 보내기 전에 Receiver와 Sensor Profile 설정을 확인하십시오. 이 KVM 토폴로지에서 AIO 게스트 주소는 `192.168.122.2`입니다.
 
 `show logforwarder` 명령에 출력이 없다면 먼저 Receiver 설정을 확인하십시오.
 
@@ -274,7 +274,7 @@ SSH 접속:
 
 | 설정 | KVM AIO 값 | 사용자 변경 필요 |
 | --- | --- | --- |
-| AIO Management IP | `192.168.122.2/24` | 아니오 |
+| AIO 관리 IP | `192.168.122.2/24` | 아니오 |
 | Gateway | `192.168.122.1` | 아니오 |
 | DNS | `8.8.8.8` | 아니오 |
 | Role | `AIO` | 아니오 |
