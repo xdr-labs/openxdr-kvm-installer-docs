@@ -9,7 +9,7 @@ description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber OpenXDR 
 
 ## 개요
 
-이 페이지는 **AIO + Sensor 설치를 처음부터 Appliance 초기 설정 완료까지 끝낼 수 있는 독립형 Runbook**입니다. 제품별 하드웨어 기준, KVM 배포, AIO 초기화, Data Lake Storage, Sensor 등록·승인, Receiver 검증까지 모두 포함합니다.
+이 페이지 하나로 **AIO + Sensor 설치부터 어플라이언스 초기 설정까지** 순서대로 진행할 수 있습니다. 제품별 하드웨어 기준, KVM 배포, AIO 초기화, Data Lake 스토리지, Sensor 등록·승인, Receiver 검증까지 모두 포함합니다.
 
 문서 기준 OS는 Ubuntu Server 24.04 LTS입니다. 설치 후 설정만 빠르게 다시 확인하려면 **[AIO & Sensor 초기 구성](/ko/installers/aio-sensor-initial-configuration)**을 사용할 수 있습니다.
 
@@ -23,7 +23,7 @@ description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber OpenXDR 
 
 | 구성 요소 | 예시 값 |
 | --- | --- |
-| 검증된 KVM Host | Dell PowerEdge R650 / R660 / R670 — Ubuntu 24.04 |
+| 검증된 KVM 호스트 | Dell PowerEdge R650 / R660 / R670 — Ubuntu 24.04 |
 | AIO VM | 48 vCPU, 136 GB RAM |
 | MDS VM | 44 vCPU, 80 GB RAM |
 | Host Access | 1 GbE UTP, 로컬 전용 `192.168.0.100` |
@@ -34,7 +34,7 @@ description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber OpenXDR 
 
 ### 하드웨어 한눈에 보기
 
-`AIO-Sensor-Installer.sh` 설치 흐름은 Dell PowerEdge R650, R660, R670에서 검증되었습니다. Repository에는 일반 Installer 시작 기준으로 **12 vCPU, 16 GB Memory, 100 GB Free Storage**가 기재되어 있지만, 이는 **Production AIO + Sensor Sizing 권장값이 아닙니다**. 아래는 문서화된 Sizing 예시입니다.
+`AIO-Sensor-Installer.sh` 설치 흐름은 Dell PowerEdge R650, R660, R670에서 검증되었습니다. 저장소에는 설치 전 확인용으로 **12 vCPU, 16 GB 메모리, 100 GB 여유 공간**이 기재되어 있지만, 이는 **운영 환경 AIO + Sensor 용량 산정 권장값이 아닙니다**. 아래는 문서화된 용량 예시입니다.
 
 | 항목 | 검증 예시 / 요구사항 |
 | --- | --- |
@@ -48,7 +48,7 @@ description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber OpenXDR 
 | OS | Ubuntu Server 24.04 LTS |
 
 <Warning>
-일반적인 12 vCPU / 16 GB / 100 GB Repository Baseline을 통합 AIO + Sensor의 Production Sizing으로 해석하지 마십시오.
+일반적인 12 vCPU / 16 GB / 100 GB 저장소의 기본값을 통합 AIO + Sensor의 운영 환경 용량 산정으로 해석하지 마십시오.
 </Warning>
 
 ### 아키텍처 개요
@@ -92,7 +92,7 @@ Stellar Cyber OpenXDR 플랫폼은 KVM 가상화를 사용하는 단일 물리 �
 ### 문서 기준 운영체제
 
 - 이 한국어 가이드는 **Ubuntu Server 24.04 LTS** 기준입니다.
-- Legacy Ubuntu/OpenXDR 조합은 현재 Source Installer와 대상 릴리스 지원 범위를 별도로 확인하십시오.
+- 이전 Ubuntu/OpenXDR 조합은 현재 설치 소스와 대상 릴리스 지원 범위를 별도로 확인하십시오.
 
 ## 3. 준비 단계
 
@@ -165,7 +165,7 @@ chmod +x AIO-Sensor-Installer.sh
 
 ### 상태 인식 실행 방식
 
-설치 프로그램은 **상태 인식 방식(state-aware)**으로 동작합니다.
+설치 프로그램은 **작업 상태를 저장하는 방식**으로 동작합니다.
 
 설치 상태는 다음 경로에 저장됩니다.
 
@@ -233,7 +233,7 @@ rm -rf /root/xdr-installer
   - password
   - URL
 
-#### 4. Full Configuration Validation
+#### 4. 전체 구성 검증
 
 전체 시스템 구성을 검증합니다.
 
@@ -338,7 +338,7 @@ STEP 01 → STEP 02 → STEP 03 → … → STEP 13
 
 ![AIO & Sensor Installer 개별 Step 선택 화면](/images/AIO-Sensor/6.png)
 
-#### 개별 Step 목록
+#### 개별 단계 목록
 
 | Step | 작업 |
 | ---: | --- |
@@ -374,12 +374,12 @@ STEP 01 → STEP 02 → STEP 03 → … → STEP 13
 4) Full configuration validation
 ```
 
-![AIO & Sensor Installer Full Configuration Validation 결과 화면](/images/AIO-Sensor/7.png)
+![AIO & Sensor Installer 전체 구성 검증 결과 화면](/images/AIO-Sensor/7.png)
 
 검증 항목은 다음을 포함합니다.
 
 - KVM 및 libvirt 서비스 상태
-- AIO 및 Sensor VM 상태 및 자동 시작 설정
+- AIO 및 Sensor VM 상태와 자동 시작 설정
 - 네트워크 구성
 - 스토리지 가용성 및 마운트 포인트
 
@@ -427,9 +427,9 @@ STEP 11 → STEP 12
 
 ## 9. 필수 AIO & Sensor 초기 구성
 
-Full Configuration Validation에서 VM 배포를 확인한 뒤 다음 Appliance 설정을 완료하십시오.
+전체 구성 검증에서 VM 배포를 확인한 뒤 다음 Appliance 설정을 완료하십시오.
 
-### 9.1 KVM 고정 Network
+### 9.1 KVM 고정 네트워크
 
 - AIO: `192.168.122.2/24`
 - Sensor/MDS: `192.168.122.3/24`
@@ -472,7 +472,7 @@ show storage
 `add storage blk`는 선택한 Device를 Format합니다. 승인 전에 `vdb`와 예상 용량을 확인하십시오.
 </Warning>
 
-GUI의 **System → DATA MANAGEMENT → Data Management → Advanced**에서 `/es-data-lvm`으로 Migration하고 **System → DATA MANAGEMENT → Data Lake**에서 **Data Storage Space**를 확인합니다.
+GUI의 **System → DATA MANAGEMENT → Data Management → Advanced**에서 `/es-data-lvm`으로 마이그레이션하고 **System → DATA MANAGEMENT → Data Lake**에서 **Data Storage Space**를 확인합니다.
 
 ### 9.4 Sensor 연결
 
@@ -517,14 +517,14 @@ console mds
 
 ### 9.7 최종 체크리스트
 
-- Full Configuration Validation에 미해결 FAIL이 없음
+- 전체 구성 검증에 미해결 FAIL이 없음
 - AIO = `192.168.122.2/24`, Sensor = `192.168.122.3/24`
 - AIO `show status`가 Ready/Healthy
-- `vdb` 추가 및 `/es-data-lvm` Migration 완료
+- `vdb` 추가 및 `/es-data-lvm` 마이그레이션 완료
 - Sensor Hostname이 고유함
 - Sensor `show cm`이 `192.168.122.2`에 **Established**
 - NTP/Timezone 및 Sensor Authorization 완료
-- Receiver와 Sensor Profile 정상
+- Receiver와 Sensor 프로필 정상
 - 기본 비밀번호 변경 완료
 
 설치 후 설정만 빠르게 다시 보려면 **[AIO & Sensor 초기 구성](/ko/installers/aio-sensor-initial-configuration)**을 사용하십시오.
@@ -538,12 +538,12 @@ console mds
 - CPU Hardware Virtualization 활성화
 - Sensor PCI Passthrough용 VT-d/IOMMU 활성화
 - 의도한 AIO/Sensor Sizing을 수용할 CPU와 Memory
-- 충분한 OS/VM Storage 및 전용 Data Lake Disk
+- 충분한 OS/VM 스토리지 및 전용 Data Lake Disk
 - Management Connectivity와 필요한 Sensor SPAN NIC
-- Package 및 Image 다운로드용 Network Access
+- 패키지와 이미지 다운로드용 네트워크 접속
 - Network 전환 전 Console 또는 Out-of-Band Access
 
-**[Ubuntu 24.04 설치 가이드](/ko/getting-started/installing-ubuntu-24-04)**는 추가 참고용이며 제품별 Hardware 가이드는 이 페이지에 요약되어 있습니다.
+**[Ubuntu 24.04 설치 가이드](/ko/getting-started/installing-ubuntu-24-04)**는 추가 참고용이며 제품별 하드웨어 가이드는 이 페이지에 요약되어 있습니다.
 
 ## 11. BIOS 및 플랫폼 설정
 
