@@ -7,7 +7,7 @@ description: "배포할 OpenXDR 구성 요소와 토폴로지에 맞는 설치 �
 
 배포 대상, 토폴로지, 네트워크 요구사항에 따라 하나의 설치 프로그램을 선택합니다.
 
-| 설치 프로그램 | 용도 | 주요 네트워크 특성 | 현재 Step 수 |
+| 설치 프로그램 | 용도 | 주요 네트워크 특성 | 현재 단계 수 |
 | --- | --- | --- | ---: |
 | `DP-Installer.sh` | DL-master / DA-master 기반 Data Processor | NAT + Cluster Bridge/SR-IOV | 14 |
 | `Sensor-Installer.sh` | Standard Modular Sensor | NAT/Bridge + SPAN PCI/Bridge | 10 |
@@ -21,7 +21,7 @@ description: "배포할 OpenXDR 구성 요소와 토폴로지에 맞는 설치 �
     NAT/Bridge와 PCI/Bridge SPAN 구성이 필요한 일반 Sensor 배포에 사용합니다.
   </Card>
   <Card title="AIO + Sensor" icon="layer-group" href="/ko/installers/aio-sensor">
-    하나의 KVM Host에 AIO와 Sensor를 통합 배포합니다.
+    하나의 KVM 호스트에 AIO와 Sensor를 통합 배포합니다.
   </Card>
 </Columns>
 
@@ -29,12 +29,12 @@ description: "배포할 OpenXDR 구성 요소와 토폴로지에 맞는 설치 �
 
 <Steps>
   <Step title="DL과 DA Data Processor VM이 필요한가?">
-    **DP-Installer.sh**를 사용합니다. DP image 준비, DL/DA 배포, SR-IOV/CPU affinity, Appliance CLI, NFS backup configuration까지 포함합니다.
+    **DP-Installer.sh**를 사용합니다. DP 이미지 준비, DL/DA 배포, SR-IOV/CPU affinity, Appliance CLI, NFS 백업 구성까지 포함합니다.
   </Step>
   <Step title="Standard Modular Sensor만 필요한가?">
-    **Sensor-Installer.sh**를 사용합니다. Sensor Storage, VM Deployment, Network/SPAN 구성을 처리합니다.
+    **Sensor-Installer.sh**를 사용합니다. Sensor 스토리지, VM 배포, 네트워크/SPAN 구성을 처리합니다.
   </Step>
-  <Step title="한 Host에 AIO와 Sensor가 필요한가?">
-    **AIO-Sensor-Installer.sh**를 사용합니다. AIO를 먼저 배포한 후 같은 Host에서 Sensor 배포를 이어서 수행합니다.
+  <Step title="한 호스트에 AIO와 Sensor가 필요한가?">
+    **AIO-Sensor-Installer.sh**를 사용합니다. AIO를 먼저 배포한 후 같은 호스트에서 Sensor 배포를 이어서 수행합니다.
   </Step>
 </Steps>
