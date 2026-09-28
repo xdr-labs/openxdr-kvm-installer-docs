@@ -35,7 +35,7 @@ description: "Ubuntu Server 24.04 LTS KVM 호스트에 Stellar Cyber OpenXDR Dat
 
 ### 하드웨어 한눈에 보기
 
-`DP-Installer.sh` 설치 흐름은 Dell PowerEdge R650, R660, R670에서 검증되었습니다. 아래 값은 현재 DP 기본값과 문서화된 배포 Sizing 예시입니다.
+`DP-Installer.sh` 설치 흐름은 Dell PowerEdge R650, R660, R670에서 검증되었습니다. 아래 값은 현재 DP 기본값과 문서화된 배포 용량 예시입니다.
 
 | 항목 | 현재 DP 값 / 가이드 |
 | --- | --- |
@@ -175,7 +175,7 @@ Host Access NIC은 로컬 전용 유지보수 및 문제 해결을 목적으로 
 
 ### 상태 인식 실행 방식
 
-설치 프로그램은 상태 인식(state-aware) 방식으로 동작합니다.
+설치 프로그램은 완료한 단계를 저장해 중단 후 이어서 진행할 수 있습니다.
 
 설치 상태는 다음 경로에 저장됩니다.
 
@@ -403,9 +403,9 @@ STEP 01 → STEP 02 → STEP 03 → … → STEP 14
 
 #### STEP 14 — NFS 백업 서버 구성
 
-현재 DP Installer의 마지막 단계는 **DP configuration backup용 NFS export**를 구성합니다. 이 단계는 Data Lake 데이터 백업이 아니라 DP 구성 백업을 위한 기능입니다.
+현재 DP Installer의 마지막 단계에서는 **DP 설정 백업용 NFS export**를 구성합니다. Data Lake 데이터를 백업하는 기능이 아니라 DP 설정을 저장하기 위한 기능입니다.
 
-기본 설정에는 `/stellarcyber` export 경로와 DL 내부 주소를 기준으로 한 허용 클라이언트 값이 포함되므로, 실제 환경에 맞는 값인지 Configuration에서 확인한 뒤 적용하십시오.
+기본 설정에는 `/stellarcyber` export 경로와 DL 내부 주소를 기준으로 한 허용 클라이언트 값이 포함됩니다. 실제 환경에 맞는지 설정 화면에서 확인한 뒤 적용하십시오.
 
 #### 중요 참고 사항
 
@@ -522,10 +522,10 @@ console da-master
 - root 권한
 - CPU Hardware Virtualization 활성화
 - SR-IOV/Direct Device 사용 시 VT-d / IOMMU 활성화
-- 위 표의 현재 DL/DA VM 기본값을 수용할 CPU와 Memory
-- 선택한 설계에 필요한 OS/VM Storage와 전용 Data Lake Disk
-- 관리 NIC, Cluster NIC, 장애 복구용 Host Access 연결
-- Package, Image, 배포 파일 다운로드용 Network Access
+- 위 표의 현재 DL/DA VM 기본값을 수용할 CPU와 메모리
+- 선택한 설계에 필요한 OS/VM 스토리지와 전용 Data Lake 디스크
+- 관리 NIC, 클러스터 NIC, 장애 복구용 호스트 접속 경로
+- 패키지, 이미지, 배포 파일 다운로드에 필요한 네트워크 연결
 
 **[Ubuntu 24.04 설치 가이드](/ko/getting-started/installing-ubuntu-24-04)**는 추가 참고용이며, DP 하드웨어 선택에 필요한 제품별 요구사항은 이 페이지에 모두 요약되어 있습니다.
 
@@ -546,7 +546,7 @@ DP Cluster Interface에 **SR-IOV**를 사용하는 경우 서버 BIOS와 NIC 장
 VM이 실행 중인 것만으로 DP 설치가 완료된 것은 아닙니다. 운영 전 다음 DL/DA 설정을 완료하십시오.
 
 <Note>
-KVM 호스트별 NAT 관리 네트워크는 고정입니다. DL은 `192.168.122.2/24`, DA는 `192.168.122.3/24`, Gateway는 `192.168.122.1`, DNS는 `8.8.8.8`을 사용합니다. 각 물리 KVM 호스트는 독립적인 libvirt NAT 네트워크를 사용하므로 서로 다른 Host에서 같은 NAT 주소를 재사용할 수 있습니다.
+KVM 호스트별 NAT 관리 네트워크는 고정입니다. DL은 `192.168.122.2/24`, DA는 `192.168.122.3/24`, Gateway는 `192.168.122.1`, DNS는 `8.8.8.8`을 사용합니다. 각 물리 KVM 호스트는 독립적인 libvirt NAT 네트워크를 사용하므로 서로 다른 호스트에서 같은 NAT 주소를 재사용할 수 있습니다.
 </Note>
 
 ### 10.1 DL Master
@@ -667,9 +667,9 @@ DL Master가 **System Ready**이고 대상 DA Master가 `resource`이면:
 - DL/DA VM이 실행 중이고 Autostart가 활성화되어 있음
 - DL 관리 IP = `192.168.122.2/24`
 - DA 관리 IP = `192.168.122.3/24`
-- 모든 Cluster Node가 고유한 Hostname과 Cluster IP를 사용함
+- 모든 클러스터 노드가 고유한 호스트명과 클러스터 IP를 사용함
 - `show interface all`에서 실제 클러스터 인터페이스를 선택함
-- 모든 Node의 CM이 DL Master Cluster IP를 가리킴. 이 문서 예시는 `192.168.12.25`
+- 모든 노드의 CM이 DL Master 클러스터 IP를 가리킴. 이 문서 예시는 `192.168.12.25`
 - 필요한 노드에 의도한 `vdb` 스토리지가 추가됨
 - DA-Master가 Data Analyzer에서 Healthy 상태임
 - Receiver 호스트명이 DA-Master를 가리키고 Sensor 프로필이 해당 Receiver를 사용함
