@@ -1,6 +1,6 @@
 ---
 title: "배포 방식 선택 가이드"
-description: "인프라 유형, 성능 요구사항, 운영 제약 조건을 기준으로 Stellar Cyber OpenXDR Platform의 권장 배포 방식을 선택합니다."
+description: "인프라 유형, 성능 요구사항, 운영 제약 조건에 맞는 Stellar Cyber OpenXDR 배포 방식을 선택합니다."
 ---
 
 # 배포 방식 선택 가이드
@@ -9,7 +9,7 @@ description: "인프라 유형, 성능 요구사항, 운영 제약 조건을 기
 
 ## 개요
 
-본 가이드는 인프라 유형, 성능 요구사항, 운영 제약 조건을 기준으로 **Stellar Cyber OpenXDR Platform의 권장 배포 방식**을 설명합니다.
+이 가이드는 인프라 유형, 성능 요구사항, 운영 제약 조건에 따라 **Stellar Cyber OpenXDR 배포 방식을 어떻게 선택할지** 설명합니다.
 
 설치 프로그램의 내부 동작 방식보다는, 운영자가 다음 사항을 결정하는 데 도움을 주는 것을 목표로 합니다.
 
@@ -49,12 +49,12 @@ description: "인프라 유형, 성능 요구사항, 운영 제약 조건을 기
 
 #### 물리 서버 3대 이상 (클러스터 배포)
 
-Data Processor를 3대 이상의 물리 서버에 배포하는 경우, 각 서버는 **Data Processor Installer 가이드**에 따라 개별적으로 설치해야 합니다.
+Data Processor를 3대 이상의 물리 서버에 배포하는 경우, 각 서버는 **Data Processor 설치 가이드**에 따라 개별적으로 설치해야 합니다.
 
 권장 접근 방식:
 
 - 모든 서버를 DP 클러스터로 구성
-- 설치 프로그램의 **Configuration → Cluster Interface Mode** 사용
+- 설치 프로그램의 **Configuration → Cluster Interface Mode**에서 선택
 - Cluster Interface Mode를 **SR-IOV**로 설정
 
 #### SR-IOV가 권장되는 이유
@@ -152,7 +152,7 @@ Bridge 모드는 추가 인프라 없이 Layer-2 수준에서 두 서버 간 직
 
 가상화 환경에서 Data Processor를 배포하는 경우:
 
-- **Data Processor Installer 가이드** 참고
+- **Data Processor 설치 가이드** 참고
 - Cluster Interface Mode를 **Bridge**로 설정
 
 #### Bridge 모드가 필요한 이유
@@ -182,7 +182,7 @@ Sensor 배포 시:
 
 ### 3.3 AIO + Sensor 배포
 
-현재 **AIO & Sensor Installer**의 표준 Auto Execute 흐름은 AIO와 Sensor를 함께 배포합니다.
+현재 **AIO & Sensor Installer**의 기본 Auto Execute 흐름은 AIO와 Sensor를 함께 배포합니다.
 
 - 관리 네트워크는 **NAT 모드**
 - Sensor SPAN 연결은 **PCI Passthrough**
@@ -237,7 +237,7 @@ Sensor 네트워크의 기본 모드는 NAT 모드입니다.
 
 ### NAT 모드 (Data Processor, AIO, Sensor)
 
-NAT(Network Address Translation) 모드는 VM을 KVM 호스트 뒤에 배치합니다.
+NAT(Network Address Translation) 모드에서는 VM이 KVM 호스트의 NAT 네트워크를 통해 통신합니다.
 
 간단히 말하면:
 

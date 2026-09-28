@@ -1,6 +1,6 @@
 ---
 title: "DP KVM Installer 사용자 가이드"
-description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber OpenXDR Data Platform을 설치, 구성, 검증 및 운영하는 사용자 가이드입니다."
+description: "Ubuntu Server 24.04 LTS KVM 호스트에 Stellar Cyber OpenXDR Data Platform을 배포하고 초기 설정하는 전체 절차입니다."
 ---
 
 # DP KVM Installer 사용자 가이드
@@ -9,9 +9,9 @@ description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber OpenXDR 
 
 ## 개요
 
-이 페이지는 **DP 설치를 처음부터 필수 초기 설정 완료까지 끝낼 수 있는 독립형 Runbook**입니다. DP 전용 하드웨어 기준, KVM 설치, Reboot/Resume, VM 배포, DL/DA 초기 설정까지 모두 포함합니다.
+이 페이지 하나로 **DP 설치부터 필수 초기 설정까지** 순서대로 진행할 수 있습니다. DP 전용 하드웨어 기준, KVM 설치, 재부팅 후 이어서 실행, VM 배포, DL/DA 초기 설정까지 모두 포함합니다.
 
-문서 기준 OS는 Ubuntu Server 24.04 LTS입니다. 설치 후 Appliance 설정만 빠르게 다시 확인하려면 **[DP Cluster 초기 구성](/ko/installers/dp-cluster-initial-configuration)**을 사용할 수 있습니다.
+문서 기준 OS는 Ubuntu Server 24.04 LTS입니다. 설치 후 어플라이언스 설정만 빠르게 다시 확인하려면 **[DP Cluster 초기 구성](/ko/installers/dp-cluster-initial-configuration)**을 사용할 수 있습니다.
 
 ## 1. 시스템 아키텍처
 
@@ -23,7 +23,7 @@ description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber OpenXDR 
 
 | 구성 요소 | 예시 값 |
 | --- | --- |
-| 검증된 KVM Host | Dell PowerEdge R650 / R660 / R670 — Ubuntu 24.04 |
+| 검증된 KVM 호스트 | Dell PowerEdge R650 / R660 / R670 — Ubuntu 24.04 |
 | DLm | `192.168.122.2`, 42 vCPU, 136 GB RAM, SSH 2222 |
 | DAm | `192.168.122.3`, 46 vCPU, 80 GB RAM, SSH 2223 |
 | libvirt NAT | `virbr0` / `192.168.122.1` |
@@ -35,7 +35,7 @@ description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber OpenXDR 
 
 ### 하드웨어 한눈에 보기
 
-`DP-Installer.sh` 설치 흐름은 Dell PowerEdge R650, R660, R670에서 검증되었습니다. 아래 값은 현재 DP 기본값과 문서화된 배포 Sizing 예시입니다.
+`DP-Installer.sh` 설치 흐름은 Dell PowerEdge R650, R660, R670에서 검증되었습니다. 아래 값은 현재 DP 기본값과 문서화된 배포 용량 예시입니다.
 
 | 항목 | 현재 DP 값 / 가이드 |
 | --- | --- |
@@ -49,7 +49,7 @@ description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber OpenXDR 
 | BIOS | CPU Virtualization 활성화, SR-IOV/Direct Device 사용 시 VT-d/IOMMU 필요 |
 
 <Note>
-위 값은 Installer 기본값과 검증된 배포 예시이며 모든 Stellar Cyber 환경의 보편적인 Sizing 기준은 아닙니다. Production에서는 예상 Ingestion, Retention, Workload에 맞는 Sizing을 별도로 확인하십시오.
+위 값은 Installer 기본값과 검증된 배포 예시이며 모든 Stellar Cyber 환경의 보편적인 용량 산정 기준은 아닙니다. 운영 환경에서는 예상 수집량, 보관 기간, 워크로드에 맞는 용량 산정을 별도로 확인하십시오.
 </Note>
 
 ### 아키텍처 개요
@@ -91,7 +91,7 @@ Stellar Cyber OpenXDR Platform은 KVM 가상화를 사용하여 단일 물리 �
 ### 문서 기준 운영체제
 
 - 이 한국어 가이드는 **Ubuntu Server 24.04 LTS** 기준입니다.
-- 현재 `DP-Installer.sh`에는 과거 DP/Ubuntu 릴리스용 호환 경로도 존재하므로 Legacy 배포 시에는 Source와 대상 릴리스 지원 범위를 별도로 확인하십시오.
+- 현재 `DP-Installer.sh`에는 과거 DP/Ubuntu 릴리스용 호환 경로도 존재하므로 이전 버전 배포 시에는 소스와 대상 릴리스 지원 범위를 별도로 확인하십시오.
 
 ### 준비 단계
 
@@ -121,9 +121,9 @@ chmod +x DP-Installer.sh
 ./DP-Installer.sh
 ```
 
-### Management NIC
+### 관리 NIC
 
-Management NIC은 다음 용도로 사용됩니다.
+관리 NIC은 다음 용도로 사용됩니다.
 
 - KVM 호스트에 대한 원격 접속
 - DLm 및 DAm 웹 인터페이스 접근
@@ -153,7 +153,7 @@ Host Access NIC은 로컬 전용 유지보수 및 문제 해결을 목적으로 
 - 원격 네트워크에서는 접근 불가
 - 현장 접속, 긴급 복구, KVM 문제 해결에 사용
 
-이 NIC은 특히 Management NIC이 10GbE로 구성되어 노트북에서 직접 접근할 수 없는 경우 매우 중요합니다.
+이 NIC은 특히 관리 NIC이 10GbE로 구성되어 노트북에서 직접 접근할 수 없는 경우 매우 중요합니다.
 
 ### NIC 준비 및 설계 가이드라인
 
@@ -161,7 +161,7 @@ Host Access NIC은 로컬 전용 유지보수 및 문제 해결을 목적으로 
 
 설치 프로그램은 **링크 상태를 기준으로 인터페이스를 식별**하므로, 케이블이 연결되어 있으면 각 NIC의 역할을 명확히 구분할 수 있습니다.
 
-![Management NIC 선택 화면](/images/DP-Installer/4.png)
+![관리 NIC 선택 화면](/images/DP-Installer/4.png)
 
 ## 3. 설치 프로그램 탐색
 
@@ -175,7 +175,7 @@ Host Access NIC은 로컬 전용 유지보수 및 문제 해결을 목적으로 
 
 ### 상태 인식 실행 방식
 
-설치 프로그램은 상태 인식(state-aware) 방식으로 동작합니다.
+설치 프로그램은 완료한 단계를 저장해 중단 후 이어서 진행할 수 있습니다.
 
 설치 상태는 다음 경로에 저장됩니다.
 
@@ -403,9 +403,9 @@ STEP 01 → STEP 02 → STEP 03 → … → STEP 14
 
 #### STEP 14 — NFS 백업 서버 구성
 
-현재 DP Installer의 마지막 단계는 **DP configuration backup용 NFS export**를 구성합니다. 이 단계는 Data Lake 데이터 백업이 아니라 DP 구성 백업을 위한 기능입니다.
+현재 DP Installer의 마지막 단계에서는 **DP 설정 백업용 NFS export**를 구성합니다. Data Lake 데이터를 백업하는 기능이 아니라 DP 설정을 저장하기 위한 기능입니다.
 
-기본 설정에는 `/stellarcyber` export 경로와 DL 내부 주소를 기준으로 한 허용 클라이언트 값이 포함되므로, 실제 환경에 맞는 값인지 Configuration에서 확인한 뒤 적용하십시오.
+기본 설정에는 `/stellarcyber` export 경로와 DL 내부 주소를 기준으로 한 허용 클라이언트 값이 포함됩니다. 실제 환경에 맞는지 설정 화면에서 확인한 뒤 적용하십시오.
 
 #### 중요 참고 사항
 
@@ -490,7 +490,7 @@ STEP 07 → STEP 09 → STEP 10 또는 STEP 11 → STEP 12
 
 ### 웹 UI 접속
 
-KVM 호스트의 Management IP를 사용하여 Data Platform Web UI에 접속합니다.
+KVM 호스트의 관리 IP를 사용하여 Data Platform Web UI에 접속합니다.
 
 예시:
 
@@ -522,10 +522,10 @@ console da-master
 - root 권한
 - CPU Hardware Virtualization 활성화
 - SR-IOV/Direct Device 사용 시 VT-d / IOMMU 활성화
-- 위 표의 현재 DL/DA VM 기본값을 수용할 CPU와 Memory
-- 선택한 설계에 필요한 OS/VM Storage와 전용 Data Lake Disk
-- Management NIC, Cluster NIC, 장애 복구용 Host Access 연결
-- Package, Image, Deployment Artifact 다운로드용 Network Access
+- 위 표의 현재 DL/DA VM 기본값을 수용할 CPU와 메모리
+- 선택한 설계에 필요한 OS/VM 스토리지와 전용 Data Lake 디스크
+- 관리 NIC, 클러스터 NIC, 장애 복구용 호스트 접속 경로
+- 패키지, 이미지, 배포 파일 다운로드에 필요한 네트워크 연결
 
 **[Ubuntu 24.04 설치 가이드](/ko/getting-started/installing-ubuntu-24-04)**는 추가 참고용이며, DP 하드웨어 선택에 필요한 제품별 요구사항은 이 페이지에 모두 요약되어 있습니다.
 
@@ -546,7 +546,7 @@ DP Cluster Interface에 **SR-IOV**를 사용하는 경우 서버 BIOS와 NIC 장
 VM이 실행 중인 것만으로 DP 설치가 완료된 것은 아닙니다. 운영 전 다음 DL/DA 설정을 완료하십시오.
 
 <Note>
-KVM Host별 NAT Management Network는 고정입니다. DL은 `192.168.122.2/24`, DA는 `192.168.122.3/24`, Gateway는 `192.168.122.1`, DNS는 `8.8.8.8`을 사용합니다. 각 물리 KVM Host는 독립적인 libvirt NAT Network를 사용하므로 서로 다른 Host에서 같은 NAT 주소를 재사용할 수 있습니다.
+KVM 호스트별 NAT 관리 네트워크는 고정입니다. DL은 `192.168.122.2/24`, DA는 `192.168.122.3/24`, Gateway는 `192.168.122.1`, DNS는 `8.8.8.8`을 사용합니다. 각 물리 KVM 호스트는 독립적인 libvirt NAT 네트워크를 사용하므로 서로 다른 호스트에서 같은 NAT 주소를 재사용할 수 있습니다.
 </Note>
 
 ### 10.1 DL Master
@@ -655,24 +655,24 @@ DL Master가 **System Ready**이고 대상 DA Master가 `resource`이면:
 5. DA Resource를 선택하고 **Role in Cluster = DA-Master**로 설정합니다.
 6. Submit 후 Node가 Healthy 상태인지 확인합니다.
 
-### 10.5 Receiver 및 Sensor Profile
+### 10.5 Receiver 및 Sensor 프로필
 
 1. **System → DATA SOURCE MANAGEMENT → Receivers**로 이동합니다.
-2. **Receiver Hostname**이 DL-Master가 아니라 **DA-Master**를 가리키는지 확인합니다.
-3. 최소 하나의 Sensor Profile이 해당 Receiver를 사용하도록 설정되어 있는지 확인합니다.
-4. `show logforwarder`에 출력이 없으면 Receiver Hostname부터 확인합니다.
+2. **Receiver 호스트명**이 DL-Master가 아니라 **DA-Master**를 가리키는지 확인합니다.
+3. 최소 하나의 Sensor 프로필이 해당 Receiver를 사용하도록 설정되어 있는지 확인합니다.
+4. `show logforwarder`에 출력이 없으면 Receiver 호스트명부터 확인합니다.
 
 ### 10.6 DP 최종 체크리스트
 
 - DL/DA VM이 실행 중이고 Autostart가 활성화되어 있음
-- DL Management IP = `192.168.122.2/24`
-- DA Management IP = `192.168.122.3/24`
-- 모든 Cluster Node가 고유한 Hostname과 Cluster IP를 사용함
-- `show interface all`에서 실제 Cluster Interface를 선택함
-- 모든 Node의 CM이 DL Master Cluster IP를 가리킴. 이 문서 예시는 `192.168.12.25`
-- 필요한 Node에 의도한 `vdb` Storage가 추가됨
+- DL 관리 IP = `192.168.122.2/24`
+- DA 관리 IP = `192.168.122.3/24`
+- 모든 클러스터 노드가 고유한 호스트명과 클러스터 IP를 사용함
+- `show interface all`에서 실제 클러스터 인터페이스를 선택함
+- 모든 노드의 CM이 DL Master 클러스터 IP를 가리킴. 이 문서 예시는 `192.168.12.25`
+- 필요한 노드에 의도한 `vdb` 스토리지가 추가됨
 - DA-Master가 Data Analyzer에서 Healthy 상태임
-- Receiver Hostname이 DA-Master를 가리키고 Sensor Profile이 해당 Receiver를 사용함
+- Receiver 호스트명이 DA-Master를 가리키고 Sensor 프로필이 해당 Receiver를 사용함
 - Full Configuration Validation에 미해결 FAIL이 없음
 
 Installer 설명 없이 초기 설정 명령만 다시 보려면 **[DP Cluster 초기 구성](/ko/installers/dp-cluster-initial-configuration)**을 사용하십시오.

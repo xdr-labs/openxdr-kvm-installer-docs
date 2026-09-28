@@ -1,16 +1,16 @@
 ---
 title: "배포 후 운영"
-description: "설치 완료 후 Host와 VM을 검증하고 정상 운영 단계로 전환합니다."
+description: "설치 완료 후 호스트와 VM을 확인하고 정상 운영 단계로 전환합니다."
 ---
 
 # 배포 후 운영
 
-Installer가 완료되면 정상 OpenXDR 운영으로 전환하기 전에 Host와 VM을 검증합니다.
+설치가 끝나면 정상 OpenXDR 운영으로 전환하기 전에 호스트와 VM을 검증합니다.
 
 ## Host 확인
 
 - libvirt Service 정상 여부
-- 예상 VM Definition 존재 여부
+- 예상한 VM 정의가 존재하는지
 - Management Address와 Route
 - 예상 LVM Volume
 - Time Synchronization
@@ -19,18 +19,18 @@ Installer가 완료되면 정상 OpenXDR 운영으로 전환하기 전에 Host�
 
 - DL/DA/AIO/Sensor VM 상태
 - Management Connectivity
-- Sensor VM의 SPAN/Passthrough Interface
+- Sensor VM의 SPAN/Passthrough 인터페이스
 - DP 경로의 SR-IOV/VF Assignment
 - Storage Mapping
 
 ## Appliance CLI
 
-Installer Family에는 DP Appliance CLI Package 설치 Step이 포함되어 있습니다.
+설치 프로그램에는 DP Appliance CLI 패키지 설치 단계이 포함되어 있습니다.
 
 <Card title="Stellar Appliance CLI" icon="terminal" href="/ko/operations/appliance-cli">
-  OpenXDR KVM Installer로 배포한 KVM Host를 운영하기 위한 통합 Interface입니다.
+  OpenXDR KVM Installer로 배포한 KVM 호스트를 운영하기 위한 통합 인터페이스입니다.
 </Card>
 
 ## 배포 Evidence 보관
 
-Change-control 정책에 따라 Installer Log와 최종 Configuration Summary를 보관합니다. 외부 공유 전 Secret을 제거하거나 Redact하십시오.
+변경 관리 정책에 따라 설치 로그와 최종 설정 요약을 보관합니다. 외부에 공유하기 전 비밀값을 제거하거나 마스킹하십시오.

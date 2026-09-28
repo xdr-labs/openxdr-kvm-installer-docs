@@ -5,22 +5,22 @@ description: "LVM Storage, CPU Placement, NUMA 및 Direct Device Assignment를 �
 
 # 스토리지 및 성능
 
-Installer는 VM용 Local Storage를 준비하고, 성능 민감 경로에서는 CPU와 Device Placement를 조정합니다.
+설치 프로그램은 VM용 로컬 스토리지를 준비하고, 성능이 중요한 구성에서는 CPU와 장치 배치를 조정합니다.
 
 ## LVM
 
-Topology에 따라 다음 Storage를 준비할 수 있습니다.
+토폴로지에 따라 다음 스토리지를 준비할 수 있습니다.
 
 - DL Root/Data
 - DA Root/Data
 - AIO
 - Sensor VM Image/Data
 
-실행 전 선택한 Block Device와 기존 Volume Group을 확인하십시오. 사용되지 않는 것처럼 보이는 Disk라도 Host 상태를 확인하기 전에는 안전하다고 가정하지 않습니다.
+실행 전 선택한 블록 장치와 기존 Volume Group을 확인하십시오. 사용되지 않는 것처럼 보이는 디스크라도 호스트 상태를 확인하기 전에는 안전하다고 가정하지 않습니다.
 
 ## CPU와 NUMA
 
-현재 Installer는 필요한 경우 Resource Calculation과 CPU Placement를 적용합니다. AIO + Sensor 및 DP 경로는 성능 민감 Workload를 의도한 Hardware Layout에 맞추기 위해 CPU Affinity를 사용할 수 있습니다.
+설치 프로그램은 필요한 경우 자원 계산과 CPU 배치를 적용합니다. AIO + Sensor와 DP 구성은 성능이 중요한 워크로드를 의도한 하드웨어 배치에 맞추기 위해 CPU Affinity를 사용할 수 있습니다.
 
 ## SR-IOV / PCI Passthrough
 

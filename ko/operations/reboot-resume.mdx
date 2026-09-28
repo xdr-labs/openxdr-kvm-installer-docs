@@ -1,27 +1,27 @@
 ---
 title: "재부팅 및 이어서 실행"
-description: "의도된 재부팅 지점과 Persistent State 기반 이어서 실행 동작을 설명합니다."
+description: "재부팅이 필요한 단계와 저장된 작업 상태를 이용해 이어서 실행하는 방법을 설명합니다."
 ---
 
 # 재부팅 및 이어서 실행
 
-Installer는 Host 변경에 Reboot가 필요해도 전체 배포를 처음부터 다시 시작하지 않도록 Stateful하게 동작합니다.
+설치 프로그램은 호스트 변경으로 재부팅이 필요해도 전체 배포를 처음부터 다시 시작하지 않도록 진행 상태를 저장합니다.
 
 ## 현재 Reboot 지점
 
-현재 Script는 다음 Step 이후 Auto Reboot를 구성합니다.
+현재 스크립트는 다음 단계 이후 자동 재부팅을 수행할 수 있습니다.
 
-- **Step 3** — NIC Rename / ifupdown 전환 / Network 구성
+- **Step 3** — NIC 이름 변경 / ifupdown 전환 / 네트워크 구성
 - **Step 5** — Kernel Tuning
 
 ## Reboot 이후
 
-동일 Source와 State Context에서 **같은 Installer**를 다시 실행한 뒤 **Auto Execute All Steps**를 선택합니다. 첫 미완료 Step부터 이어집니다.
+같은 소스와 저장된 작업 상태를 유지한 채 **같은 설치 프로그램**을 다시 실행하고 **Auto Execute All Steps**를 선택합니다. 첫 미완료 단계부터 이어집니다.
 
 ## State 원칙
 
-Step이 정상 완료된 경우에만 Completed State가 진행됩니다. Failed 또는 Canceled Step은 완료 Step Marker를 앞으로 이동시키지 않아야 합니다.
+단계가 정상 완료된 경우에만 완료 상태가 기록됩니다. 실패하거나 취소된 단계는 완료 위치를 앞으로 이동시키지 않습니다.
 
 <Note>
-실패한 Step을 건너뛰기 위해 State File을 수동으로 변경하지 마십시오. 원인을 해결하고 해당 Step을 다시 실행하는 것이 기본 복구 방법입니다.
+실패한 단계를 건너뛰기 위해 상태 파일을 수동으로 변경하지 마십시오. 원인을 해결한 뒤 해당 단계를 다시 실행하는 것이 기본 복구 방법입니다.
 </Note>
