@@ -1,6 +1,6 @@
 ---
 title: "Deployment Method Selection Guide"
-description: "Choose the recommended Stellar Cyber OpenXDR Platform deployment model based on infrastructure type, performance requirements, and operational constraints."
+description: "Choose a Stellar Cyber OpenXDR deployment model based on infrastructure, performance needs, and operational constraints."
 ---
 
 # Deployment Method Selection Guide
@@ -9,13 +9,13 @@ description: "Choose the recommended Stellar Cyber OpenXDR Platform deployment m
 
 ## Overview
 
-This guide describes the **recommended deployment models for the Stellar Cyber OpenXDR Platform** based on infrastructure type, performance requirements, and operational constraints.
+This guide compares deployment models for the **Stellar Cyber OpenXDR Platform** based on infrastructure, performance needs, and operational constraints.
 
 Rather than focusing on the installer's internal implementation, it is intended to help operators decide:
 
 - which installer to use
 - which network mode or attachment method to select
-- how to balance performance, stability, and operational simplicity
+- how to balance performance, stability, and day-to-day simplicity
 
 This guide applies to:
 
@@ -75,7 +75,7 @@ There are two recommended approaches depending on the network design.
 - set Cluster Interface Mode to **SR-IOV**
 - connect both servers to the switch
 
-This provides:
+This configuration provides:
 
 - high throughput
 - a topology that can be expanded later
@@ -197,7 +197,7 @@ If you need AIO only, do not simply run the complete Auto Execute workflow. Firs
 Some environments require the Sensor VM network to be separated from the KVM host network for:
 
 - security isolation
-- operational visibility
+- day-to-day visibility
 - management-policy compliance
 
 In that case:
@@ -253,7 +253,7 @@ In simple terms:
 #### Trade-offs
 
 - simpler configuration
-- additional operational considerations for access and management
+- additional access and management considerations
 
 ### PCI Passthrough (Sensor)
 
