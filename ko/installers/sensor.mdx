@@ -1,6 +1,6 @@
 ---
 title: "Sensor KVM Installer 사용자 가이드"
-description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber OpenXDR Sensor VM을 설치, 구성, 검증 및 운영하는 전체 절차입니다."
+description: "Ubuntu Server 24.04 LTS KVM 호스트에 Stellar Cyber OpenXDR Sensor VM을 배포하고 Data Platform에 연결하는 전체 절차입니다."
 ---
 
 # Sensor KVM Installer 사용자 가이드
@@ -9,7 +9,7 @@ description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber OpenXDR 
 
 ## 개요
 
-이 페이지는 **Standalone Sensor 설치를 처음부터 Data Platform 연결 및 승인까지 끝낼 수 있는 독립형 Runbook**입니다. Sensor 전용 하드웨어 기준, NAT/Bridge, SPAN 연결, Installer 실행, CM 연결과 Authorization을 모두 포함합니다.
+이 페이지 하나로 **Standalone Sensor 설치부터 Data Platform 연결과 승인까지** 순서대로 진행할 수 있습니다. Sensor 전용 하드웨어 기준, NAT/Bridge, SPAN 연결, Installer 실행, CM 연결과 Authorization을 모두 포함합니다.
 
 문서 기준 OS는 Ubuntu Server 24.04 LTS입니다.
 
@@ -19,14 +19,14 @@ description: "Ubuntu Server 24.04 LTS KVM 호스트에서 Stellar Cyber OpenXDR 
 
 | 항목 | Sensor 요구사항 / 가이드 |
 | --- | --- |
-| CPU | 12 vCPU 이상, VM Sizing은 자동 계산 |
-| Memory | 16 GB 이상, VM Sizing은 자동 계산 |
+| CPU | 12 vCPU 이상, VM 자원은 자동 계산 |
+| Memory | 16 GB 이상, VM 자원은 자동 계산 |
 | Storage | Sensor Storage 생성 전 `ubuntu-vg`에 최소 100 GB Free Space |
 | Management NIC | 1 GbE 이상 |
 | SPAN NIC | Traffic 설계에 필요한 수량 |
 | SPAN 연결 | PCI Passthrough, 제한 환경에서는 Bridge |
 | BIOS | CPU Virtualization 활성화, PCI Passthrough 사용 시 VT-d/IOMMU 필요 |
-| 검증된 Hardware | Dell PowerEdge R650 / R660 / R670 |
+| 검증된 하드웨어 | Dell PowerEdge R650 / R660 / R670 |
 | OS | 문서 기준 Ubuntu Server 24.04 LTS |
 
 <Note>
@@ -71,7 +71,7 @@ Stellar Cyber XDR Sensor는 KVM 가상화를 사용하는 물리 서버 상에�
 ### 문서 기준 운영체제
 
 - 이 한국어 가이드는 **Ubuntu Server 24.04 LTS** 기준입니다.
-- Source Installer에는 이전 Ubuntu 릴리스에 대한 호환 코드가 존재할 수 있으므로 Legacy 배포는 현재 Source와 대상 OpenXDR 릴리스 지원 범위를 별도로 확인하십시오.
+- Source Installer에는 이전 Ubuntu 릴리스에 대한 호환 코드가 존재할 수 있으므로 이전 버전 배포는 현재 소스와 대상 OpenXDR 릴리스 지원 범위를 별도로 확인하십시오.
 
 ### 준비 단계
 
@@ -442,9 +442,9 @@ STEP 07 → STEP 08 → STEP 09
 
 ## 9. Sensor 배포 이후
 
-### 9.1 Management Network 설정
+### 9.1 관리 네트워크 설정
 
-Standalone Sensor KVM Installer는 NAT와 Bridge 두 가지 Management Network 모드를 지원합니다.
+Standalone Sensor KVM Installer는 NAT와 Bridge 두 가지 관리 네트워크 모드를 지원합니다.
 
 #### NAT 모드
 
@@ -464,7 +464,7 @@ set interface management dns 8.8.8.8
 
 #### Bridge 모드
 
-Bridge 모드에서는 Installer Configuration에서 지정한 Sensor Management IP, Netmask, Gateway 및 DNS를 사용합니다.
+Bridge 모드에서는 Installer Configuration에서 지정한 Sensor 관리 IP, Netmask, Gateway 및 DNS를 사용합니다.
 
 Bridge 모드 주소를 위의 NAT 값으로 변경하지 마십시오. 수동 수정이 필요한 경우 실제 환경에 할당한 값을 사용합니다.
 
@@ -474,7 +474,7 @@ set interface management gateway <GATEWAY>
 set interface management dns <DNS>
 ```
 
-현재 Management 설정을 확인합니다.
+현재 관리 설정을 확인합니다.
 
 ```text
 show interfaces
@@ -516,9 +516,9 @@ set hostname sensor-site1
 
 ### 9.4 Sensor를 Data Platform에 연결
 
-`set cm`에는 Sensor가 접근할 수 있는 Stellar Cyber Platform Management Endpoint를 지정합니다.
+`set cm`에는 Sensor가 접근할 수 있는 Stellar Cyber Platform 관리 주소를 지정합니다.
 
-Cluster Data Platform에서는 **DL-master Management Interface 주소**를 사용합니다. Single DP/AIO 환경에서는 **Platform Management IP 또는 Hostname**을 사용합니다.
+Cluster Data Platform에서는 **DL-master 관리 인터페이스 주소**를 사용합니다. Single DP/AIO 환경에서는 **Platform 관리 IP 또는 Hostname**을 사용합니다.
 
 예:
 
@@ -597,7 +597,7 @@ SSH 접속:
 - Management NIC 및 필요한 SPAN/Data NIC
 - CPU Virtualization 활성화
 - PCI Passthrough 사용 시 VT-d/IOMMU 활성화
-- Package 및 Sensor Image 다운로드용 Network Access
+- 패키지와 Sensor 이미지 다운로드용 네트워크 접속
 - Network 전환 전 Console 또는 Out-of-Band Access
 
 Storage 확인:
@@ -608,7 +608,7 @@ vgs
 lvs
 ```
 
-**[Ubuntu 24.04 설치 가이드](/ko/getting-started/installing-ubuntu-24-04)**는 추가 참고용이며, Sensor 전용 Hardware Baseline은 이 페이지에 모두 요약되어 있습니다.
+**[Ubuntu 24.04 설치 가이드](/ko/getting-started/installing-ubuntu-24-04)**는 추가 참고용이며, Sensor 전용 하드웨어 기준은 이 페이지에 모두 요약되어 있습니다.
 
 ## 11. BIOS 및 플랫폼 설정
 
@@ -622,8 +622,8 @@ lvs
 
 - Full Configuration Validation에 미해결 FAIL이 없음
 - Sensor VM이 실행 중이고 Autostart가 활성화되어 있음
-- NAT 모드는 `192.168.122.2/24`, Bridge 모드는 환경별 Management Address를 사용함
-- `show interfaces`에 의도한 Management 설정이 표시됨
+- NAT 모드는 `192.168.122.2/24`, Bridge 모드는 환경별 관리 주소를 사용함
+- `show interfaces`에 의도한 관리 설정이 표시됨
 - Sensor Hostname이 고유함
 - `set cm`이 Sensor 자신의 NAT IP가 아니라 접근 가능한 Data Platform Management 주소를 가리킴
 - `show cm`의 **Status가 Established**
