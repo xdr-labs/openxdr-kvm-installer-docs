@@ -1,6 +1,6 @@
 ---
 title: "Stellar Appliance CLI 사용자 가이드"
-description: "OpenXDR KVM 호스트의 배포 이후 네트워크, NTP, ACL, VM 운영과 시스템 설정을 관리하는 Stellar Appliance CLI 가이드입니다."
+description: "OpenXDR KVM 호스트의 네트워크, NTP, ACL, VM과 시스템 설정을 배포 후 관리하는 Stellar Appliance CLI 가이드입니다."
 ---
 
 # Stellar Appliance CLI 사용자 가이드
@@ -13,7 +13,7 @@ Stellar Appliance CLI는 Stellar Cyber OpenXDR 환경을 위해 설계된 명령
 
 이 CLI는 공식 설치 스크립트를 사용하여 OpenXDR 구성 요소(Data Processor, Sensor, AIO)가 이미 배포된 KVM 호스트를 관리하기 위한 통합 운영 인터페이스를 제공합니다.
 
-본 CLI는 배포 이후(Post-deployment) 운영 작업에만 집중하며, 시스템 엔지니어와 운영자가 환경을 안전하고, 일관되며, 감사 가능하게 구성·제어·유지보수할 수 있도록 지원합니다.
+본 CLI는 배포 후 운영 작업에만 집중하며, 시스템 엔지니어와 운영자가 환경을 안전하고 일관된 방식으로 구성·제어·유지보수할 수 있도록 지원합니다.
 
 특히 다음 항목에 중점을 둡니다.
 
@@ -93,13 +93,13 @@ console dl-master
 | --- | --- |
 | `clear` | 명령 History 초기화 |
 | `console` | dl-master, da-master(aka dr-master), mds 또는 aio Console 접속 |
-| `monitor` | VM Resource와 System Health 모니터링 |
+| `monitor` | VM 자원과 시스템 상태 모니터링 |
 | `quit` | CLI 종료 |
-| `restart` | System 또는 Service 재시작 |
+| `restart` | 시스템 또는 서비스 재시작 |
 | `set` | Component Parameter 구성 |
 | `show` | Component 정보 표시 |
-| `shutdown` | System 또는 Service 종료 |
-| `start` | System 또는 Service 시작 |
+| `shutdown` | 시스템 또는 서비스 종료 |
+| `start` | 시스템 또는 서비스 시작 |
 | `unset` | Configuration 제거 |
 
 ### 도움말 및 Shell 명령
@@ -462,7 +462,7 @@ monitor
 
 ## 8. 패치 관리
 
-CLI는 Data Platform에서 제공되는 패치를 적용하고 적용 이력을 확인하는 기능을 제공합니다.
+CLI는 Data Platform에서 제공하는 패치를 적용하고 적용 이력을 확인하는 기능을 제공합니다.
 
 ```text
 set patch apply <patch_name>
