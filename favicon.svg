@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#1F59E0"/>
-  <path d="M17 17h8v13l11-13h10L33 32l14 15H36L25 34v13h-8V17z" fill="#fff"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="OpenXDR KVM Installer">
+  <rect x="4" y="4" width="56" height="56" rx="16" fill="#1F59E0"/>
+  <path d="M18 17h7v13l12-13h9L33 32l14 15h-10L25 34v13h-7V17z" fill="#FFFFFF"/>
+  <circle cx="46" cy="18" r="3.5" fill="#FF9B1D"/>
 </svg>

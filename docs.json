@@ -159,5 +159,10 @@
   },
   "styling": {
     "eyebrows": "breadcrumbs"
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg",
+    "href": "https://kvm.xdr.ooo"
   }
 }
