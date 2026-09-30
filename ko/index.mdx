@@ -3,11 +3,24 @@ title: "OpenXDR KVM Installer"
 description: "Stellar Cyber OpenXDR 구성 요소를 KVM 기반 Linux 환경에 배포하고 운영하기 위한 스크립트 기반 자동화 프레임워크입니다."
 ---
 
-# OpenXDR KVM Installer
+<div className="xdr-hero">
+  <p className="xdr-kicker">OpenXDR deployment automation</p>
+  <h1 className="xdr-hero-title">KVM 기반 Stellar Cyber 배포를 반복 가능한 절차로.</h1>
+  <p className="xdr-hero-copy">
+    KVM 호스트 준비부터 Data Processor와 Sensor VM 배포, 하드웨어·네트워크·스토리지 검증, 재부팅 후 이어서 실행까지 하나의 가이드형 설치 흐름으로 관리합니다.
+  </p>
+  <div className="xdr-hero-actions">
+    <a className="xdr-hero-primary" href="/ko/getting-started/choose-installer">설치 프로그램 선택 →</a>
+    <a className="xdr-hero-secondary" href="/ko/getting-started/quickstart">빠른 시작</a>
+  </div>
+  <div className="xdr-signal-grid">
+    <div className="xdr-signal"><strong>Prepare</strong><span>하드웨어, libvirt, 스토리지, 네트워크, passthrough 준비 상태를 검증합니다.</span></div>
+    <div className="xdr-signal"><strong>Deploy</strong><span>DP, Standard Sensor, AIO + Sensor에 맞는 가이드형 배포 절차를 사용합니다.</span></div>
+    <div className="xdr-signal"><strong>Resume</strong><span>재부팅과 부분 실행 뒤에도 단계 상태와 검증 결과를 유지합니다.</span></div>
+  </div>
+</div>
 
 ## 문서 개요
-
-이 문서는 **Stellar Cyber OpenXDR 구성 요소를 KVM 기반 Linux 환경에 배포하고 운영하는 자동화 도구인 OpenXDR KVM Installer**의 실무 가이드입니다.
 
 OpenXDR KVM Installer는 Stellar Cyber OpenXDR 구성 요소를 KVM에 배포할 때 필요한 호스트 작업을 자동화합니다. libvirt, 스토리지, 네트워크, VM 이미지, passthrough, CPU 배치, 재부팅 상태를 각각 수작업으로 구성하는 대신 `whiptail` 메뉴, 작업 상태 저장, 검증 절차를 제공합니다.
 
