@@ -4,7 +4,9 @@
   "name": "OpenXDR KVM Installer",
   "description": "Operator documentation for deploying Stellar Cyber OpenXDR Data Processor and Sensor components on KVM.",
   "colors": {
-    "primary": "#16A34A"
+    "primary": "#1F59E0",
+    "light": "#2982E8",
+    "dark": "#5B8CFF"
   },
   "favicon": "/favicon.svg",
   "navbar": {
